@@ -25,9 +25,13 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
-        if (($this->app['request']->header('X-Forwarded-Proto') ?? '') === 'https') {
-            $this->app['request']->server->set('HTTPS', 'on');
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+        $req = $this->app['request'];
+
+        // Trust Render / proxy for correct URL generation
+        if ($req->headers->has('X-Forwarded-Proto')) {
+            $req->server->set('HTTPS', str_starts_with($req->header('X-Forwarded-Proto'), 'https') ? 'on' : 'off');
+            \Illuminate\Support\Facades\URL::forceRootUrl($req->getSchemeAndHttpHost());
+            \Illuminate\Support\Facades\URL::forceScheme($req->getScheme());
         }
         try {
             $settings = Setting::pluck('value', 'key');
