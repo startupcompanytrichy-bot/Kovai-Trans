@@ -7,8 +7,8 @@
 /* ── Page Header ── */
 .drv-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 14px; padding: 22px 28px;
-    color: #fff; margin-bottom: 22px;
+    border-radius: 14px; padding: 14px 24px;
+    color: #fff; margin-bottom: 18px;
     position: relative; overflow: hidden;
 }
 .drv-header::before { content:''; position:absolute; top:-50px; right:-50px; width:180px; height:180px; background:rgba(255,255,255,.06); border-radius:50%; }

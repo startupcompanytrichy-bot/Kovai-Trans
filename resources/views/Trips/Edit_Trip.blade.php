@@ -781,6 +781,7 @@
                             <input type="date" name="paid_on" id="payDateInput"
                                 class="form-control form-control-sm"
                                 style="border-color:#d7dce5;min-height:38px;"
+                                max="{{ date('Y-m-d') }}"
                                 value="{{ now()->format('Y-m-d') }}">
                         </div>
                     </div>
@@ -981,6 +982,35 @@
                 </div>
             </div>
             <div class="et-card-body">
+
+                {{-- Existing document preview --}}
+                @if($trip->document_path)
+                @php
+                    $docUrl = asset('storage/' . $trip->document_path);
+                    $docExt = strtolower(pathinfo($trip->document_path, PATHINFO_EXTENSION));
+                    $isImage = in_array($docExt, ['jpg','jpeg','png']);
+                @endphp
+                <div style="background:#f7f8fc;border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid #e8edf7;">
+                    <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
+                        <i class="ti-files" style="color:#667eea;"></i> Uploaded Document
+                    </div>
+                    @if($isImage)
+                    <img src="{{ $docUrl }}" alt="Document" onclick="openDocViewer('{{ $docUrl }}')"
+                        style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;">
+                    @else
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #e2e8f0;">
+                        <i class="ti-file" style="font-size:22px;color:#667eea;"></i>
+                        <span style="flex:1;font-size:13px;font-weight:600;color:#1a2340;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            {{ basename($trip->document_path) }}
+                        </span>
+                        <a href="{{ $docUrl }}" target="_blank"
+                            style="font-size:11px;font-weight:700;color:#667eea;text-decoration:none;white-space:nowrap;">
+                            <i class="ti-download mr-1"></i> View
+                        </a>
+                    </div>
+                    @endif
+                </div>
+                @else
                 <div class="doc-upload-zone" onclick="document.getElementById('docFileInput').click()">
                     <input type="file" id="docFileInput" style="display:none;" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                     <i class="ti-cloud-up"></i>
@@ -988,9 +1018,18 @@
                     <div class="duz-sub">PDF, JPG, PNG, DOC — Max 10MB each</div>
                 </div>
                 <div id="docFileList" class="mt-2"></div>
-                <div class="mt-3" style="font-size:12px;color:#8a94a6;">
-                    <div class="d-flex align-items-center" style="gap:6px;margin-bottom:6px;">
-                        <i class="ti-file" style="color:#667eea;"></i>
+                @endif
+
+                {{-- Document details --}}
+                <div class="mt-2" style="font-size:12px;color:#8a94a6;">
+                    @if($trip->document_number)
+                    <div class="d-flex align-items-center" style="gap:6px;margin-bottom:5px;">
+                        <i class="ti-file" style="color:#667eea;font-size:13px;"></i>
+                        <span>Doc No: <strong style="color:#1a2340;">{{ $trip->document_number }}</strong></span>
+                    </div>
+                    @endif
+                    <div class="d-flex align-items-center" style="gap:6px;">
+                        <i class="ti-file" style="color:#667eea;font-size:13px;"></i>
                         <span>LR No: <strong style="color:#1a2340;">{{ $trip->lr_no ?: 'Not assigned' }}</strong></span>
                     </div>
                 </div>
@@ -1005,10 +1044,40 @@
 </div>{{-- /main-body --}}
 </div>{{-- /pcoded-inner-content --}}
 
+{{-- Document viewer lightbox --}}
+<div id="docViewerOverlay"
+    onclick="closeDocViewer()"
+    style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);cursor:zoom-out;">
+    <button type="button" onclick="closeDocViewer()"
+        style="position:absolute;top:20px;right:24px;width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <i class="ti-close"></i>
+    </button>
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;padding:40px;">
+        <img id="docViewerImg" src=""
+            style="max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
+/* ══════════════════════════════════════════════════════════════
+   DOCUMENT VIEWER LIGHTBOX (global)
+══════════════════════════════════════════════════════════════ */
+function openDocViewer(url) {
+    document.getElementById('docViewerImg').src = url;
+    document.getElementById('docViewerOverlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+function closeDocViewer() {
+    document.getElementById('docViewerOverlay').style.display = 'none';
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDocViewer();
+});
+
 $(document).ready(function () {
 
     /* ══════════════════════════════════════════════════════════════

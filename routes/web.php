@@ -85,6 +85,7 @@ Route::get('/driver/edit/{id}', [DriverController::class, 'edit'])->name('driver
 Route::get('/driver/view/{id}', [DriverController::class, 'view'])->name('driver.view');
 Route::put('/driver/{id}', [DriverController::class, 'update'])->name('driver.update');
 Route::delete('/driver/{id}', [DriverController::class, 'destroy'])->name('driver.destroy');
+Route::post('/driver/upload-temp', [DriverController::class, 'uploadTemp'])->name('driver.upload-temp');
 
 Route::get('/trip', [TripController::class, 'index'])->name('trip');
 Route::get('/trip/add', [TripController::class, 'create'])->name('trip.create');

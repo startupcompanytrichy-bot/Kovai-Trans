@@ -462,14 +462,11 @@
         default => ''
         };
 
-        [$cgR,$sgR] = match($invType){
-        'rcm' => [2.5,2.5],
-        'exempt' => [0.0,0.0],
-        default => [9.0,9.0]
-        };
+        $cgR = (float)($cgstRate ?? match($invType){'rcm'=>0,'exempt'=>0.0,default=>0});
+        $sgR = (float)($sgstRate ?? match($invType){'rcm'=>0,'exempt'=>0.0,default=>0});
         $sub = (float)$trips->sum('freight_amount');
-        $cgst = round($sub*$cgR/100, 2);
-        $sgst = round($sub*$sgR/100, 2);
+        $cgst = round($sub*$cgR/100, 0);
+        $sgst = round($sub*$sgR/100, 0);
         $grand = $sub + $cgst + $sgst;
 
         $invNo = $invoiceNo ?? ($ft->invoice_no ?: (($company->company_code??'INV').'-'.date('Y').'/'.$ft->id));

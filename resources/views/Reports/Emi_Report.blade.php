@@ -9,7 +9,7 @@
     .rpt-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 14px;
-        padding: 20px 24px;
+        padding: 14px 24px;
         color: #fff;
         margin-bottom: 20px;
         position: relative;

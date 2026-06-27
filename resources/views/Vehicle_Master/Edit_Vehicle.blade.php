@@ -7,8 +7,8 @@
 /* ── Header ── */
 .veh-edit-header {
     background: linear-gradient(135deg, #1a2340 0%, #303f6e 100%);
-    border-radius: 14px; padding: 22px 28px;
-    color: #fff; margin-bottom: 22px;
+    border-radius: 14px; padding: 14px 24px;
+    color: #fff; margin-bottom: 18px;
     position: relative; overflow: hidden;
 }
 .veh-edit-header::before {
@@ -345,7 +345,7 @@
 
 {{-- Doc Preview Modal --}}
 <div class="modal fade" id="docPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document" style="margin:0 0 0 auto;width:100%;max-width:700px;height:100%;">
+    <div class="modal-dialog" role="document" style="position:fixed;right:0;top:0;margin:0;width:100%;max-width:700px;height:100%;transform:none;">
         <div class="modal-content" style="height:100vh;border-radius:0;display:flex;flex-direction:column;border:none;">
             <div class="modal-header" style="background:#1a2340;padding:16px 20px;">
                 <h5 class="modal-title text-white"><i class="ti-file mr-2"></i><span id="docPreviewTitle">Document Preview</span></h5>

@@ -4,14 +4,15 @@
 <style>
     .rpt-page {
         background: #f4f6fb;
+        padding: 6px 0;
     }
 
     .rpt-header {
         background: linear-gradient(135deg, #1a2340 0%, #2d3a5e 60%, #667eea 100%);
-        border-radius: 14px;
-        padding: 24px 28px;
+        border-radius: 16px;
+        padding: 14px 28px;
         color: #fff;
-        margin-bottom: 22px;
+        margin-bottom: 32px;
         position: relative;
         overflow: hidden;
     }
@@ -19,10 +20,10 @@
     .rpt-header::before {
         content: '';
         position: absolute;
-        top: -40px;
-        right: -40px;
-        width: 160px;
-        height: 160px;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
         background: rgba(255, 255, 255, .06);
         border-radius: 50%;
     }
@@ -30,102 +31,123 @@
     .rpt-header h4 {
         font-size: 20px;
         font-weight: 800;
-        margin: 0 0 4px;
+        margin: 0 0 2px;
     }
 
     .rpt-header .sub {
         font-size: 13px;
-        opacity: .8;
+        opacity: .75;
     }
 
     .rpt-section-title {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: .8px;
-        color: #8a94a6;
-        margin: 0 0 12px;
-        padding-left: 2px;
+        letter-spacing: 1px;
+        color: #94a3b8;
+        margin: 0 0 14px;
+        padding-left: 4px;
     }
 
     .rpt-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
-        margin-bottom: 24px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-bottom: 36px;
     }
 
     .rpt-card {
         background: #fff;
-        border-radius: 14px;
-        padding: 20px 22px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, .07);
+        border-radius: 16px;
+        padding: 24px 26px;
+        box-shadow: 0 2px 14px rgba(0, 0, 0, .06);
         display: flex;
-        align-items: center;
-        gap: 16px;
+        align-items: flex-start;
+        gap: 18px;
         text-decoration: none;
         color: inherit;
-        transition: all .2s;
+        transition: all .25s;
         border: 2px solid transparent;
+        min-height: 100%;
     }
 
     .rpt-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 28px rgba(0, 0, 0, .12);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 32px rgba(0, 0, 0, .1);
         text-decoration: none;
         color: inherit;
     }
 
+    .rpt-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+        flex: 1;
+    }
+
     .rpt-card .rc-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 12px;
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 22px;
         flex-shrink: 0;
+        margin-top: 2px;
     }
 
     .rpt-card .rc-title {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 800;
-        color: #1a2340;
-        margin-bottom: 3px;
+        color: #0f172a;
+        margin: 0 0 2px;
     }
 
     .rpt-card .rc-desc {
-        font-size: 12px;
-        color: #8a94a6;
-        line-height: 1.5;
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.55;
+        margin: 0;
     }
 
     .rpt-card .rc-arrow {
         margin-left: auto;
-        font-size: 16px;
-        color: #b0bac9;
+        font-size: 18px;
+        color: #cbd5e1;
         flex-shrink: 0;
-        transition: transform .2s;
+        transition: all .25s;
+        align-self: center;
     }
 
     .rpt-card:hover .rc-arrow {
         color: #667eea;
-        transform: translateX(3px);
+        transform: translateX(5px);
     }
 
     .rpt-card .rc-badge {
         font-size: 10px;
         font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 10px;
-        margin-top: 4px;
+        padding: 3px 12px;
+        border-radius: 20px;
+        margin-top: 8px;
         display: inline-block;
+        align-self: flex-start;
     }
 
-    @media(max-width:767.98px) {
+    @media(max-width:991.98px) {
+        .rpt-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media(max-width:575.98px) {
         .rpt-grid {
             grid-template-columns: 1fr;
+            gap: 14px;
         }
+        .rpt-header { padding: 24px 20px; }
+        .rpt-card { padding: 18px 20px; }
     }
 </style>
 
@@ -144,12 +166,37 @@
                     </div>
                 </div>
 
-                {{-- Operations Reports --}}
-                <div class="rpt-section-title"><i class="ti-location-arrow mr-1"></i> Operations Reports</div>
                 <div class="rpt-grid">
+                    <a href="{{ route('reports.parties-payment-ledger') }}" class="rpt-card" style="border-color:#f3e8ff;">
+                        <div class="rc-icon" style="background:#f3e8ff;color:#9333ea;"><i class="ti-wallet"></i></div>
+                        <div class="rpt-card-body">
+                            <div class="rc-title">Parties Payment Ledger</div>
+                            <div class="rc-desc">View payment ledger with party selection. Filter by month, year, date, or custom date range.</div>
+                            <span class="rc-badge" style="background:#f3e8ff;color:#9333ea;">Party-wise</span>
+                        </div>
+                        <i class="ti-arrow-right rc-arrow"></i>
+                    </a>
+                    <a href="{{ route('reports.invoices') }}" class="rpt-card" style="border-color:#eef2ff;">
+                        <div class="rc-icon" style="background:#eef2ff;color:#4338ca;"><i class="ti-receipt"></i></div>
+                        <div class="rpt-card-body">
+                            <div class="rc-title">Invoice Report</div>
+                            <div class="rc-desc">Invoice date, payment collected date, grand total (incl. tax), collected and balance per invoice.</div>
+                            <span class="rc-badge" style="background:#eef2ff;color:#4338ca;">PDF &amp; Excel</span>
+                        </div>
+                        <i class="ti-arrow-right rc-arrow"></i>
+                    </a>
+                    <a href="{{ route('reports.emi') }}" class="rpt-card" style="border-color:#eef2ff;">
+                        <div class="rc-icon" style="background:#eef2ff;color:#4338ca;"><i class="ti-calendar"></i></div>
+                        <div class="rpt-card-body">
+                            <div class="rc-title">EMI Details Report</div>
+                            <div class="rc-desc">Vehicle loan EMI details, outstanding balances, payment progress, and overdue alerts.</div>
+                            <span class="rc-badge" style="background:#eef2ff;color:#4338ca;">PDF &amp; Excel</span>
+                        </div>
+                        <i class="ti-arrow-right rc-arrow"></i>
+                    </a>
                     <a href="{{ route('reports.trips') }}" class="rpt-card" style="border-color:#eef2ff;">
                         <div class="rc-icon" style="background:#eef2ff;color:#667eea;"><i class="ti-location-arrow"></i></div>
-                        <div>
+                        <div class="rpt-card-body">
                             <div class="rc-title">Trip Report</div>
                             <div class="rc-desc">All trips with filters by date, driver, vehicle, party, and status.</div>
                             <span class="rc-badge" style="background:#eef2ff;color:#667eea;">Printable</span>
@@ -158,21 +205,16 @@
                     </a>
                     <a href="{{ route('reports.pnl') }}" class="rpt-card" style="border-color:#f0fff4;">
                         <div class="rc-icon" style="background:#f0fff4;color:#38a169;"><i class="ti-stats-up"></i></div>
-                        <div>
+                        <div class="rpt-card-body">
                             <div class="rc-title">Profit & Loss Report</div>
                             <div class="rc-desc">Net profit/loss per trip. Identify profitable routes and loss-making trips.</div>
                             <span class="rc-badge" style="background:#f0fff4;color:#38a169;">Completed Trips</span>
                         </div>
                         <i class="ti-arrow-right rc-arrow"></i>
                     </a>
-                </div>
-
-                {{-- Finance Reports --}}
-                <div class="rpt-section-title"><i class="ti-money mr-1"></i> Finance Reports</div>
-                <div class="rpt-grid">
                     <a href="{{ route('reports.expenses') }}" class="rpt-card" style="border-color:#fff5f5;">
                         <div class="rc-icon" style="background:#fff5f5;color:#e53e3e;"><i class="ti-receipt"></i></div>
-                        <div>
+                        <div class="rpt-card-body">
                             <div class="rc-title">Expense Report</div>
                             <div class="rc-desc">Analyze expenses by category, vehicle, and date range. Track spending patterns.</div>
                             <span class="rc-badge" style="background:#fff5f5;color:#e53e3e;">Category Breakdown</span>
@@ -181,52 +223,10 @@
                     </a>
                     <a href="{{ route('reports.collection') }}" class="rpt-card" style="border-color:#fffbeb;">
                         <div class="rc-icon" style="background:#fffbeb;color:#d97706;"><i class="ti-credit-card"></i></div>
-                        <div>
+                        <div class="rpt-card-body">
                             <div class="rc-title">Pending Collection Report</div>
                             <div class="rc-desc">Track outstanding payments, overdue collections, and customer balances.</div>
                             <span class="rc-badge" style="background:#fffbeb;color:#d97706;">Overdue Alerts</span>
-                        </div>
-                        <i class="ti-arrow-right rc-arrow"></i>
-                    </a>
-                </div>
-
-                {{-- Invoice Report --}}
-                <div class="rpt-section-title"><i class="ti-receipt mr-1"></i> Invoice Reports</div>
-                <div class="rpt-grid">
-                    <a href="{{ route('reports.invoices') }}" class="rpt-card" style="border-color:#eef2ff;">
-                        <div class="rc-icon" style="background:#eef2ff;color:#4338ca;"><i class="ti-receipt"></i></div>
-                        <div>
-                            <div class="rc-title">Invoice Report</div>
-                            <div class="rc-desc">Invoice date, payment collected date, grand total (incl. tax), collected and balance per invoice.</div>
-                            <span class="rc-badge" style="background:#eef2ff;color:#4338ca;">PDF &amp; Excel</span>
-                        </div>
-                        <i class="ti-arrow-right rc-arrow"></i>
-                    </a>
-                </div>
-
-                {{-- Vehicle Finance Reports --}}
-                <div class="rpt-section-title"><i class="ti-calendar mr-1"></i> Vehicle Finance Reports</div>
-                <div class="rpt-grid">
-                    <a href="{{ route('reports.emi') }}" class="rpt-card" style="border-color:#eef2ff;">
-                        <div class="rc-icon" style="background:#eef2ff;color:#4338ca;"><i class="ti-calendar"></i></div>
-                        <div>
-                            <div class="rc-title">EMI Details Report</div>
-                            <div class="rc-desc">Vehicle loan EMI details, outstanding balances, payment progress, and overdue alerts.</div>
-                            <span class="rc-badge" style="background:#eef2ff;color:#4338ca;">PDF &amp; Excel</span>
-                        </div>
-                        <i class="ti-arrow-right rc-arrow"></i>
-                    </a>
-                </div>
-
-                {{-- Parties Reports --}}
-                <div class="rpt-section-title"><i class="ti-user mr-1"></i> Parties Reports</div>
-                <div class="rpt-grid">
-                    <a href="{{ route('reports.parties-payment-ledger') }}" class="rpt-card" style="border-color:#f3e8ff;">
-                        <div class="rc-icon" style="background:#f3e8ff;color:#9333ea;"><i class="ti-wallet"></i></div>
-                        <div>
-                            <div class="rc-title">Parties Payment Ledger</div>
-                            <div class="rc-desc">View payment ledger with party selection. Filter by month, year, date, or custom date range.</div>
-                            <span class="rc-badge" style="background:#f3e8ff;color:#9333ea;">Party-wise</span>
                         </div>
                         <i class="ti-arrow-right rc-arrow"></i>
                     </a>

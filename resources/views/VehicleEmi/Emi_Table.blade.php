@@ -3,7 +3,7 @@
 @section('content')
 <style>
 .emi-page{background:#f4f6fb;}
-.emi-header{background:linear-gradient(135deg,#1a2340 0%,#2d3a5e 60%,#4338ca 100%);border-radius:14px;padding:24px 28px;color:#fff;margin-bottom:22px;position:relative;overflow:hidden;}
+.emi-header{background:linear-gradient(135deg,#1a2340 0%,#2d3a5e 60%,#4338ca 100%);border-radius:14px;padding:14px 24px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden;}
 .emi-header::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,.06);border-radius:50%;}
 .emi-header h4{font-size:20px;font-weight:800;margin:0 0 4px;}
 .emi-header .sub{font-size:13px;opacity:.8;}

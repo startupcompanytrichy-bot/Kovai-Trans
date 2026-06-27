@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
 
 class DriverController extends Controller
 {
@@ -37,15 +39,15 @@ class DriverController extends Controller
         $validated = $request->validate([
             'name'           => 'required|string|max:255',
             'driver_type'    => 'nullable|in:own,rental',
-            'license_number' => 'required|string|max:100|unique:drivers,license_number',
+            'license_number' => ['required', 'string', 'max:16', Rule::unique('drivers', 'license_number')->where('is_deleted', 0)],
             'mobile'         => 'required|string|max:20',
-            'aadhar_number'  => 'required|string|max:20|unique:drivers,aadhar_number',
-            'pan_number'     => 'required|string|max:10|unique:drivers,pan_number',
+            'aadhar_number'  => ['required', 'string', 'max:12', Rule::unique('drivers', 'aadhar_number')->where('is_deleted', 0)],
+            'pan_number'     => ['required', 'string', 'max:10', Rule::unique('drivers', 'pan_number')->where('is_deleted', 0)],
             'dob'            => 'required|string|max:20',
             'state'          => 'nullable|string|max:100',
             'district'       => 'nullable|string|max:100',
             'city'           => 'nullable|string|max:100',
-            'postal_code'    => 'nullable|string|max:10',
+            'postal_code'    => 'nullable|string|max:6',
             'address'        => 'nullable|string',
             'remarks'        => 'nullable|string',
             'driver_photo'   => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
@@ -62,11 +64,15 @@ class DriverController extends Controller
             $validated['created_by'] = auth()->id();
         }
 
-        // Handle photo uploads
+        // Handle photo uploads (direct file or temp upload from validation error)
         foreach (['driver_photo', 'aadhar_photo', 'pan_photo', 'license_photo'] as $photo) {
             if ($request->hasFile($photo)) {
                 $validated[$photo] = $request->file($photo)
                     ->store('drivers/photos', 'public');
+            } elseif ($tempPath = $request->input($photo . '_temp')) {
+                $newPath = 'drivers/photos/' . basename($tempPath);
+                Storage::disk('public')->move($tempPath, $newPath);
+                $validated[$photo] = $newPath;
             } else {
                 unset($validated[$photo]);
             }
@@ -115,15 +121,15 @@ class DriverController extends Controller
         $validated = $request->validate([
             'name'           => 'required|string|max:255',
             'driver_type'    => 'nullable|in:own,rental',
-            'license_number' => 'required|string|max:100|unique:drivers,license_number,' . $id,
+            'license_number' => ['required', 'string', 'max:16', Rule::unique('drivers', 'license_number')->ignore($id)->where('is_deleted', 0)],
             'mobile'         => 'required|string|max:20',
-            'aadhar_number'  => 'required|string|max:20|unique:drivers,aadhar_number,' . $id,
-            'pan_number'     => 'required|string|max:10|unique:drivers,pan_number,' . $id,
+            'aadhar_number'  => ['required', 'string', 'max:12', Rule::unique('drivers', 'aadhar_number')->ignore($id)->where('is_deleted', 0)],
+            'pan_number'     => ['required', 'string', 'max:10', Rule::unique('drivers', 'pan_number')->ignore($id)->where('is_deleted', 0)],
             'dob'            => 'required|string|max:20',
             'state'          => 'nullable|string|max:100',
             'district'       => 'nullable|string|max:100',
             'city'           => 'nullable|string|max:100',
-            'postal_code'    => 'nullable|string|max:10',
+            'postal_code'    => 'nullable|string|max:6',
             'address'        => 'nullable|string',
             'remarks'        => 'nullable|string',
             'driver_photo'   => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
@@ -145,6 +151,13 @@ class DriverController extends Controller
                 }
                 $validated[$photo] = $request->file($photo)
                     ->store('drivers/photos', 'public');
+            } elseif ($tempPath = $request->input($photo . '_temp')) {
+                if ($driver->$photo && $driver->$photo !== $tempPath) {
+                    Storage::disk('public')->delete($driver->$photo);
+                }
+                $newPath = 'drivers/photos/' . basename($tempPath);
+                Storage::disk('public')->move($tempPath, $newPath);
+                $validated[$photo] = $newPath;
             } else {
                 unset($validated[$photo]);
             }
@@ -156,12 +169,37 @@ class DriverController extends Controller
     }
 
     /**
+     * Upload a file temporarily (used to persist files across validation errors)
+     */
+    public function uploadTemp(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
+        $path = $request->file('file')->store('temp/uploads', 'public');
+
+        return response()->json([
+            'path' => $path,
+            'url'  => asset('storage/' . $path),
+            'name' => $request->file('file')->getClientOriginalName(),
+        ]);
+    }
+
+    /**
      * Soft-delete the specified driver
      */
     public function destroy($id)
     {
         $driver = Driver::findOrFail($id);
-        $driver->update(['is_deleted' => true, 'is_active' => false]);
+        $suffix = '-deleted-' . $driver->id;
+        $driver->update([
+            'is_deleted'      => true,
+            'is_active'       => false,
+            'license_number'  => $driver->license_number . $suffix,
+            'aadhar_number'   => $driver->aadhar_number . $suffix,
+            'pan_number'      => $driver->pan_number . $suffix,
+        ]);
 
         return redirect()->route('driver')->with('success', 'Driver deleted successfully');
     }

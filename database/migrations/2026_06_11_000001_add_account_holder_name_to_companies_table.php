@@ -10,7 +10,7 @@ return new class extends Migration
     {
         if (!Schema::hasColumn('companies', 'account_holder_name')) {
             Schema::table('companies', function (Blueprint $table) {
-                $table->string('account_holder_name')->nullable()->after('account_number');
+                $table->string('account_holder_name')->nullable();
             });
         }
         // Ensure phone columns also exist (in case billing migration wasn't run)

@@ -73,47 +73,234 @@ $typeConfig = [
 /* ── Pay slide-in panel ── */
 .pay-backdrop {
     display:none; position:fixed; inset:0;
-    background:rgba(26,35,64,.45); z-index:1040; backdrop-filter:blur(2px);
+    background:rgba(15,23,42,.55); z-index:1040; backdrop-filter:blur(3px);
 }
 .pay-backdrop.show { display:block; }
+
+/* ── Panel shell ── */
 .pay-panel {
     position:fixed; top:0; right:0; bottom:0;
-    width:100%; max-width:460px; background:#fff; z-index:1050;
+    width:100%; max-width:660px; background:#fff; z-index:1050;
     display:flex; flex-direction:column;
-    transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1);
-    box-shadow:-8px 0 40px rgba(0,0,0,.18);
+    transform:translateX(100%); transition:transform .4s cubic-bezier(.22,1,.36,1);
+    box-shadow:-24px 0 80px rgba(15,23,42,.22);
 }
 .pay-panel.open { transform:translateX(0); }
-.pay-panel-hdr {
-    background:linear-gradient(135deg,#1a2340 0%,#303f6e 100%);
-    padding:16px 20px; display:flex; align-items:center;
-    justify-content:space-between; flex-shrink:0;
+
+/* ── Header ── */
+.pay-hdr { flex-shrink:0; background:#fff; position:relative; }
+.pay-hdr-accent {
+    height:4px;
+    background:linear-gradient(90deg,#0f172a,#1e293b,#334155,#475569);
 }
-.pay-panel-hdr h5 { color:#fff; font-size:15px; font-weight:700; margin:0; display:flex; align-items:center; gap:8px; }
-.pay-panel-close {
-    width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,.15);
-    border:none; color:#fff; font-size:18px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; transition:background .15s;
+.pay-hdr-inner {
+    padding:20px 28px; display:flex; align-items:center;
+    justify-content:space-between; gap:16px;
 }
-.pay-panel-close:hover { background:#e53e3e; }
-.pay-panel-body { flex:1; min-height:0; overflow-y:auto; padding:22px 20px; }
-.pay-panel-footer {
-    padding:14px 20px; border-top:1px solid #edf0f7; background:#fafbff;
-    display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-shrink:0;
+.pay-hdr-left { display:flex; align-items:center; gap:14px; min-width:0; }
+.pay-hdr-icon {
+    width:44px; height:44px; border-radius:14px;
+    background:linear-gradient(135deg,#1e293b,#334155);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; color:#e2e8f0; flex-shrink:0;
 }
-.pay-field label { font-size:11px; font-weight:700; color:#596579; text-transform:uppercase; letter-spacing:.4px; display:block; margin-bottom:5px; }
-.pay-field label .req { color:#e53e3e; }
-.pay-field .form-control { border-color:#d7dce5; border-radius:8px; font-size:13px; min-height:40px; }
-.pay-field .form-control:focus { border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,.12); }
-.pay-status-pills { display:flex; gap:8px; flex-wrap:wrap; }
+.pay-hdr-text { min-width:0; }
+.pay-hdr-text h5 {
+    font-size:16px; font-weight:700; color:#0f172a; margin:0; line-height:1.3;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.pay-hdr-text .hdr-sub {
+    font-size:11px; color:#94a3b8; margin:0; line-height:1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.pay-hdr-close {
+    width:36px; height:36px; border-radius:10px; background:#f8fafc;
+    border:1px solid #e2e8f0; color:#94a3b8; font-size:15px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .15s; flex-shrink:0;
+}
+.pay-hdr-close:hover { background:#fef2f2; border-color:#fecaca; color:#ef4444; }
+
+/* ── Body ── */
+.pay-body {
+    flex:1; min-height:0; overflow-y:auto;
+    padding:24px 28px 12px;
+    background:linear-gradient(180deg,#fafbfc 0%,#fff 60px);
+}
+.pay-body::-webkit-scrollbar { width:5px; }
+.pay-body::-webkit-scrollbar-track { background:transparent; }
+.pay-body::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:8px; }
+
+/* ── Footer ── */
+.pay-foot {
+    padding:16px 28px; border-top:1px solid #f1f5f9; background:#fff;
+    display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-shrink:0;
+}
+
+/* ── Section heading ── */
+.pay-sec {
+    display:flex; align-items:center; gap:8px;
+    margin-bottom:14px; position:relative;
+}
+.pay-sec-icon {
+    width:26px; height:26px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; flex-shrink:0;
+}
+.pay-sec-icon.c1 { background:#1e293b; color:#e2e8f0; }
+.pay-sec-icon.c2 { background:#eef2ff; color:#4f46e5; }
+.pay-sec-icon.c3 { background:#ecfdf5; color:#059669; }
+.pay-sec-text {
+    font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase;
+    letter-spacing:.7px; flex-shrink:0;
+}
+.pay-sec-line {
+    flex:1; height:1px;
+    background:repeating-linear-gradient(90deg,#e2e8f0 0,#e2e8f0 5px,transparent 5px,transparent 9px);
+}
+
+/* ── Fields ── */
+.pay-fld { margin-bottom:16px; }
+.pay-fld label {
+    font-size:12px; font-weight:600; color:#1e293b; display:block; margin-bottom:6px;
+}
+.pay-fld label .req { color:#ef4444; }
+.pay-fld .fctrl {
+    border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px;
+    height:44px; padding:0 14px; background:#fff; color:#0f172a;
+    transition:border-color .15s,box-shadow .15s; width:100%;
+}
+.pay-fld .fctrl:focus { border-color:#0f172a; box-shadow:0 0 0 3px rgba(15,23,42,.08); }
+.pay-fld .fctrl:user-invalid { border-color:#ef4444; }
+.pay-fld textarea.fctrl { height:auto; padding:10px 14px; }
+
+/* ── Row: two fields side by side ── */
+.pay-row {
+    display:flex; gap:14px; margin-bottom:16px;
+}
+.pay-row .pay-fld { margin-bottom:0; flex:1; }
+
+/* ── Status pills ── */
+.pay-pills { display:flex; gap:10px; }
 .pay-pill {
-    padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer;
-    border:2px solid #d7dce5; background:#fff; color:#596579; transition:all .15s;
+    flex:1; padding:12px 10px; border-radius:10px; font-size:12px; font-weight:600;
+    cursor:pointer;
+    border:1.5px solid #e2e8f0; background:#fff; color:#64748b;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:all .2s; position:relative; user-select:none;
 }
-.pay-pill.active-pending  { border-color:#d97706; background:#fffbeb; color:#d97706; }
-.pay-pill.active-partial  { border-color:#3b82f6; background:#eff6ff; color:#3b82f6; }
-.pay-pill.active-completed{ border-color:#38a169; background:#f0fff4; color:#38a169; }
-@media(max-width:575px){ .pay-panel{ max-width:100%; } }
+.pay-pill:hover { border-color:#94a3b8; transform:translateY(-1px); box-shadow:0 4px 14px rgba(15,23,42,.07); }
+.pay-pill .pdot {
+    width:9px; height:9px; border-radius:50%; display:inline-block;
+    background:#cbd5e1; transition:all .2s; flex-shrink:0;
+}
+.pay-pill.active-pending  { border-color:#d97706; background:linear-gradient(135deg,#fffbeb,#fef3c7); color:#b45309; box-shadow:0 4px 18px rgba(217,119,6,.16); }
+.pay-pill.active-pending .pdot  { background:#d97706; box-shadow:0 0 7px rgba(217,119,6,.5); }
+.pay-pill.active-partial  { border-color:#4f46e5; background:linear-gradient(135deg,#eef2ff,#e0e7ff); color:#4338ca; box-shadow:0 4px 18px rgba(79,70,229,.16); }
+.pay-pill.active-partial .pdot  { background:#4f46e5; box-shadow:0 0 7px rgba(79,70,229,.5); }
+.pay-pill.active-completed{ border-color:#059669; background:linear-gradient(135deg,#ecfdf5,#d1fae5); color:#047857; box-shadow:0 4px 18px rgba(5,150,105,.16); }
+.pay-pill.active-completed .pdot { background:#059669; box-shadow:0 0 7px rgba(5,150,105,.5); }
+
+/* ── Invoice summary card ── */
+.pay-summary {
+    border-radius:16px; margin-bottom:24px; overflow:hidden;
+    border:1px solid #e2e8f0;
+    box-shadow:0 2px 10px rgba(15,23,42,.05);
+}
+.pay-summary-top {
+    padding:18px 22px 14px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+}
+.pay-summary-l { min-width:0; }
+.pay-summary-badge {
+    display:inline-flex; align-items:center; gap:5px; background:#f1f5f9;
+    color:#475569; font-size:9px; font-weight:700; letter-spacing:.6px;
+    padding:3px 11px; border-radius:20px; text-transform:uppercase; margin-bottom:8px;
+}
+.pay-summary-invno { font-family:monospace; font-weight:800; font-size:19px; color:#0f172a; }
+.pay-summary-r { text-align:right; flex-shrink:0; }
+.pay-summary-party-label { font-size:9px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:.6px; }
+.pay-summary-party-name { font-size:13px; font-weight:600; color:#334155; margin-top:1px; }
+
+/* ── Amount breakdown ── */
+.pay-breakdown { padding:0 22px 18px; }
+.pay-bd-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:7px 0; border-bottom:1px dashed #f1f5f9;
+}
+.pay-bd-row:last-child { border-bottom:none; padding-bottom:0; }
+.pay-bd-row:first-child { padding-top:0; }
+.pay-bd-label { font-size:13px; color:#64748b; font-weight:500; display:flex; align-items:center; gap:6px; }
+.pay-bd-label .bd-dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.pay-bd-value { font-size:14px; font-weight:700; color:#0f172a; }
+
+/* Grand total — special row */
+.pay-bd-row.grand {
+    background:linear-gradient(135deg,#f8fafc,#f1f5f9);
+    margin:0 -22px; padding:10px 22px; border-bottom:none;
+    border-top:1.5px solid #e2e8f0;
+}
+.pay-bd-row.grand .pay-bd-label { font-size:13px; font-weight:700; color:#0f172a; text-transform:uppercase; letter-spacing:.3px; }
+.pay-bd-row.grand .pay-bd-value { font-size:17px; font-weight:800; color:#0f172a; }
+
+/* ── Payment progress bar ── */
+.pay-progress { padding:0 22px 16px; }
+.pay-progress-bar {
+    height:6px; border-radius:3px; background:#f1f5f9; overflow:hidden; position:relative;
+}
+.pay-progress-fill {
+    height:100%; border-radius:3px; background:linear-gradient(90deg,#4f46e5,#6366f1);
+    transition:width .4s ease;
+}
+.pay-progress-labels {
+    display:flex; justify-content:space-between; margin-top:6px;
+    font-size:10px; color:#94a3b8; font-weight:600;
+}
+
+/* ── Footer buttons ── */
+.pay-btn {
+    padding:10px 24px; border-radius:10px; font-size:13px; font-weight:600;
+    cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:8px;
+    border:none; flex-shrink:0;
+}
+.pay-btn-cancel { background:#f8fafc; border:1.5px solid #e2e8f0; color:#475569; }
+.pay-btn-cancel:hover { background:#f1f5f9; border-color:#cbd5e1; }
+.pay-btn-save {
+    background:#0f172a; color:#fff;
+    box-shadow:0 4px 16px rgba(15,23,42,.3);
+}
+.pay-btn-save:hover { background:#1e293b; transform:translateY(-1px); box-shadow:0 6px 22px rgba(15,23,42,.35); }
+.pay-btn-save:active { transform:translateY(0); }
+
+/* ── Error box ── */
+.pay-err {
+    background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
+    padding:11px 15px; font-size:13px; color:#dc2626; font-weight:600;
+    display:none; align-items:center; gap:8px; margin-top:8px;
+}
+
+/* ── Select2 overrides inside panel ── */
+.pay-panel .select2-container .select2-selection--single {
+    height:44px; border:1.5px solid #e2e8f0; border-radius:10px;
+}
+.pay-panel .select2-container .select2-selection--single .select2-selection__rendered {
+    line-height:44px; font-size:13px; color:#0f172a; padding-left:14px;
+}
+.pay-panel .select2-container .select2-selection--single .select2-selection__arrow {
+    height:44px; right:10px;
+}
+.pay-panel .select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color:#94a3b8;
+}
+
+@media(max-width:575px){
+    .pay-panel{ max-width:100%; }
+    .pay-body { padding:16px 18px; }
+    .pay-foot { padding:14px 18px; }
+    .pay-hdr-inner { padding:16px 18px; }
+    .pay-summary-top { flex-direction:column; }
+    .pay-summary-r { text-align:left; }
+}
 </style>
 
 <div class="pcoded-inner-content il-page">
@@ -366,67 +553,113 @@ $exemptCount   = $invoices->where('invoice_type','exempt')->count();
 {{-- ── Payment slide-in panel ── --}}
 <div class="pay-backdrop" id="payBackdrop" onclick="closePayPanel()"></div>
 <div class="pay-panel" id="payPanel">
-    <div class="pay-panel-hdr">
-        <h5><i class="ti-money"></i> Record Payment</h5>
-        <button class="pay-panel-close" onclick="closePayPanel()"><i class="ti-close"></i></button>
+    <div class="pay-hdr">
+        <div class="pay-hdr-accent"></div>
+        <div class="pay-hdr-inner">
+            <div class="pay-hdr-left">
+                <div class="pay-hdr-icon"><i class="ti-wallet"></i></div>
+                <div class="pay-hdr-text">
+                    <h5>Record Payment</h5>
+                    <div class="hdr-sub">Apply payment against this invoice</div>
+                </div>
+            </div>
+            <button class="pay-hdr-close" onclick="closePayPanel()"><i class="ti-close"></i></button>
+        </div>
     </div>
-    <div class="pay-panel-body">
-        {{-- Invoice info strip --}}
-        <div id="payInvoiceInfo" style="background:#f4f7ff;border-radius:10px;padding:12px 14px;margin-bottom:20px;">
-            <div style="font-size:11px;color:#8a94a6;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Invoice</div>
-            <div id="payInvoiceNo" style="font-family:monospace;font-weight:800;font-size:15px;color:#1a2340;"></div>
-            <div id="payInvoiceParty" style="font-size:12px;color:#596579;margin-top:2px;"></div>
-            <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
-                <div>
-                    <div style="font-size:10px;color:#8a94a6;font-weight:700;">Freight</div>
-                    <div id="payFreightAmt" style="font-size:13px;font-weight:700;color:#1a2340;"></div>
+    <div class="pay-body">
+        {{-- Invoice summary card --}}
+        <div class="pay-summary">
+            <div class="pay-summary-top">
+                <div class="pay-summary-l">
+                    <div class="pay-summary-badge"><i class="ti-receipt"></i> Invoice</div>
+                    <div id="payInvoiceNo" class="pay-summary-invno"></div>
                 </div>
-                <div>
-                    <div style="font-size:10px;color:#8a94a6;font-weight:700;">Tax <span id="payTaxRate" style="color:#b0bac9;">(CGST+SGST)</span></div>
-                    <div id="payTaxAmt" style="font-size:13px;font-weight:700;color:#d97706;"></div>
+                <div class="pay-summary-r">
+                    <div class="pay-summary-party-label">Party</div>
+                    <div id="payInvoiceParty" class="pay-summary-party-name"></div>
                 </div>
-                <div>
-                    <div style="font-size:10px;color:#8a94a6;font-weight:700;">Grand Total</div>
-                    <div id="payGrandAmt" style="font-size:13px;font-weight:700;color:#4338ca;"></div>
+            </div>
+            {{-- Amount breakdown line by line --}}
+            <div class="pay-breakdown">
+                <div class="pay-bd-row">
+                    <span class="pay-bd-label"><span class="bd-dot" style="background:#64748b;"></span> Freight</span>
+                    <span id="payFreightAmt" class="pay-bd-value"></span>
                 </div>
-                <div>
-                    <div style="font-size:10px;color:#8a94a6;font-weight:700;">Collected</div>
-                    <div id="payCollectedAmt" style="font-size:13px;font-weight:700;color:#38a169;"></div>
+                <div class="pay-bd-row">
+                    <span class="pay-bd-label"><span class="bd-dot" style="background:#d97706;"></span> Tax <span id="payTaxRate" style="color:#94a3b8;font-weight:500;">(CGST+SGST)</span></span>
+                    <span id="payTaxAmt" class="pay-bd-value" style="color:#d97706;"></span>
                 </div>
-                <div>
-                    <div style="font-size:10px;color:#8a94a6;font-weight:700;">Balance</div>
-                    <div id="payBalanceAmt" style="font-size:13px;font-weight:700;color:#e53e3e;"></div>
+                <div class="pay-bd-row grand">
+                    <span class="pay-bd-label">Grand Total</span>
+                    <span id="payGrandAmt" class="pay-bd-value"></span>
+                </div>
+                <div class="pay-bd-row">
+                    <span class="pay-bd-label"><span class="bd-dot" style="background:#059669;"></span> Collected</span>
+                    <span id="payCollectedAmt" class="pay-bd-value" style="color:#059669;"></span>
+                </div>
+                <div class="pay-bd-row">
+                    <span class="pay-bd-label"><span class="bd-dot" style="background:#dc2626;"></span> Balance</span>
+                    <span id="payBalanceAmt" class="pay-bd-value" style="color:#dc2626;"></span>
+                </div>
+            </div>
+            {{-- Collection progress --}}
+            <div class="pay-progress">
+                <div class="pay-progress-bar">
+                    <div id="payProgressFill" class="pay-progress-fill" style="width:0%;"></div>
+                </div>
+                <div class="pay-progress-labels">
+                    <span>Collected</span>
+                    <span id="payProgressPct">0%</span>
                 </div>
             </div>
         </div>
 
         {{-- Payment Status --}}
-        <div class="pay-field mb-3">
-            <label>Payment Status <span class="req">*</span></label>
-            <div class="pay-status-pills">
-                <button type="button" class="pay-pill" data-val="pending"   onclick="selectPayStatus('pending')">○ Pending</button>
-                <button type="button" class="pay-pill" data-val="partial"   onclick="selectPayStatus('partial')">⬤ Partial</button>
-                <button type="button" class="pay-pill" data-val="completed" onclick="selectPayStatus('completed')">✓ Collected</button>
+        <div class="pay-sec">
+            <div class="pay-sec-icon c1"><i class="ti-check-box"></i></div>
+            <span class="pay-sec-text">Payment Status</span>
+            <span class="pay-sec-line"></span>
+        </div>
+        <div class="pay-fld">
+            <div class="pay-pills">
+                <button type="button" class="pay-pill" data-val="pending" onclick="selectPayStatus('pending')">
+                    <span class="pdot"></span> Pending
+                </button>
+                <button type="button" class="pay-pill" data-val="partial" onclick="selectPayStatus('partial')">
+                    <span class="pdot"></span> Partial
+                </button>
+                <button type="button" class="pay-pill" data-val="completed" onclick="selectPayStatus('completed')">
+                    <span class="pdot"></span> Collected
+                </button>
             </div>
             <input type="hidden" id="payStatusVal" value="pending">
         </div>
 
-        {{-- Amount Collected --}}
-        <div class="pay-field mb-3">
-            <label>Amount Collected (₹) <span class="req">*</span></label>
-            <input type="number" id="payAmtInput" class="form-control" placeholder="0.00" min="0" step="0.01">
+        {{-- Amount & Date row --}}
+        <div class="pay-sec">
+            <div class="pay-sec-icon c2"><i class="ti-credit-card"></i></div>
+            <span class="pay-sec-text">Payment Details</span>
+            <span class="pay-sec-line"></span>
         </div>
-
-        {{-- Collected Date --}}
-        <div class="pay-field mb-3">
-            <label>Payment Collected Date</label>
-            <input type="date" id="payDateInput" class="form-control">
+        <div class="pay-row">
+            <div class="pay-fld" style="flex:2;">
+                <label>Amount Collected (₹) <span class="req">*</span></label>
+                <input type="number" id="payAmtInput" class="fctrl" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <div class="pay-fld" style="flex:1;">
+                <label>Date</label>
+                <input type="date" id="payDateInput" class="fctrl" max="{{ date('Y-m-d') }}">
+            </div>
         </div>
 
         {{-- Payment Mode --}}
-        <div class="pay-field mb-3">
-            <label>Payment Mode <span class="req">*</span></label>
-            <select id="payModeInput" class="form-control" required>
+        <div class="pay-sec">
+            <div class="pay-sec-icon c3"><i class="ti-wallet"></i></div>
+            <span class="pay-sec-text">Payment Mode</span>
+            <span class="pay-sec-line"></span>
+        </div>
+        <div class="pay-fld">
+            <select id="payModeInput" class="fctrl" required>
                 <option value="">— Select Mode —</option>
                 <option value="cash">Cash</option>
                 <option value="upi">UPI</option>
@@ -436,25 +669,25 @@ $exemptCount   = $invoices->where('invoice_type','exempt')->count();
         </div>
 
         {{-- Conditional: UPI details --}}
-        <div id="payUpiFields" class="pay-field mb-3" style="display:none;">
+        <div id="payUpiFields" class="pay-fld" style="display:none;">
             <label>UPI VPA / Transaction ID</label>
-            <input type="text" id="payUpiInput" class="form-control" placeholder="e.g. example@upi / UPI1234">
+            <input type="text" id="payUpiInput" class="fctrl" placeholder="e.g. example@upi / UPI1234">
         </div>
 
         {{-- Conditional: Bank / Cheque details --}}
-        <div id="payBankFields" class="pay-field mb-3" style="display:none;">
+        <div id="payBankFields" class="pay-fld" style="display:none;">
             <label>Bank Name / Reference No</label>
-            <input type="text" id="payBankInput" class="form-control" placeholder="e.g. HDFC / NEFT Ref No">
+            <input type="text" id="payBankInput" class="fctrl" placeholder="e.g. HDFC / NEFT Ref No">
         </div>
 
-        <div id="payErrorBox" class="alert alert-danger" style="display:none;"></div>
+        <div id="payErrorBox" class="pay-err"><i class="ti-alert"></i> <span id="payErrorText"></span></div>
     </div>
-    <div class="pay-panel-footer">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="closePayPanel()" style="border-radius:8px;">
-            <i class="ti-close mr-1"></i> Cancel
+    <div class="pay-foot">
+        <button type="button" class="pay-btn pay-btn-cancel" onclick="closePayPanel()">
+            <i class="ti-close"></i> Cancel
         </button>
-        <button type="button" id="paySubmitBtn" class="btn btn-success btn-sm" onclick="submitPayment()" style="border-radius:8px;font-weight:700;">
-            <i class="ti-save mr-1"></i> Save Payment
+        <button type="button" id="paySubmitBtn" class="pay-btn pay-btn-save" onclick="submitPayment()">
+            <i class="ti-save"></i> Save Payment
         </button>
     </div>
 </div>
@@ -533,6 +766,11 @@ function openPayPanel(btn) {
     document.getElementById('payCollectedAmt').textContent = '₹' + collected.toLocaleString('en-IN', {minimumFractionDigits:2});
     document.getElementById('payBalanceAmt').textContent   = '₹' + balance.toLocaleString('en-IN', {minimumFractionDigits:2});
 
+    // Progress bar
+    var pct = grand > 0 ? Math.min(100, (collected / grand) * 100) : 0;
+    document.getElementById('payProgressFill').style.width = pct + '%';
+    document.getElementById('payProgressPct').textContent  = Math.round(pct) + '%';
+
     // Pre-fill fields
     selectPayStatus(_payRow.data('pay-status') || 'pending');
     document.getElementById('payAmtInput').value  = collected > 0 ? collected : '';
@@ -542,7 +780,15 @@ function openPayPanel(btn) {
     var today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     document.getElementById('payDateInput').value = existingDate || today;
 
-    document.getElementById('payModeInput').value = _payRow.data('pay-mode') || '';
+    $('#payModeInput').val(_payRow.data('pay-mode') || '').trigger('change');
+    if ($('#payModeInput').data('select2')) {
+        $('#payModeInput').select2('destroy');
+    }
+    $('#payModeInput').select2({
+        width: '100%',
+        minimumResultsForSearch: -1,
+        dropdownParent: $('#payPanel')
+    });
     document.getElementById('payUpiInput').value  = '';
     document.getElementById('payBankInput').value = '';
     document.getElementById('payErrorBox').style.display = 'none';
@@ -554,6 +800,9 @@ function openPayPanel(btn) {
 }
 
 function closePayPanel() {
+    if ($('#payModeInput').data('select2')) {
+        $('#payModeInput').select2('destroy');
+    }
     document.getElementById('payPanel').classList.remove('open');
     document.getElementById('payBackdrop').classList.remove('show');
     document.body.style.overflow = '';
@@ -597,18 +846,19 @@ function submitPayment() {
     var date      = document.getElementById('payDateInput').value;
     var mode      = document.getElementById('payModeInput').value;
     var errBox    = document.getElementById('payErrorBox');
+    var errText  = document.getElementById('payErrorText');
 
     errBox.style.display = 'none';
 
     if (!amount || parseFloat(amount) < 0) {
-        errBox.textContent = 'Please enter a valid collected amount.';
-        errBox.style.display = 'block';
+        errText.textContent = 'Please enter a valid collected amount.';
+        errBox.style.display = 'flex';
         return;
     }
 
     if (!mode) {
-        errBox.textContent = 'Please select a Payment Mode.';
-        errBox.style.display = 'block';
+        errText.textContent = 'Please select a Payment Mode.';
+        errBox.style.display = 'flex';
         return;
     }
 

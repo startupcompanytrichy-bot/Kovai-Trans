@@ -8,9 +8,9 @@
     .drv-add-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 14px;
-        padding: 22px 28px;
+        padding: 14px 24px;
         color: #fff;
-        margin-bottom: 22px;
+        margin-bottom: 18px;
         position: relative;
         overflow: hidden;
     }
@@ -367,7 +367,7 @@
                                     <div class="form-group-drv">
                                         <label>Mobile Number <span class="req">*</span></label>
                                         <input type="text" name="mobile" class="form-control @error('mobile') is-invalid @enderror"
-                                            value="{{ old('mobile') }}" placeholder="Enter mobile number" required>
+                                            value="{{ old('mobile') }}" placeholder="Enter mobile number" maxlength="10" required>
                                         @error('mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
@@ -375,7 +375,7 @@
                                     <div class="form-group-drv">
                                         <label>License Number <span class="req">*</span></label>
                                         <input type="text" name="license_number" class="form-control @error('license_number') is-invalid @enderror"
-                                            value="{{ old('license_number') }}" placeholder="e.g. TN0120230001234" required>
+                                            value="{{ old('license_number') }}" placeholder="e.g. TN0120230001234" maxlength="16" required>
                                         @error('license_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
@@ -383,7 +383,7 @@
                                     <div class="form-group-drv">
                                         <label>Aadhar Number <span class="req">*</span></label>
                                         <input type="text" name="aadhar_number" class="form-control @error('aadhar_number') is-invalid @enderror"
-                                            value="{{ old('aadhar_number') }}" placeholder="12-digit Aadhar number" required>
+                                            value="{{ old('aadhar_number') }}" placeholder="12-digit Aadhar number" maxlength="12" required>
                                         @error('aadhar_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
@@ -391,7 +391,7 @@
                                     <div class="form-group-drv">
                                         <label>PAN Number <span class="req">*</span></label>
                                         <input type="text" name="pan_number" class="form-control @error('pan_number') is-invalid @enderror"
-                                            value="{{ old('pan_number') }}" placeholder="e.g. AAAPL1234C" required>
+                                            value="{{ old('pan_number') }}" placeholder="e.g. AAAPL1234C" maxlength="10" required>
                                         @error('pan_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
@@ -448,7 +448,7 @@
                                     <div class="form-group-drv">
                                         <label>Postal Code</label>
                                         <input type="text" name="postal_code" class="form-control"
-                                            value="{{ old('postal_code') }}" placeholder="PIN Code">
+                                            value="{{ old('postal_code') }}" placeholder="PIN Code" maxlength="6">
                                     </div>
                                 </div>
                             </div>
@@ -494,6 +494,8 @@
                                         accept=".{{ str_replace(',', ',.', $accept) }}"
                                         style="display:none;"
                                         onchange="onPhotoChosen(this, '{{ $field }}')">
+                                    <input type="hidden" name="{{ $field }}_temp" id="{{ $field }}_temp"
+                                        value="{{ old($field . '_temp') }}">
                                     @error($field)<div class="text-danger" style="font-size:12px;margin-top:4px;">{{ $message }}</div>@enderror
                                 </div>
                                 @endforeach
@@ -535,23 +537,26 @@
 
 @push('scripts')
 <script>
-    $(function () {
+    $(function() {
 
-        var API_STATES    = @json(route('api.general.states'));
+        var API_STATES = @json(route('api.general.states'));
         var API_DISTRICTS = @json(route('api.general.districts'));
 
-        var stateEl    = document.getElementById('stateSelect');
+        var stateEl = document.getElementById('stateSelect');
         var districtEl = document.getElementById('districtSelect');
-        var savedState    = @json(old('state', ''));
+        var savedState = @json(old('state', ''));
         var savedDistrict = @json(old('district', ''));
 
         /* ── plain fetch → JSON ── */
         function apiFetch(url, params) {
             var qs = params ? '?' + new URLSearchParams(params) : '';
             return fetch(url + qs, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 credentials: 'same-origin'
-            }).then(function (r) {
+            }).then(function(r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.json();
             });
@@ -563,11 +568,15 @@
                 $el.select2('destroy');
             }
             $el.empty().append('<option value="">' + placeholder + '</option>');
-            items.forEach(function (name) {
+            items.forEach(function(name) {
                 var sel = name === selectVal;
                 $el.append(new Option(name, name, false, sel));
             });
-            $el.select2({ width: '100%', allowClear: true, placeholder: placeholder });
+            $el.select2({
+                width: '100%',
+                allowClear: true,
+                placeholder: placeholder
+            });
         }
 
         /* ── load districts for chosen state ── */
@@ -578,78 +587,142 @@
                 return;
             }
             var $dist = $(districtEl);
-            if ($dist.data('select2')) { $dist.select2('destroy'); }
+            if ($dist.data('select2')) {
+                $dist.select2('destroy');
+            }
             $dist.empty().append('<option value="">Loading…</option>');
-            $dist.select2({ width: '100%', allowClear: true, placeholder: 'Loading…' });
+            $dist.select2({
+                width: '100%',
+                allowClear: true,
+                placeholder: 'Loading…'
+            });
 
-            apiFetch(API_DISTRICTS, { state: state })
-                .then(function (data) {
+            apiFetch(API_DISTRICTS, {
+                    state: state
+                })
+                .then(function(data) {
                     var list = Array.isArray(data) ? data : (data.districts || []);
-                    if ($dist.data('select2')) { $dist.select2('destroy'); }
+                    if ($dist.data('select2')) {
+                        $dist.select2('destroy');
+                    }
                     $dist.empty().append('<option value="">Select District</option>');
-                    list.forEach(function (name) {
+                    list.forEach(function(name) {
                         $dist.append(new Option(name, name, false, name === preselectDistrict));
                     });
-                    $dist.select2({ width: '100%', allowClear: true, placeholder: 'Select District' });
+                    $dist.select2({
+                        width: '100%',
+                        allowClear: true,
+                        placeholder: 'Select District'
+                    });
                 })
-                .catch(function () {
-                    if ($dist.data('select2')) { $dist.select2('destroy'); }
+                .catch(function() {
+                    if ($dist.data('select2')) {
+                        $dist.select2('destroy');
+                    }
                     $dist.empty().append('<option value="">Error loading</option>');
-                    $dist.select2({ width: '100%', allowClear: true, placeholder: 'Error loading' });
+                    $dist.select2({
+                        width: '100%',
+                        allowClear: true,
+                        placeholder: 'Error loading'
+                    });
                 });
         }
 
         /* ── load states on page load ── */
         apiFetch(API_STATES)
-            .then(function (data) {
+            .then(function(data) {
                 var list = Array.isArray(data) ? data : (data.states || []);
                 fillSelect(stateEl, 'Select State', list, savedState || null);
                 if (savedState) {
                     loadDistricts(savedDistrict || null);
                 }
             })
-            .catch(function () {
+            .catch(function() {
                 fillSelect(stateEl, 'Error loading states', [], null);
             });
 
         /* ── state change → reload districts ── */
-        $(stateEl).on('select2:select', function () {
+        $(stateEl).on('select2:select', function() {
             loadDistricts(null);
         });
 
     });
 
 
+    var uploadXhr = {};
+
     function onPhotoChosen(input, field) {
         var card = document.getElementById('card_' + field);
         var nameEl = document.getElementById('name_' + field);
         var preview = document.getElementById('preview_' + field);
         var iconEl = document.getElementById('icon_' + field);
-        if (input.files && input.files[0]) {
-            var file = input.files[0];
-            if (file.size > 2 * 1024 * 1024) {
-                alert('File exceeds 2 MB limit.');
-                input.value = '';
-                return;
+        if (!input.files || !input.files[0]) return;
+        var file = input.files[0];
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File exceeds 2 MB limit.');
+            input.value = '';
+            return;
+        }
+        // Abort previous upload for this field
+        if (uploadXhr[field]) uploadXhr[field].abort();
+
+        nameEl.textContent = '📎 ' + file.name;
+        nameEl.style.display = 'block';
+        card.classList.add('has-file');
+        preview.style.display = 'none';
+        iconEl.style.display = 'block';
+
+        // Upload via AJAX immediately
+        var fd = new FormData();
+        fd.append('file', file);
+        var xhr = new XMLHttpRequest();
+        uploadXhr[field] = xhr;
+        xhr.open('POST', '{{ route("driver.upload-temp") }}');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Accept', 'application/json');
+        // Add CSRF token
+        var csrfToken = document.querySelector('input[name="_token"]');
+        if (csrfToken) xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken.value);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    document.getElementById(field + '_temp').value = data.path;
+                    var ext = data.name.split('.').pop().toLowerCase();
+                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1) {
+                        preview.src = data.url;
+                        preview.style.display = 'block';
+                        iconEl.style.display = 'none';
+                    }
+                } catch (e) {}
             }
-            nameEl.textContent = '📎 ' + file.name;
-            nameEl.style.display = 'block';
-            card.classList.add('has-file');
-            var ext = file.name.split('.').pop().toLowerCase();
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
+        };
+        xhr.send(fd);
+    }
+
+    // Restore file previews after validation error
+    document.addEventListener('DOMContentLoaded', function() {
+        var fields = ['driver_photo', 'aadhar_photo', 'pan_photo', 'license_photo'];
+        fields.forEach(function(field) {
+            var tempPath = document.getElementById(field + '_temp');
+            if (tempPath && tempPath.value) {
+                var card = document.getElementById('card_' + field);
+                var nameEl = document.getElementById('name_' + field);
+                var preview = document.getElementById('preview_' + field);
+                var iconEl = document.getElementById('icon_' + field);
+                card.classList.add('has-file');
+                nameEl.textContent = '📎 ' + tempPath.value.split('/').pop();
+                nameEl.style.display = 'block';
+                var ext = tempPath.value.split('.').pop().toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1) {
+                    preview.src = '/storage/' + tempPath.value;
                     preview.style.display = 'block';
                     iconEl.style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.style.display = 'none';
-                iconEl.style.display = 'block';
+                }
             }
-        }
-    }
+        });
+    });
 
     $('#addDriverForm').on('submit', function() {
         var btn = document.getElementById('addDriverBtn');

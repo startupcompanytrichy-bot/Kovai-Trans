@@ -84,8 +84,13 @@ class InvoiceController extends Controller
             'exempt' => 'EXEMPTED INVOICE',
             default  => 'TAX INVOICE',
         };
+        [$cgstRate, $sgstRate] = match ($invoiceType) {
+            'rcm'    => [0.0, 0.0],
+            'exempt' => [0.0, 0.0],
+            default  => [0.0, 0.0],
+        };
 
-        return view('Invoice.Trip_Invoice', compact('trips', 'company', 'invoiceNo', 'invoiceType', 'invoiceTypeName'));
+        return view('Invoice.Trip_Invoice', compact('trips', 'company', 'invoiceNo', 'invoiceType', 'invoiceTypeName', 'cgstRate', 'sgstRate'));
     }
 
     /**
@@ -96,7 +101,19 @@ class InvoiceController extends Controller
         $trip    = Trip::with(['vehicle', 'driver', 'party', 'supplier'])->findOrFail($id);
         $company = Company::where('is_deleted', false)->first();
 
-        return view('Invoice.Trip_Invoice', compact('trip', 'company'));
+        $invoiceType     = $trip->invoice_type ?? 'normal';
+        $invoiceTypeName = match ($invoiceType) {
+            'rcm'    => 'RCM INVOICE',
+            'exempt' => 'EXEMPTED INVOICE',
+            default  => 'TAX INVOICE',
+        };
+        [$cgstRate, $sgstRate] = match ($invoiceType) {
+            'rcm'    => [0.0, 0.0],
+            'exempt' => [0.0, 0.0],
+            default  => [0.0, 0.0],
+        };
+
+        return view('Invoice.Trip_Invoice', compact('trip', 'company', 'invoiceType', 'invoiceTypeName', 'cgstRate', 'sgstRate'));
     }
 
     /**
@@ -122,7 +139,19 @@ class InvoiceController extends Controller
             ->get();
         $company = Company::where('is_deleted', false)->first();
 
-        return view('Invoice.Trip_Invoice', compact('trips', 'company'));
+        $invoiceType     = $trips->first()->invoice_type ?? 'normal';
+        $invoiceTypeName = match ($invoiceType) {
+            'rcm'    => 'RCM INVOICE',
+            'exempt' => 'EXEMPTED INVOICE',
+            default  => 'TAX INVOICE',
+        };
+        [$cgstRate, $sgstRate] = match ($invoiceType) {
+            'rcm'    => [0.0, 0.0],
+            'exempt' => [0.0, 0.0],
+            default  => [0.0, 0.0],
+        };
+
+        return view('Invoice.Trip_Invoice', compact('trips', 'company', 'invoiceType', 'invoiceTypeName', 'cgstRate', 'sgstRate'));
     }
 
     /**
@@ -152,9 +181,9 @@ class InvoiceController extends Controller
         $invoiceNo = $prefix . '-' . $yearMonth . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
         [$cgstRate, $sgstRate] = match ($invoiceType) {
-            'rcm'    => [2.5, 2.5],
+            'rcm'    => [0.0, 0.0],
             'exempt' => [0.0, 0.0],
-            default  => [9.0, 9.0],
+            default  => [0.0, 0.0],
         };
 
         $tripsToUpdate = Trip::whereIn('id', $ids)->get();
@@ -186,7 +215,7 @@ class InvoiceController extends Controller
             default  => 'TAX INVOICE',
         };
 
-        return view('Invoice.Trip_Invoice', compact('trips', 'company', 'invoiceNo', 'invoiceType', 'invoiceTypeName'));
+        return view('Invoice.Trip_Invoice', compact('trips', 'company', 'invoiceNo', 'invoiceType', 'invoiceTypeName', 'cgstRate', 'sgstRate'));
     }
 
     /**
@@ -215,9 +244,9 @@ class InvoiceController extends Controller
         // Determine tax rates from invoice type
         $invoiceType = $trips->first()->invoice_type ?? 'normal';
         [$cgstRate, $sgstRate] = match ($invoiceType) {
-            'rcm'    => [2.5, 2.5],
+            'rcm'    => [0.0, 0.0],
             'exempt' => [0.0, 0.0],
-            default  => [9.0, 9.0],
+            default  => [0.0, 0.0],
         };
 
         // Calculate per-trip grand total (freight + tax) for proportional distribution
@@ -300,9 +329,9 @@ class InvoiceController extends Controller
         $subTotal  = (float) $trips->sum('freight_amount');
 
         [$cgstRate, $sgstRate] = match ($invoiceType) {
-            'rcm'    => [2.5, 2.5],
+            'rcm'    => [0.0, 0.0],
             'exempt' => [0.0, 0.0],
-            default  => [9.0, 9.0],
+            default  => [0.0, 0.0],
         };
         $cgstAmt    = round($subTotal * $cgstRate / 100, 2);
         $sgstAmt    = round($subTotal * $sgstRate / 100, 2);
@@ -335,7 +364,9 @@ class InvoiceController extends Controller
 
         return response()->stream(function () use ($rows) {
             $h = fopen('php://output', 'w');
-            foreach ($rows as $row) { fputcsv($h, $row); }
+            foreach ($rows as $row) {
+                fputcsv($h, $row);
+            }
             fclose($h);
         }, 200, [
             'Content-Type'        => 'text/csv',

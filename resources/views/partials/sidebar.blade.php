@@ -286,14 +286,6 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
                         </a>
                     </li>
                     @endif
-                    @if($showAll || userCanSeeMenu('organization'))
-                    <li class="{{ $isSettings ? 'active' : '' }}">
-                        <a href="{{ route('settings') }}">
-                            <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
-                            <span class="pcoded-mtext">Default Branch</span>
-                        </a>
-                    </li>
-                    @endif
                 </ul>
             </li>
             @endif

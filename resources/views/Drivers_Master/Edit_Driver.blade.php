@@ -100,7 +100,22 @@
     flex-wrap: wrap; gap: 10px;
 }
 
-/* Photo Preview Modal */
+/* Photo Preview Modal - right panel */
+#photoPreviewModal .modal-dialog {
+    position: fixed !important;
+    right: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    max-width: 700px !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+#photoPreviewModal .modal-content {
+    height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+}
 #photoPreviewModal .modal-body {
     background: #1a1a2e; padding: 0;
     display: flex; align-items: center; justify-content: center; min-height: 400px;
@@ -194,7 +209,7 @@
                             <div class="form-group-drv">
                                 <label>License Number <span class="req">*</span></label>
                                 <input type="text" name="license_number" class="form-control @error('license_number') is-invalid @enderror"
-                                    value="{{ old('license_number', $driver->license_number) }}" placeholder="License number" required>
+                                    value="{{ old('license_number', $driver->license_number) }}" placeholder="License number" maxlength="16" required>
                                 @error('license_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                         </div>
@@ -202,7 +217,7 @@
                             <div class="form-group-drv">
                                 <label>Aadhar Number <span class="req">*</span></label>
                                 <input type="text" name="aadhar_number" class="form-control @error('aadhar_number') is-invalid @enderror"
-                                    value="{{ old('aadhar_number', $driver->aadhar_number) }}" placeholder="12-digit Aadhar" required>
+                                    value="{{ old('aadhar_number', $driver->aadhar_number) }}" placeholder="12-digit Aadhar" maxlength="12" required>
                                 @error('aadhar_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                         </div>
@@ -210,7 +225,7 @@
                             <div class="form-group-drv">
                                 <label>PAN Number <span class="req">*</span></label>
                                 <input type="text" name="pan_number" class="form-control @error('pan_number') is-invalid @enderror"
-                                    value="{{ old('pan_number', $driver->pan_number) }}" placeholder="PAN number" required>
+                                    value="{{ old('pan_number', $driver->pan_number) }}" placeholder="PAN number" maxlength="10" required>
                                 @error('pan_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                         </div>
@@ -257,7 +272,7 @@
                             <div class="form-group-drv">
                                 <label>Postal Code</label>
                                 <input type="text" name="postal_code" class="form-control"
-                                    value="{{ old('postal_code', $driver->postal_code) }}" placeholder="PIN Code">
+                                    value="{{ old('postal_code', $driver->postal_code) }}" placeholder="PIN Code" maxlength="6">
                             </div>
                         </div>
                     </div>
@@ -318,6 +333,8 @@
                                     accept=".{{ str_replace(',', ',.', $accept) }}"
                                     style="display:none;"
                                     onchange="onPhotoChosen(this, '{{ $field }}')">
+                                <input type="hidden" name="{{ $field }}_temp" id="{{ $field }}_temp"
+                                    value="{{ old($field . '_temp') }}">
                             </div>
                             @error($field)<div class="text-danger" style="font-size:12px;margin-top:4px;">{{ $message }}</div>@enderror
                         </div>
@@ -356,8 +373,8 @@
 
 {{-- Photo Preview Modal --}}
 <div class="modal fade" id="photoPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document" style="margin:0 0 0 auto;width:100%;max-width:700px;height:100%;">
-        <div class="modal-content" style="height:100vh;border-radius:0;display:flex;flex-direction:column;border:none;">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
             <div class="modal-header" style="background:#1a2340;padding:16px 20px;">
                 <h5 class="modal-title text-white"><i class="ti-file mr-2"></i><span id="photoPreviewTitle">Preview</span></h5>
                 <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
@@ -458,17 +475,56 @@ $(function () {
 });
 
 /* ── Photo upload ── */
+var uploadXhr = {};
 function onPhotoChosen(input, field) {
     var card   = document.getElementById('card_'  + field);
     var nameEl = document.getElementById('name_'  + field);
-    if (input.files && input.files[0]) {
-        var file = input.files[0];
-        if (file.size > 2 * 1024 * 1024) { alert('File exceeds 2 MB limit.'); input.value = ''; return; }
-        nameEl.textContent = '📎 ' + file.name;
-        nameEl.style.display = 'block';
-        card.classList.add('has-file');
-    }
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 2 * 1024 * 1024) { alert('File exceeds 2 MB limit.'); input.value = ''; return; }
+    // Abort previous upload for this field
+    if (uploadXhr[field]) uploadXhr[field].abort();
+
+    nameEl.textContent = '📎 ' + file.name;
+    nameEl.style.display = 'block';
+    card.classList.add('has-file');
+
+    // Upload via AJAX immediately
+    var fd = new FormData();
+    fd.append('file', file);
+    var xhr = new XMLHttpRequest();
+    uploadXhr[field] = xhr;
+    xhr.open('POST', '{{ route("driver.upload-temp") }}');
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.setRequestHeader('Accept', 'application/json');
+    var csrfToken = document.querySelector('input[name="_token"]');
+    if (csrfToken) xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken.value);
+
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                document.getElementById(field + '_temp').value = data.path;
+            } catch (e) {}
+        }
+    };
+    xhr.send(fd);
 }
+
+// Restore file previews after validation error
+document.addEventListener('DOMContentLoaded', function() {
+    var fields = ['driver_photo', 'aadhar_photo', 'pan_photo', 'license_photo'];
+    fields.forEach(function(field) {
+        var tempPath = document.getElementById(field + '_temp');
+        if (tempPath && tempPath.value) {
+            var card = document.getElementById('card_' + field);
+            var nameEl = document.getElementById('name_' + field);
+            card.classList.add('has-file');
+            nameEl.textContent = '📎 ' + tempPath.value.split('/').pop();
+            nameEl.style.display = 'block';
+        }
+    });
+});
 
 /* ── Photo preview ── */
 function previewPhoto(url, label) {

@@ -7,8 +7,8 @@
 /* ── Page Header ── */
 .veh-header {
     background: linear-gradient(135deg, #1a2340 0%, #303f6e 100%);
-    border-radius: 14px; padding: 22px 28px;
-    color: #fff; margin-bottom: 22px;
+    border-radius: 14px; padding: 14px 24px;
+    color: #fff; margin-bottom: 18px;
     position: relative; overflow: hidden;
 }
 .veh-header::before {
