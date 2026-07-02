@@ -1,4 +1,4 @@
-@ -1,17 +0,0 @@
+
 FROM php:8.3-cli
 
 RUN apt-get update && apt-get install -y \
@@ -15,4 +15,6 @@ RUN composer install --no-dev --optimize-autoloader
 
 EXPOSE 10000
 
+CMD php artisan serve --host=0.0.0.0 --port=10000
+=======
 CMD php artisan serve --host=0.0.0.0 --port=10000
