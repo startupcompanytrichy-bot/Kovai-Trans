@@ -924,3 +924,75 @@
     border-radius: 6px !important;
     padding: 6px 10px !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAGINATION — reusable across all tables
+   ═══════════════════════════════════════════════════════════════════ */
+.table-pagination-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 20px;
+    border-top: 1px solid #f0f2f7;
+}
+.table-pagination-wrap .info {
+    font-size: 12px;
+    color: #8a94a6;
+}
+.table-pagination-wrap .info strong {
+    font-weight: 700;
+    color: #1a2340;
+}
+.table-pagination-wrap .pagination {
+    margin: 0;
+    gap: 2px;
+}
+.table-pagination-wrap .pagination .page-item .page-link {
+    border: none;
+    border-radius: 6px !important;
+    padding: 6px 11px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #596579;
+    background: transparent;
+    transition: all .15s;
+    line-height: 1.4;
+    min-width: 30px;
+    text-align: center;
+}
+.table-pagination-wrap .pagination .page-item .page-link:hover {
+    background: #f0f2f7;
+    color: #1a2340;
+}
+.table-pagination-wrap .pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(102,126,234,.35);
+}
+.table-pagination-wrap .pagination .page-item.disabled .page-link {
+    color: #c8cedb;
+    background: transparent;
+    cursor: default;
+}
+.table-pagination-wrap .pagination .page-item:first-child .page-link,
+.table-pagination-wrap .pagination .page-item:last-child .page-link {
+    font-size: 14px;
+    padding: 6px 10px;
+}
+@media(max-width:576px) {
+    .table-pagination-wrap {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    .table-pagination-wrap .pagination {
+        justify-content: center;
+    }
+    .table-pagination-wrap .pagination .page-item .page-link {
+        padding: 5px 8px;
+        font-size: 11px;
+        min-width: 26px;
+    }
+}

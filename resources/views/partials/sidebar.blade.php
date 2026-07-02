@@ -13,6 +13,7 @@ $isDriver = str_starts_with($currentRoute, 'driver');
 $isTrip = str_starts_with($currentRoute, 'trip');
 $isExpense = str_starts_with($currentRoute, 'expense') || str_starts_with($currentRoute, 'expense.ledger') || $currentRoute === 'reports.expenses';
 $isEmi = str_starts_with($currentRoute, 'emi');
+$isPayroll = str_starts_with($currentRoute, 'payroll');
 $isReports = str_starts_with($currentRoute, 'reports');
 $isPackingSlip = str_contains($currentRoute, 'packing-slip');
 $isInvoice = str_starts_with($currentRoute, 'invoice');
@@ -147,6 +148,31 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
                     <span class="pcoded-mtext">Vehicle EMI</span>
                     <span class="pcoded-mcaret"></span>
                 </a>
+            </li>
+            @endif
+
+            {{-- Payroll --}}
+            @if($showAll || userCanSeeMenu('payroll'))
+            <li class="pcoded-hasmenu {{ $isPayroll ? 'pcoded-trigger active' : '' }}">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="ti-money"></i><b>P</b></span>
+                    <span class="pcoded-mtext">Payroll</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class="{{ $currentRoute === 'payroll' ? 'active' : '' }}">
+                        <a href="{{ route('payroll') }}">
+                            <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                            <span class="pcoded-mtext">All Payroll</span>
+                        </a>
+                    </li>
+                    <li class="{{ $currentRoute === 'payroll.create' ? 'active' : '' }}">
+                        <a href="{{ route('payroll.create') }}">
+                            <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                            <span class="pcoded-mtext">Add Payroll</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             @endif
 

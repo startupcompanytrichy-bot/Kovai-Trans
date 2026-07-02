@@ -604,6 +604,98 @@ $selectedBilling = old('billing_type','fixed');
     .doc-drop-zone:hover { border-color: #667eea; background: #eef2ff; }
     .doc-drop-zone.drag-over { border-color: #667eea; background: #eef2ff; transform: scale(1.01); }
     .doc-drop-zone.has-file { border-color: #48bb78; background: #f0fff4; text-align: left; justify-content: flex-start; padding: 12px 16px; }
+
+    /* ── Review Cards ─────────────────────────────────────────── */
+    .rv-card {
+        background: #fff;
+        border: 1px solid #edf0f7;
+        border-radius: 10px;
+        margin-bottom: 14px;
+        overflow: hidden;
+        box-shadow: 0 1px 6px rgba(0,0,0,.04);
+    }
+    .rv-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f2f7;
+        background: #fafbff;
+    }
+    .rv-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px; flex-shrink: 0;
+    }
+    .rv-card-title {
+        font-size: 13px; font-weight: 700; color: #1a2340;
+    }
+    .rv-card-body { padding: 14px 16px; }
+
+    /* Highlight bar (Party / Route / Distance) */
+    .rv-highlight {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: #f8faff;
+        border: 1px solid #e8ecf7;
+        border-radius: 8px;
+        padding: 0;
+        margin-bottom: 14px;
+        overflow: hidden;
+    }
+    .rv-hl-item {
+        flex: 1;
+        padding: 10px 14px;
+        text-align: center;
+        min-width: 0;
+    }
+    .rv-hl-label {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        color: #8a94a6;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 3px;
+    }
+    .rv-hl-value {
+        display: block;
+        font-size: 13px;
+        font-weight: 800;
+        color: #1a2340;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .rv-hl-divider {
+        width: 1px;
+        height: 36px;
+        background: #e0e4f0;
+        flex-shrink: 0;
+    }
+
+    /* Grid of fields */
+    .rv-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 16px;
+    }
+    .rv-field {
+        padding: 6px 0;
+        border-bottom: 1px solid #f4f6fb;
+    }
+    .rv-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #8a94a6;
+        margin-bottom: 2px;
+    }
+    .rv-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1a2340;
+    }
 </style>
 
 <div class="pcoded-inner-content nt-page">
@@ -1360,8 +1452,6 @@ $selectedBilling = old('billing_type','fixed');
            BUILD REVIEW (Step 4)
         ══════════════════════════════════════════════════════════════ */
         function buildReview() {
-            var rows = [];
-
             function val(name) {
                 var $el = $('[name="' + name + '"]');
                 if ($el.is('select')) {
@@ -1376,47 +1466,80 @@ $selectedBilling = old('billing_type','fixed');
                 var txt = $s.find('option:selected').text().trim();
                 return txt && txt !== $s.find('option:first').text() ? txt : '—';
             }
+            function fmtAmt(v) {
+                var n = parseFloat(v);
+                return isNaN(n) || n === 0 ? '—' : '₹' + n.toLocaleString('en-IN');
+            }
 
-            // Step 1 — Basic Info
-            rows.push({ section: '📋 Basic Info' });
-            rows.push({ label: 'Booking Date',    value: val('booking_date') });
-            rows.push({ label: 'Trip Start Date', value: val('trip_date') });
-            rows.push({ label: 'LR Number',       value: val('lr_no') });
-            rows.push({ label: 'Party / Customer',value: selText('[name="party_id"]') });
-            rows.push({ label: 'From',            value: $('#fromLocationVal').val() || '—' });
-            rows.push({ label: 'To',              value: $('#toLocationVal').val()   || '—' });
-            rows.push({ label: 'Distance (KM)',   value: val('distance_km') });
-            rows.push({ label: 'Material',        value: val('material') });
-            rows.push({ label: 'Load Type',       value: selText('[name="load_type"]') });
+            var data = {
+                bookingDate:   val('booking_date'),
+                tripDate:      val('trip_date'),
+                lrNo:          val('lr_no'),
+                party:         selText('[name="party_id"]'),
+                from:          $('#fromLocationVal').val() || '—',
+                to:            $('#toLocationVal').val()   || '—',
+                distance:      val('distance_km'),
+                material:      val('material'),
+                loadType:      selText('[name="load_type"]'),
 
-            // Step 2 — Vehicle & Driver
-            rows.push({ section: '🚛 Vehicle & Driver' });
-            rows.push({ label: 'Vehicle',          value: selText('#ntVehicleIdSelect') });
-            rows.push({ label: 'Driver',           value: selText('#ntDriverIdSelect') });
-            rows.push({ label: 'Transport Vendor', value: selText('#ntSupplierSelect') });
-            rows.push({ label: 'Start KMs',        value: val('start_kms_reading') });
+                vehicle:       selText('#ntVehicleIdSelect'),
+                driver:        selText('#ntDriverIdSelect'),
+                vendor:        selText('#ntSupplierSelect'),
+                startKms:      val('start_kms_reading'),
 
-            // Step 3 — Financials
-            rows.push({ section: '💰 Financials' });
-            rows.push({ label: 'Billing Type',    value: $('[name="billing_type"]:checked').val() || '—' });
-            rows.push({ label: 'Freight Amount',  value: val('freight_amount') !== '—' ? '₹' + parseFloat(val('freight_amount')).toLocaleString('en-IN') : '—' });
+                billingType:   $('[name="billing_type"]:checked').val() || '—',
+                freightAmt:    val('freight_amount'),
+            };
 
-            // Build HTML
-            var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">';
-            var inGrid = false;
-            rows.forEach(function(r) {
-                if (r.section) {
-                    if (inGrid) { html += '</div>'; inGrid = false; }
-                    html += '<div style="grid-column:1/-1;font-size:12px;font-weight:800;color:#667eea;text-transform:uppercase;letter-spacing:.6px;padding:14px 0 8px;border-bottom:1px solid #eef2ff;margin-bottom:4px;">' + r.section + '</div>';
-                    inGrid = false;
-                } else {
-                    html +=
-                        '<div style="padding:8px 10px 8px 0;border-bottom:1px solid #f4f6fb;">' +
-                            '<div style="font-size:11px;color:#8a94a6;font-weight:600;">' + r.label + '</div>' +
-                            '<div style="font-size:13px;font-weight:700;color:#1a2340;margin-top:2px;">' + r.value + '</div>' +
-                        '</div>';
-                }
-            });
+            function field(l, v) {
+                return '<div class="rv-field"><div class="rv-label">' + l + '</div><div class="rv-value">' + v + '</div></div>';
+            }
+
+            var html = '';
+
+            // ── Card 1: Basic Info ──
+            html += '<div class="rv-card">';
+            html += '  <div class="rv-card-header"><div class="rv-icon" style="background:#eef2ff;color:#667eea;"><i class="ti-file"></i></div><div><div class="rv-card-title">Basic Info</div></div></div>';
+            html += '  <div class="rv-card-body">';
+            html += '    <div class="rv-highlight">';
+            html += '      <div class="rv-hl-item"><span class="rv-hl-label">Party</span><span class="rv-hl-value">' + data.party + '</span></div>';
+            html += '      <div class="rv-hl-divider"></div>';
+            html += '      <div class="rv-hl-item"><span class="rv-hl-label">Route</span><span class="rv-hl-value">' + data.from + ' <i class="ti-arrow-right" style="font-size:10px;color:#b0bac9;"></i> ' + data.to + '</span></div>';
+            html += '      <div class="rv-hl-divider"></div>';
+            html += '      <div class="rv-hl-item"><span class="rv-hl-label">Distance</span><span class="rv-hl-value">' + data.distance + ' KM</span></div>';
+            html += '    </div>';
+            html += '    <div class="rv-grid">';
+            html += field('Booking Date', data.bookingDate);
+            html += field('Trip Start Date', data.tripDate);
+            html += field('LR Number', data.lrNo);
+            html += field('Material', data.material);
+            html += field('Load Type', data.loadType);
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+
+            // ── Card 2: Vehicle & Driver ──
+            html += '<div class="rv-card">';
+            html += '  <div class="rv-card-header"><div class="rv-icon" style="background:#f0fff4;color:#38a169;"><i class="ti-truck"></i></div><div><div class="rv-card-title">Vehicle &amp; Driver</div></div></div>';
+            html += '  <div class="rv-card-body">';
+            html += '    <div class="rv-grid">';
+            html += field('Vehicle', data.vehicle);
+            html += field('Driver', data.driver);
+            html += field('Transport Vendor', data.vendor);
+            html += field('Start KMs', data.startKms);
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+
+            // ── Card 3: Financials ──
+            html += '<div class="rv-card">';
+            html += '  <div class="rv-card-header"><div class="rv-icon" style="background:#fef3c7;color:#d97706;"><i class="ti-wallet"></i></div><div><div class="rv-card-title">Financials</div></div></div>';
+            html += '  <div class="rv-card-body">';
+            html += '    <div class="rv-grid">';
+            html += field('Billing Type', data.billingType);
+            html += field('Freight Amount', fmtAmt(data.freightAmt));
+            html += '    </div>';
+            html += '  </div>';
             html += '</div>';
 
             $('#reviewContent').html(html);

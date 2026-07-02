@@ -24,6 +24,7 @@ class Vehicle extends Model
         'engine_number',
         'chassis_number',
         'rc_number',
+        'permit_type',
         'permit_number',
         'insurance_expiry_date',
         'fitness_expiry_date',

@@ -17,8 +17,13 @@ class Driver extends Model
         'driver_type',
         'license_number',
         'mobile',
+        'alternative_mobile',
         'aadhar_number',
         'pan_number',
+        'bank_name_id',
+        'account_number',
+        'ifsc_code',
+        'branch_name',
         'dob',
         'state',
         'district',
@@ -40,6 +45,11 @@ class Driver extends Model
         'is_active'  => 'boolean',
         'is_deleted' => 'boolean',
     ];
+
+    public function bank()
+    {
+        return $this->belongsTo(Bank::class, 'bank_name_id');
+    }
 
     public function createdBy()
     {

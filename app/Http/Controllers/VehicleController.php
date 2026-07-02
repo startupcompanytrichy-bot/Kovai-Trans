@@ -15,16 +15,23 @@ class VehicleController extends Controller
      */
     public function index()
     {
-        $vehicles  = Vehicle::with('supplier')->orderBy('created_at', 'desc')->get();
-        $suppliers = Supplier::where('is_active', true)->where('is_deleted', false)->orderBy('name')->get();
+        $vehicles       = Vehicle::with('supplier')->orderBy('created_at', 'desc')->paginate(25);
+        $totalVehicles  = Vehicle::count();
+        $activeVehicles = Vehicle::where('status', 'active')->count();
+        $expiredCount   = Vehicle::where(function ($q) {
+            $q->where('insurance_expiry_date', '<', now())
+              ->orWhere('fitness_expiry_date', '<', now());
+        })->count();
 
-        return view('Vehicle_Master.Vehicles_Table', compact('vehicles', 'suppliers'));
+        return view('Vehicle_Master.Vehicles_Table', compact('vehicles', 'totalVehicles', 'activeVehicles', 'expiredCount'));
     }
 
     public function add()
     {
-        $suppliers = Supplier::all(); // Assuming you have a Supplier model
-        return view('Vehicle_Master.Vehicles_Table', compact('suppliers'));
+        $suppliers = Supplier::where('is_active', true)->where('is_deleted', false)->orderBy('name')->get();
+        $docTypes  = VehicleDocument::$typeLabels;
+        $docIcons  = VehicleDocument::$typeIcons;
+        return view('Vehicle_Master.Add_Vehicle', compact('suppliers', 'docTypes', 'docIcons'));
     }
 
     /**
@@ -33,18 +40,20 @@ class VehicleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'vehicle_name'          => 'nullable|string|max:255',
+            'vehicle_name'          => 'required|string|max:255',
             'vehicle_number'        => 'required|string|max:50|unique:vehicles,vehicle_number',
-            'owner_type'            => 'nullable|string|max:50',
+            'owner_type'            => 'required|string|max:50',
             'supplier_id'           => 'nullable|integer|exists:suppliers,id',
-            'vehicle_type'          => 'nullable|string|max:50',
+            'vehicle_type'          => 'required|string|max:50',
             'asset_make'            => 'nullable|string|max:100',
             'asset_type'            => 'nullable|string|max:100',
             'engine_number'         => 'nullable|string|max:100',
             'chassis_number'        => 'nullable|string|max:100',
             'rc_number'             => 'nullable|string|max:100',
-            'insurance_expiry_date' => 'nullable|date',
-            'fitness_expiry_date'   => 'nullable|date',
+            'permit_type'           => 'required|string|max:50',
+            'permit_number'         => 'nullable|string|max:100',
+            'insurance_expiry_date' => 'required|date',
+            'fitness_expiry_date'   => 'required|date',
             'permit_expiry_date'    => 'nullable|date',
             'puc_expiry_date'       => 'nullable|date',
         ]);
@@ -55,10 +64,32 @@ class VehicleController extends Controller
             $validated['created_by'] = auth()->id();
         }
 
-        Vehicle::create($validated);
+        $vehicle = Vehicle::create($validated);
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Vehicle added successfully']);
+        // Handle document uploads
+        $docTypes = array_keys(VehicleDocument::$typeLabels);
+        foreach ($docTypes as $type) {
+            $fileKey = "doc_{$type}";
+            if ($request->hasFile($fileKey)) {
+                $request->validate([
+                    $fileKey => 'file|mimes:pdf,jpg,jpeg,png|max:5120',
+                ]);
+                $file      = $request->file($fileKey);
+                $ext       = $file->getClientOriginalExtension();
+                $fileName  = time() . '_' . $vehicle->id . '_' . $type . '.' . $ext;
+                $path      = $file->storeAs('vehicles/docs', $fileName, 'public');
+
+                VehicleDocument::create([
+                    'vehicle_id'     => $vehicle->id,
+                    'document_type'  => $type,
+                    'document_label' => VehicleDocument::$typeLabels[$type],
+                    'file_name'      => $file->getClientOriginalName(),
+                    'file_path'      => $path,
+                    'file_extension' => $ext,
+                    'file_size'      => $file->getSize(),
+                    'uploaded_by'    => auth()->check() ? auth()->id() : null,
+                ]);
+            }
         }
 
         return redirect()->route('vehicle')->with('success', 'Vehicle added successfully');
@@ -172,6 +203,8 @@ class VehicleController extends Controller
             'engine_number'         => 'nullable|string|max:100',
             'chassis_number'        => 'nullable|string|max:100',
             'rc_number'             => 'nullable|string|max:100',
+            'permit_type'           => 'nullable|string|max:50',
+            'permit_number'         => 'nullable|string|max:100',
             'insurance_expiry_date' => 'nullable|date',
             'fitness_expiry_date'   => 'nullable|date',
             'permit_expiry_date'    => 'nullable|date',
@@ -237,6 +270,10 @@ class VehicleController extends Controller
             }
         }
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Vehicle updated successfully']);
+        }
+
         return redirect()->route('vehicle.edit', $id)
             ->with('success', 'Vehicle updated successfully!');
     }
@@ -255,6 +292,10 @@ class VehicleController extends Controller
         }
 
         $vehicle->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Vehicle deleted successfully']);
+        }
 
         return redirect()->route('vehicle')->with('success', 'Vehicle deleted successfully');
     }

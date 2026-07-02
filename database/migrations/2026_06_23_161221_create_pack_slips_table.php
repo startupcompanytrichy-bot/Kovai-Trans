@@ -14,11 +14,15 @@ return new class extends Migration
         Schema::create('pack_slips', function (Blueprint $table) {
             $table->id();
             $table->string('lr_no');
+            $table->string('bill_no')->nullable()->after('lr_no');
+            $table->string('lot_no')->nullable()->after('bill_no');
             $table->date('slip_date');
             $table->foreignId('pack_customer_id')->constrained()->onDelete('cascade');
             $table->string('from_location')->nullable();
             $table->string('to_location')->nullable();
             $table->string('material')->nullable();
+            $table->string('quality')->nullable()->after('material');
+            $table->string('folding')->nullable()->after('quality');
             $table->decimal('quantity', 12, 2)->nullable();
             $table->string('vehicle_number')->nullable();
             $table->string('invoice_no')->nullable();

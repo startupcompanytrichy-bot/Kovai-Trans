@@ -26,7 +26,7 @@
     {{-- Select2 theme overrides --}}
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/select2-theme.css') }}?v={{ filemtime(public_path('assets/css/select2-theme.css')) }}">
     {{-- App custom styles --}}
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/app-custom.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/app-custom.css') }}?v={{ filemtime(public_path('assets/css/app-custom.css')) }}">
 
     @stack('styles')
     <style>
@@ -103,8 +103,24 @@
                     {{-- sidebar partial --}}
                     @include('partials.sidebar')
 
-                    <div class="pcoded-content">
-                        @yield('content')
+                    <div class="pcoded-content" id="pcoded-content" style="position:relative;">
+                        <div id="content-loader" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,.8);z-index:999;align-items:center;justify-content:center;">
+                            <div class="ball-scale" style="transform:scale(.5);"><div class='contain'>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                                <div class="ring"><div class="frame"></div></div>
+                            </div></div>
+                        </div>
+                        <div id="pcoded-content-inner">
+                            @yield('content')
+                        </div>
                     </div>
 
                 </div>
@@ -120,10 +136,80 @@
     </div>
 
     {{-- Page-level scripts pushed via @push('scripts') --}}
-
+    <div id="softnav-stack">
     @stack('scripts')
+    </div>
 
     <script>
+function showLoader() {
+    var el = document.getElementById('content-loader');
+    if (el) { el.style.display = 'flex'; }
+}
+function hideLoader() {
+    var el = document.getElementById('content-loader');
+    if (el) { el.style.display = 'none'; }
+}
+
+function reExecScripts(container) {
+    var scripts = container.querySelectorAll('script');
+    scripts.forEach(function(old) {
+        var s = document.createElement('script');
+        if (old.src) { s.src = old.src; } else { s.textContent = old.textContent; }
+        old.parentNode.replaceChild(s, old);
+    });
+    var inlineStyles = container.querySelectorAll('style');
+    inlineStyles.forEach(function(old) {
+        var s = document.createElement('style');
+        s.textContent = old.textContent;
+        old.parentNode.replaceChild(s, old);
+    });
+}
+
+window.softNav = function(url, fromPopState) {
+    showLoader();
+    fetch(url)
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            var newInner = doc.querySelector('#pcoded-content-inner');
+            var curInner = document.querySelector('#pcoded-content-inner');
+            if (newInner && curInner) {
+                curInner.innerHTML = newInner.innerHTML;
+                if (!fromPopState) {
+                    history.pushState({sn: true}, '', url);
+                }
+                document.title = doc.title;
+                try { reExecScripts(curInner); } catch(e) {}
+                var newStack = doc.querySelector('#softnav-stack');
+                var curStack = document.querySelector('#softnav-stack');
+                if (newStack && curStack) {
+                    curStack.innerHTML = newStack.innerHTML;
+                    try { reExecScripts(curStack); } catch(e) {}
+                }
+                hideLoader();
+            } else {
+                hideLoader();
+                window.location.href = url;
+            }
+        })
+        .catch(function() {
+            hideLoader();
+            window.location.href = url;
+        });
+};
+
+/* ── Back/Forward navigation ── */
+window.addEventListener('popstate', function(e) {
+    var targetUrl = window.location.href;
+    showLoader();
+    if (typeof window.softNav === 'function') {
+        window.softNav(targetUrl, true);
+    } else {
+        window.location.href = targetUrl;
+    }
+});
+
         $(document).ready(function() {
             if (typeof initSelect2Events === 'function') {
                 initSelect2Events();
@@ -133,6 +219,15 @@
             $('.pcoded-hasmenu.pcoded-trigger').each(function() {
                 $(this).find('> .pcoded-submenu').css('display', 'block');
             });
+        });
+
+        /* ── Global pagination softNav: intercept clicks on all paginated tables ── */
+        $(document).on('click', '.pagination a', function(e) {
+            e.preventDefault();
+            var href = $(this).attr('href');
+            if (!href) return;
+            var url = new URL(href, window.location.href);
+            softNav(url.pathname + url.search);
         });
     </script>
 

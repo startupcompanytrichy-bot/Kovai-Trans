@@ -1,32 +1,21 @@
 <?php
 
+// ══════════════════════════════════════════════════════════════════
+// CONSOLIDATED into 2026_05_23_154150_create_companies_table
+// (business_type already included in CREATE — no separate modifier)
+// ══════════════════════════════════════════════════════════════════
+
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        if (Schema::hasTable('companies') && ! Schema::hasColumn('companies', 'business_type')) {
-            Schema::table('companies', function (Blueprint $table) {
-                $table->string('business_type')->nullable();
-            });
-        }
+        // No-op: business_type is already in the parent CREATE
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        if (Schema::hasTable('companies') && Schema::hasColumn('companies', 'business_type')) {
-            Schema::table('companies', function (Blueprint $table) {
-                $table->dropColumn('business_type');
-            });
-        }
+        // No-op
     }
 };

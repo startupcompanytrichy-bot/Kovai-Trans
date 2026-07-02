@@ -28,3 +28,12 @@ Thumbs.db
 
 .vercel
 .env*
+
+Dockerfile
+index.php
+/api
+packing-slip-*.pdf
+test_view.php
+TODO.md
+EMI_*.md
+storage/framework/views/*.php

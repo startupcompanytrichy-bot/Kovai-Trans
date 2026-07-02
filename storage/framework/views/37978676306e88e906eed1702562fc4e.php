@@ -181,7 +181,30 @@
         clearInterval(globalDelTimer);
         if (globalDelFormId) {
             var form = document.getElementById(globalDelFormId);
-            if (form) form.submit();
+            if (form) {
+                var btn = document.querySelector('.global-del-btn-confirm');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti-reload" style="font-size:11px;margin-right:4px;"></i> Deleting...'; }
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: new FormData(form)
+                })
+                .then(function(r) {
+                    $('#globalDeleteModal').modal('hide');
+                    if (r.ok) {
+                        if (typeof toastr !== 'undefined') toastr.success('Deleted successfully');
+                        if (typeof softNav === 'function') { softNav(window.location.href); }
+                        else { window.location.reload(); }
+                    } else {
+                        if (typeof toastr !== 'undefined') toastr.error('Delete failed');
+                        else { window.location.reload(); }
+                    }
+                })
+                .catch(function() {
+                    $('#globalDeleteModal').modal('hide');
+                    window.location.reload();
+                });
+            }
         }
     }
 

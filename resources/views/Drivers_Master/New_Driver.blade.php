@@ -363,7 +363,7 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group-drv">
                                         <label>Mobile Number <span class="req">*</span></label>
                                         <input type="text" name="mobile" class="form-control @error('mobile') is-invalid @enderror"
@@ -371,7 +371,15 @@
                                         @error('mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <div class="form-group-drv">
+                                        <label>Alternative Mobile 2</label>
+                                        <input type="text" name="alternative_mobile" class="form-control @error('alternative_mobile') is-invalid @enderror"
+                                            value="{{ old('alternative_mobile') }}" placeholder="Enter alternative number" maxlength="20">
+                                        @error('alternative_mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
                                     <div class="form-group-drv">
                                         <label>License Number <span class="req">*</span></label>
                                         <input type="text" name="license_number" class="form-control @error('license_number') is-invalid @enderror"
@@ -462,7 +470,56 @@
                     </div>
 
 
-                    {{-- 3. Documents & Photos --}}
+                    {{-- 3. Bank Details --}}
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="ti-wallet" style="color:#667eea;"></i>
+                            <h6>Bank Details</h6>
+                        </div>
+                        <div class="form-card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group-drv">
+                                        <label>Bank Name</label>
+                                        <select name="bank_name_id" class="form-control select2 @error('bank_name_id') is-invalid @enderror">
+                                            <option value="">Select Bank</option>
+                                            @foreach($banks as $bank)
+                                            <option value="{{ $bank->id }}" {{ old('bank_name_id') == $bank->id ? 'selected' : '' }}>{{ $bank->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('bank_name_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group-drv">
+                                        <label>Account Number</label>
+                                        <input type="text" name="account_number" class="form-control @error('account_number') is-invalid @enderror"
+                                            value="{{ old('account_number') }}" placeholder="Enter account number" maxlength="30">
+                                        @error('account_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group-drv">
+                                        <label>IFSC Code</label>
+                                        <input type="text" name="ifsc_code" class="form-control @error('ifsc_code') is-invalid @enderror"
+                                            value="{{ old('ifsc_code') }}" placeholder="e.g. SBIN0001234" maxlength="15">
+                                        @error('ifsc_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group-drv">
+                                        <label>Branch Name</label>
+                                        <input type="text" name="branch_name" class="form-control @error('branch_name') is-invalid @enderror"
+                                            value="{{ old('branch_name') }}" placeholder="Enter branch name" maxlength="100">
+                                        @error('branch_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    {{-- 4. Documents & Photos --}}
                     <div class="form-card">
                         <div class="form-card-header">
                             <i class="ti-files" style="color:#667eea;"></i>
@@ -644,6 +701,13 @@
         /* ── state change → reload districts ── */
         $(stateEl).on('select2:select', function() {
             loadDistricts(null);
+        });
+
+        /* ── bank name select2 ── */
+        $('select[name="bank_name_id"]').select2({
+            width: '100%',
+            allowClear: true,
+            placeholder: 'Select Bank'
         });
 
     });

@@ -346,6 +346,14 @@ class TripController extends Controller
         return response()->json(['lr_no' => $lrNo]);
     }
 
+    public function consignorDocument($id)
+    {
+        $trip    = Trip::with(['vehicle', 'driver', 'party', 'supplier'])->findOrFail($id);
+        $company = \App\Models\Company::where('is_deleted', false)->first();
+
+        return view('Trips.Consignor_Document', compact('trip', 'company'));
+    }
+
     /**
      * POST /trip/{id}/payments  — add a payment entry
      * Adds the payment to trip_payments, recalculates collected_amount on the trip.

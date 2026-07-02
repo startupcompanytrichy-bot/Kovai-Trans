@@ -23,24 +23,40 @@ return new class extends Migration
             if (!Schema::hasColumn('companies', 'phone2')) {
                 $table->string('phone2')->nullable()->after('phone');
             }
-            $table->string('bank_name')->nullable()->after('gst');
-            $table->string('account_number')->nullable()->after('bank_name');
-            $table->string('ifsc_code')->nullable()->after('account_number');
-            $table->string('branch_name')->nullable()->after('ifsc_code');
-            $table->string('upi_id')->nullable()->after('branch_name');
-            $table->string('place_of_supply')->nullable()->after('upi_id');
+            if (!Schema::hasColumn('companies', 'bank_name')) {
+                $table->string('bank_name')->nullable()->after('gst');
+            }
+            if (!Schema::hasColumn('companies', 'account_number')) {
+                $table->string('account_number')->nullable()->after('bank_name');
+            }
+            if (!Schema::hasColumn('companies', 'ifsc_code')) {
+                $table->string('ifsc_code')->nullable()->after('account_number');
+            }
+            if (!Schema::hasColumn('companies', 'branch_name')) {
+                $table->string('branch_name')->nullable()->after('ifsc_code');
+            }
+            if (!Schema::hasColumn('companies', 'upi_id')) {
+                $table->string('upi_id')->nullable()->after('branch_name');
+            }
+            if (!Schema::hasColumn('companies', 'place_of_supply')) {
+                $table->string('place_of_supply')->nullable()->after('upi_id');
+            }
         });
     }
 
     public function down(): void
     {
-        Schema::table('companies', function (Blueprint $table) {
-            $table->dropForeign(['fin_year']);
-            $table->dropForeign(['branch_id']);
-            $table->dropColumn(['fin_year', 'branch_id']);
-        });
-        Schema::table('companies', function (Blueprint $table) {
-            $table->dropColumn(['phone','phone2','bank_name','account_number','ifsc_code','branch_name','upi_id','place_of_supply']);
-        });
+        if (Schema::hasColumn('companies', 'fin_year')) {
+            Schema::table('companies', function (Blueprint $table) {
+                $table->dropForeign(['fin_year']);
+                $table->dropForeign(['branch_id']);
+                $table->dropColumn(['fin_year', 'branch_id']);
+            });
+        }
+        if (Schema::hasColumn('companies', 'phone')) {
+            Schema::table('companies', function (Blueprint $table) {
+                $table->dropColumn(['phone','phone2','bank_name','account_number','ifsc_code','branch_name','upi_id','place_of_supply']);
+            });
+        }
     }
 };
