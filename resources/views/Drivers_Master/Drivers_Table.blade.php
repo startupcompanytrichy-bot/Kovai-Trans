@@ -483,6 +483,7 @@ function viewDriver(driverId) {
             html += field('Driver Name', d.name);
             html += field('Date of Birth', d.dob);
             html += field('Mobile Number', d.mobile);
+            html += field('Alternative Mobile', d.alternative_mobile || '—');
             html += field('License Number', d.license_number);
             html += field('Aadhar Number', d.aadhar_number);
             html += field('PAN Number', d.pan_number);
@@ -496,6 +497,16 @@ function viewDriver(driverId) {
             html += field('Postal Code', d.postal_code);
             html += '<div class="col-md-12 mb-3"><div class="view-label">Full Address</div><div class="view-value">' + (d.address || '—') + '</div></div>';
             html += '</div>';
+
+            if (d.bank_name_id) {
+                html += '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#667eea;margin-bottom:12px;margin-top:4px;padding-bottom:8px;border-bottom:1px solid #edf0f7;display:flex;align-items:center;gap:6px;"><i class="ti-wallet"></i> Bank Details</div>';
+                html += '<div class="row">';
+                html += field('Bank Name', d.bank?.name || '—');
+                html += field('Account Number', d.account_number || '—');
+                html += field('IFSC Code', d.ifsc_code || '—');
+                html += field('Branch Name', d.branch_name || '—');
+                html += '</div>';
+            }
 
             if (d.remarks) {
                 html += '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#667eea;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #edf0f7;"><i class="ti-comment mr-1"></i> Remarks</div>';

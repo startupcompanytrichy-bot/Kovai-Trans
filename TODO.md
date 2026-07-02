@@ -1,4 +1,0 @@
-- [ ] Update /driver/add view: Address Details dropdown logic so District reloads only when City changes (trigger), while keeping State → District → City hierarchy.
-- [ ] Ensure District/City selected values restore correctly on validation errors / old input.
-- [ ] Mirror fix in /driver/edit view if needed for consistent UX.
-- [ ] Smoke test in browser: select State, District, City; verify District doesn’t refresh unnecessarily and only refreshes on City change.

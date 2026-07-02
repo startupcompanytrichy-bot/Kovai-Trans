@@ -544,7 +544,7 @@
                         <a href="{{ route('invoice.index') }}" class="btn b-back">&#8592; Invoice List</a>
                         <span class="pill" style="color:{{$pC}};background:{{$pBg}};border-color:{{$pBd}}">
                             {{ strtoupper($invTypeName) }}
-                            @if($invType==='rcm') &middot; 5% RCM
+                            @if($invType==='rcm') &middot; 0% RCM
                             @elseif($invType==='exempt') &middot; 0% Exempt
                             @else &middot; 18% GST @endif
                         </span>
@@ -743,12 +743,12 @@
                                         </tr>
                                         @if($invType==='rcm')
                                         <tr>
-                                            <td class="TK">CGST 2.5%</td>
-                                            <td class="TV">{{ number_format($cgst, 2) }}</td>
+                                            <td class="TK">CGST 0%</td>
+                                            <td class="TV">0.00</td>
                                         </tr>
                                         <tr>
-                                            <td class="TK">SGST 2.5%</td>
-                                            <td class="TV">{{ number_format($sgst, 2) }}</td>
+                                            <td class="TK">SGST 0%</td>
+                                            <td class="TV">0.00</td>
                                         </tr>
                                         @elseif($invType==='exempt')
                                         <tr>

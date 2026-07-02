@@ -1,25 +1,21 @@
 <?php
 
+// ══════════════════════════════════════════════════════════════════
+// CONSOLIDATED into 2026_06_23_161221_create_pack_slips_table
+// (bill_no, lot_no, quality, folding now in CREATE)
+// ══════════════════════════════════════════════════════════════════
+
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('pack_slips', function (Blueprint $table) {
-            $table->string('bill_no')->nullable()->after('lr_no');
-            $table->string('lot_no')->nullable()->after('bill_no');
-            $table->string('quality')->nullable()->after('material');
-            $table->string('folding')->nullable()->after('quality');
-        });
+        // No-op: fields now in parent CREATE
     }
 
     public function down(): void
     {
-        Schema::table('pack_slips', function (Blueprint $table) {
-            $table->dropColumn(['bill_no', 'lot_no', 'quality', 'folding']);
-        });
+        // No-op
     }
 };

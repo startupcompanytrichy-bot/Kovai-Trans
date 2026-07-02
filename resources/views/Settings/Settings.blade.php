@@ -1,183 +1,282 @@
 @extends('layouts.app')
 
-@section('content')
-
+@push('styles')
 <style>
-.st-page { background: #f4f6fb; }
+/* ════════════════════════════════════════════════════════════════════
+   SETTINGS PAGE — Premium Layout
+════════════════════════════════════════════════════════════════════ */
+.st-page { background: #f0f2f8; min-height:100vh; }
+
+/* ── Table scroll wrapper ───────────────────────────────────────── */
+.st-tbl-wrap {
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.st-tbl-wrap table { margin-bottom:0; }
+.st-tbl-wrap + .st-card-bd { border-top:1px solid #f1f5f9; }
 
 /* ── Page header ─────────────────────────────────────────────────── */
-.st-page-header {
-    background: linear-gradient(135deg, #1a2340 0%, #2d3a5e 60%, #667eea 100%);
-    border-radius: 10px; padding: 14px 20px; color: #fff;
-    margin-bottom: 16px; position: relative; overflow: hidden;
+.st-hdr {
+    background: linear-gradient(135deg, #0c1322 0%, #1a2340 40%, #3b4f8a 70%, #667eea 100%);
+    border-radius: 16px; padding: 22px 28px; color: #fff;
+    margin-bottom: 22px; position: relative; overflow: hidden;
 }
-.st-page-header::before {
-    content:''; position:absolute; top:-40px; right:-40px;
-    width:140px; height:140px; background:rgba(255,255,255,.05); border-radius:50%;
+.st-hdr::before {
+    content:''; position:absolute; top:-60px; right:-60px;
+    width:240px; height:240px; background:rgba(255,255,255,.04); border-radius:50%;
 }
-.st-page-header h4 { font-size:16px; font-weight:800; margin:0 0 2px; }
-.st-page-header .sub { font-size:12px; opacity:.75; }
+.st-hdr::after {
+    content:''; position:absolute; bottom:-40px; right:-20px;
+    width:140px; height:140px; background:rgba(255,255,255,.03); border-radius:50%;
+}
+.st-hdr-tag {
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+    border-radius:20px;padding:4px 14px;font-size:10px;font-weight:700;
+    letter-spacing:.5px;margin-bottom:8px;backdrop-filter:blur(4px);
+}
+.st-hdr h4 { font-size:20px; font-weight:800; margin:0 0 3px; position:relative; z-index:1; }
+.st-hdr .sub { font-size:12px; opacity:.65; position:relative; z-index:1; }
 
-/* ── Settings sidebar nav ────────────────────────────────────────── */
-.st-nav {
-    background: #fff; border-radius: 10px;
-    box-shadow: 0 1px 6px rgba(0,0,0,.06); overflow: hidden;
-    position: sticky; top: 16px;
+/* ── Sidebar navigation ──────────────────────────────────────────── */
+.st-nav-wrap {
+    background:#fff; border-radius:16px;
+    box-shadow:0 2px 12px rgba(15,23,42,.07);
+    overflow:hidden; position:sticky; top:20px;
 }
 .st-nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px; cursor: pointer;
-    border-left: 3px solid transparent;
-    transition: all .15s; font-size: 13px; font-weight: 600; color: #596579;
+    display:flex; align-items:center; gap:12px;
+    padding:14px 20px; cursor:pointer;
+    border-left:3px solid transparent;
+    transition:all .2s; font-size:13px; font-weight:600; color:#64748b;
+    position:relative;
 }
-.st-nav-item:hover { background: #f5f7ff; color: #1a2340; }
-.st-nav-item.active { background: #eef2ff; border-left-color: #667eea; color: #4f46e5; }
-.st-nav-item .nav-icon {
-    width: 32px; height: 32px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; flex-shrink: 0;
-    background: #f4f6fb; color: #8a94a6;
+.st-nav-item:not(:last-child)::after {
+    content:''; position:absolute; bottom:0; left:20px; right:20px;
+    height:1px; background:#f1f5f9;
 }
-.st-nav-item.active .nav-icon { background: #667eea; color: #fff; }
-.st-nav-item .nav-count {
-    margin-left: auto;
-    background: #f4f6fb; color: #8a94a6;
-    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 12px;
+.st-nav-item:hover { background:#f8fafc; color:#1e293b; }
+.st-nav-item.active { background:#eef2ff; border-left-color:#6366f1; color:#4f46e5; }
+.st-nav-item .ni-ico {
+    width:34px; height:34px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; flex-shrink:0;
+    background:#f1f5f9; color:#94a3b8; transition:all .2s;
 }
-.st-nav-item.active .nav-count { background: #c7d2fe; color: #4f46e5; }
+.st-nav-item.active .ni-ico {
+    background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff;
+    box-shadow:0 4px 10px rgba(99,102,241,.3);
+}
+.st-nav-item .ni-badge {
+    margin-left:auto;
+    background:#f1f5f9; color:#94a3b8;
+    font-size:10px; font-weight:700; padding:2px 10px; border-radius:20px;
+}
+.st-nav-item.active .ni-badge { background:#c7d2fe; color:#4f46e5; }
 
 /* ── Tab panes ────────────────────────────────────────────────────── */
-.st-tab-pane { display: none; }
-.st-tab-pane.active { display: block; }
+.st-tab-pane { display:none; }
+.st-tab-pane.active { display:block; animation:stFade .25s ease; }
+@keyframes stFade { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-/* ── Section label ────────────────────────────────────────────────── */
-.st-section-label {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 11px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: .7px; color: #8a94a6;
-    margin: 0 0 10px;
+/* ── Section heading ──────────────────────────────────────────────── */
+.st-sec {
+    display:flex; align-items:center; gap:10px;
+    font-size:10px; font-weight:800; text-transform:uppercase;
+    letter-spacing:.8px; color:#94a3b8; margin:0 0 14px;
 }
-.st-section-label::after {
-    content:''; flex:1; height:1px; background:#e9ecef;
-}
+.st-sec::after { content:''; flex:1; height:1px; background:#e2e8f0; }
 
 /* ── Card ─────────────────────────────────────────────────────────── */
 .st-card {
-    background: #fff; border-radius: 10px;
-    box-shadow: 0 1px 6px rgba(0,0,0,.06); overflow: hidden;
-    margin-bottom: 14px;
+    background:#fff; border-radius:16px;
+    box-shadow:0 1px 10px rgba(15,23,42,.05); overflow:hidden;
+    margin-bottom:20px; transition:box-shadow .2s;
 }
-.st-card-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px; border-bottom: 1px solid #f0f2f7; background: #fafbff;
-    flex-wrap: wrap; gap: 8px;
+.st-card:hover { box-shadow:0 4px 20px rgba(15,23,42,.08); }
+.st-card-hd {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 22px; border-bottom:1px solid #f1f5f9; background:#fafbff;
+    flex-wrap:wrap; gap:8px;
 }
-.st-card-head h6 {
-    margin: 0; font-size: 13px; font-weight: 800; color: #1a2340;
-    display: flex; align-items: center; gap: 6px;
+.st-card-hd h6 {
+    margin:0; font-size:13px; font-weight:700; color:#0f172a;
+    display:flex; align-items:center; gap:8px;
 }
-.st-card-body { padding: 16px; }
+.st-card-hd .hd-ico {
+    width:28px; height:28px; border-radius:8px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:13px;
+}
+.st-card-bd { padding:22px; }
 
-/* ── Active FY banner ─────────────────────────────────────────────── */
-.st-fy-active-banner {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; border-radius: 8px;
-    background: #f0fff4; border: 1px solid #9ae6b4;
-    margin-bottom: 14px;
+/* ── Active FY banner ────────────────────────────────────────────── */
+.st-fy-act {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 16px; border-radius:12px;
+    background:linear-gradient(135deg,#f0fff4,#dcfce7); border:1px solid #86efac;
+    margin-bottom:16px;
 }
-.st-fy-active-banner .af-icon {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: #c6f6d5; color: #276749;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; flex-shrink: 0;
+.st-fy-act .fa-ico {
+    width:36px; height:36px; border-radius:10px;
+    background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; flex-shrink:0; box-shadow:0 3px 8px rgba(34,197,94,.3);
 }
-.st-fy-active-banner .af-label { font-size: 10px; font-weight: 700; color: #276749; text-transform: uppercase; letter-spacing: .3px; }
-.st-fy-active-banner .af-value { font-size: 15px; font-weight: 800; color: #276749; line-height: 1.1; }
-.st-fy-active-banner .af-range { font-size: 11px; color: #48bb78; }
+.st-fy-act .fa-lbl { font-size:10px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:.3px; }
+.st-fy-act .fa-val { font-size:16px; font-weight:800; color:#14532d; line-height:1.1; }
+.st-fy-act .fa-rng { font-size:11px; color:#22c55e; }
 
-.st-no-fy-banner {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; border-radius: 8px;
-    background: #fffbeb; border: 1px solid #fde68a;
-    margin-bottom: 14px;
+.st-fy-miss {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 16px; border-radius:12px;
+    background:linear-gradient(135deg,#fffbeb,#fef3c7); border:1px solid #fcd34d;
+    margin-bottom:16px;
 }
 
-/* ── FY Table ─────────────────────────────────────────────────────── */
-#fyTable { min-width: 500px; margin-bottom: 0; }
-#fyTable th, #fyTable td { height: 44px; padding: 7px 12px; vertical-align: middle; border-color: #f0f2f7; font-size: 13px; }
-#fyTable th { background: #f8fafc; color: #14213d; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
-#fyTable tr.fy-active td { background: #f0fff4 !important; }
-#fyTable tr.fy-active td:first-child { border-left: 3px solid #48bb78; }
+/* ── FY table ─────────────────────────────────────────────────────── */
+#fyTbl { min-width:520px; margin-bottom:0; }
+#fyTbl th, #fyTbl td { height:46px; padding:8px 14px; vertical-align:middle; border-color:#f1f5f9; font-size:13px; }
+#fyTbl th { background:#f8fafc; color:#0f172a; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
+#fyTbl tr.fy-on td { background:#f0fdf4 !important; }
+#fyTbl tr.fy-on td:first-child { border-left:3px solid #22c55e; }
+#fyTbl tbody tr.fy-hid { display:none; }
 
-/* default: only first 3 rows visible */
-#fyTable tbody tr.fy-hidden { display: none; }
-
-/* scrollable expanded area */
-.fy-table-wrap {
-    max-height: 320px;
-    overflow-y: auto;
-    overflow-x: auto;
+.fy-tw {
+    max-height:320px; overflow-y:auto; overflow-x:auto;
+    border:1px solid #f1f5f9; border-radius:10px;
 }
-.fy-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
-.fy-table-wrap::-webkit-scrollbar-track { background: #f4f6fb; }
-.fy-table-wrap::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 4px; }
+.fy-tw::-webkit-scrollbar { width:4px; height:4px; }
+.fy-tw::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
 
-/* show-more toggle */
-.fy-show-more {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px; border-top: 1px solid #f0f2f7;
-    font-size: 12px; font-weight: 700; color: #667eea;
-    cursor: pointer; background: #fafbff;
-    border-radius: 0 0 8px 8px;
-    transition: background .15s;
+.fy-more {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:10px; border:1px solid #f1f5f9; border-top:none;
+    font-size:12px; font-weight:700; color:#6366f1;
+    cursor:pointer; background:#fafbff; transition:all .15s;
+    border-radius:0 0 10px 10px;
 }
-.fy-show-more:hover { background: #eef2ff; }
+.fy-more:hover { background:#eef2ff; }
 
-/* ── Form ─────────────────────────────────────────────────────────── */
-.st-form-label { font-size: 12px; font-weight: 700; color: #596579; margin-bottom: 4px; }
-.st-form-label span.req { color: #e53e3e; }
-.st-input { height: 40px; font-size: 13px; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0 12px; width: 100%; color: #1a2340; background: #fff; }
-.st-input:focus { border-color: #667eea; outline: none; box-shadow: 0 0 0 3px rgba(102,126,234,.15); }
-select.st-input { padding: 0 10px; }
+/* ── Next FY preview ──────────────────────────────────────────────── */
+.fy-next {
+    background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+    border:1.5px dashed #a5b4fc; border-radius:12px;
+    padding:16px; margin-bottom:16px; text-align:center;
+}
+.fy-next .fn-lbl { font-size:10px; font-weight:700; color:#6366f1; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.fy-next .fn-val { font-size:24px; font-weight:800; color:#4338ca; letter-spacing:.5px; margin-bottom:2px; }
+.fy-next .fn-rng { font-size:12px; color:#6366f1; opacity:.7; }
+
+/* ── Form elements ────────────────────────────────────────────────── */
+.st-f { font-size:12px; font-weight:600; color:#475569; margin-bottom:5px; display:block; }
+.st-f .req { color:#ef4444; }
+.st-i {
+    height:42px; font-size:13px; border:1.5px solid #e2e8f0;
+    border-radius:10px; padding:0 14px; width:100%; color:#0f172a;
+    background:#fff; transition:all .15s;
+}
+.st-i:focus { border-color:#6366f1; outline:none; box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+select.st-i { padding:0 12px; }
+.st-i-sm { height:36px; font-size:12px; border-radius:8px; }
 
 /* ── Info box ─────────────────────────────────────────────────────── */
-.st-info-box {
-    padding: 12px 14px; border-radius: 8px;
-    background: #f5f7ff; border-left: 3px solid #667eea;
-    font-size: 12px; color: #596579; line-height: 1.8;
+.st-inf {
+    padding:14px 16px; border-radius:10px;
+    background:#f8fafc; border:1px solid #e2e8f0;
+    font-size:12px; color:#64748b; line-height:1.8;
 }
-.st-info-box .ib-title {
-    font-size: 10px; font-weight: 800; color: #667eea;
-    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px;
-}
-.st-info-box ul { margin: 0; padding-left: 16px; }
+.st-inf .if-t { font-size:10px; font-weight:700; color:#6366f1; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.st-inf ul { margin:0; padding-left:18px; }
 
-/* ── Action buttons ───────────────────────────────────────────────── */
-.st-icon-btn {
-    width: 30px; height: 30px; border-radius: 7px; border: none;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 13px; cursor: pointer; transition: all .15s;
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.st-btn {
+    display:inline-flex;align-items:center;gap:6px;
+    height:38px; padding:0 18px; border-radius:10px;
+    font-size:12px; font-weight:700; border:none; cursor:pointer;
+    transition:all .15s; text-decoration:none;
 }
-.st-icon-btn.del   { background: #fff5f5; color: #e53e3e; }
-.st-icon-btn.del:hover   { background: #e53e3e; color: #fff; }
-.st-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+.st-btn-primary { background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff; box-shadow:0 3px 10px rgba(99,102,241,.25); }
+.st-btn-primary:hover { transform:translateY(-1px); box-shadow:0 5px 16px rgba(99,102,241,.35); }
+.st-btn-success { background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff; box-shadow:0 3px 10px rgba(34,197,94,.25); }
+.st-btn-success:hover { transform:translateY(-1px); box-shadow:0 5px 16px rgba(34,197,94,.35); }
+.st-btn-ghost { background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; }
+.st-btn-ghost:hover { background:#e2e8f0; color:#0f172a; }
+
+/* ── Icon buttons ─────────────────────────────────────────────────── */
+.st-ib {
+    width:32px; height:32px; border-radius:8px; border:none;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:13px; cursor:pointer; transition:all .15s;
+}
+.st-ib.edit { background:#eef2ff; color:#6366f1; }
+.st-ib.edit:hover { background:#6366f1; color:#fff; }
+.st-ib.del { background:#fef2f2; color:#ef4444; }
+.st-ib.del:hover { background:#ef4444; color:#fff; }
+
+/* ── Badges/pills ─────────────────────────────────────────────────── */
+.st-pill {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:3px 10px; border-radius:20px;
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.3px;
+}
+
+/* ── All Settings table ───────────────────────────────────────────── */
+.st-tbl { width:100%; border-collapse:collapse; }
+.st-tbl thead { border-bottom:2px solid #eef2ff; }
+.st-tbl th {
+    font-size:10px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.06em; color:#94a3b8; background:#f8fafc;
+    padding:12px 18px; border:none; white-space:nowrap;
+}
+.st-tbl td {
+    font-size:12.5px; padding:14px 18px;
+    vertical-align:middle; border-bottom:1px solid #f1f5f9; border-top:none;
+}
+.st-tbl tr:last-child td { border-bottom:none; }
+.st-tbl tbody tr { transition:background .15s; }
+.st-tbl tbody tr:hover td { background:#fafbff; }
+.st-tbl tbody tr:has(.sef[style*="block"]) td { background:#f8faff; }
+
+/* ── Primary button full width ────────────────────────────────────── */
+.st-btn-block {
+    display:block; width:100%; height:44px; border-radius:10px;
+    font-size:14px; font-weight:700; border:none; cursor:pointer;
+    background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff;
+    box-shadow:0 3px 12px rgba(99,102,241,.3); transition:all .15s;
+}
+.st-btn-block:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,102,241,.4); }
+
+/* ── Smooth value edit transition ─────────────────────────────────── */
+.sv, .sef { transition:opacity .15s; }
+
+/* ── Card body compact variant ────────────────────────────────────── */
+.st-card-bd-compact { padding:16px 22px; }
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width:767px) {
+    .st-hdr { padding:16px 18px; }
+    .st-hdr h4 { font-size:17px; }
+    .st-card-hd { padding:14px 16px; }
+    .st-card-bd { padding:16px; }
+}
 </style>
+@endpush
+
+@section('content')
 
 <div class="pcoded-inner-content st-page">
-<div class="main-body"><div class="page-wrapper"><div class="page-body">
+<div class="main-body"><div class="page-wrapper"><div class="page-body" style="padding:22px;background:#f0f2f8;min-height:100vh;">
 
-{{-- ── PAGE HEADER ──────────────────────────────────────────────────────── --}}
-<div class="st-page-header">
+{{-- ══ PAGE HEADER ═══════════════════════════════════════════════════════ --}}
+<div class="st-hdr">
     <div class="row align-items-center">
         <div class="col-md-8" style="position:relative;z-index:1;">
-            <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;margin-bottom:6px;">
-                <i class="ti-settings"></i> Settings
-            </div>
+            <div class="st-hdr-tag"><i class="ti-settings"></i> Settings</div>
             <h4>Application Settings</h4>
-            <div class="sub">Configure financial years and application preferences.</div>
+            <div class="sub">Configure financial years, branches, GST rates, and application preferences.</div>
         </div>
         <div class="col-md-4 text-right mt-2 mt-md-0" style="position:relative;z-index:1;">
-            <a href="{{ route('dashboard') }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-weight:600;border-radius:8px;padding:6px 16px;">
+            <a href="{{ route('dashboard') }}" class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);font-weight:700;border-radius:10px;padding:7px 18px;font-size:12px;backdrop-filter:blur(4px);">
                 <i class="ti-home mr-1"></i> Dashboard
             </a>
         </div>
@@ -186,136 +285,125 @@ select.st-input { padding: 0 10px; }
 
 @include('partials.flash')
 
-{{-- Flash alerts (inline fallback) --}}
 @if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" style="border-radius:8px;font-size:13px;" role="alert">
+<div class="alert alert-success alert-dismissible fade show" style="border-radius:12px;font-size:13px;font-weight:600;margin-bottom:18px;border:none;" role="alert">
     <i class="ti-check-box mr-2"></i>{{ session('success') }}
     <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
 </div>
 @endif
 @if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show" style="border-radius:8px;font-size:13px;" role="alert">
+<div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px;font-size:13px;font-weight:600;margin-bottom:18px;border:none;" role="alert">
     <i class="ti-alert mr-2"></i>{{ $errors->first() }}
     <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
 </div>
 @endif
 
-{{-- ══════════════════════════════════════════════════════════════════════
-     SETTINGS NAVIGATION + TAB PANES
-══════════════════════════════════════════════════════════════════════ --}}
+{{-- ══ LAYOUT: SIDEBAR + CONTENT ═══════════════════════════════════════ --}}
 <div class="row">
 
-    {{-- ─── Left: Settings Nav Sidebar ─────────────────────────────── --}}
+    {{-- ─── Sidebar Navigation ─────────────────────────────────────── --}}
     <div class="col-md-3 mb-3 mb-md-0">
-        <div class="st-nav" id="settingsNav">
+        <div class="st-nav-wrap" id="settingsNav">
             <div class="st-nav-item active" data-tab="tab-all-settings">
-                <div class="nav-icon"><i class="ti-server"></i></div>
-                All Settings
-                <span class="nav-count">{{ $allSettings->count() }}</span>
+                <div class="ni-ico"><i class="ti-server"></i></div>
+                <span>All Settings</span>
+                <span class="ni-badge">{{ $allSettings->count() }}</span>
             </div>
             @if(userCan('view_settings_financial_year'))
             <div class="st-nav-item" data-tab="tab-financial-year">
-                <div class="nav-icon"><i class="ti-calendar"></i></div>
+                <div class="ni-ico"><i class="ti-calendar"></i></div>
                 Financial Year
-                <span class="nav-count">{{ $financialYears->count() }}</span>
+                <span class="ni-badge">{{ $financialYears->count() }}</span>
             </div>
             @endif
             @if(userCan('view_settings_branch_default'))
             <div class="st-nav-item" data-tab="tab-branch">
-                <div class="nav-icon"><i class="ti-layers"></i></div>
+                <div class="ni-ico"><i class="ti-layers"></i></div>
                 Branch Settings
             </div>
             @endif
             @if(showAllMenu())
+            <div class="st-nav-item" data-tab="tab-gst">
+                <div class="ni-ico"><i class="ti-receipt"></i></div>
+                GST Settings
+                <span class="ni-badge">{{ $gstSettings->count() }}</span>
+            </div>
+            @endif
+            @if(showAllMenu())
             <div class="st-nav-item" data-tab="tab-limits">
-                <div class="nav-icon"><i class="ti-lock"></i></div>
+                <div class="ni-ico"><i class="ti-lock"></i></div>
                 Account Limits
             </div>
             @endif
         </div>
     </div>
 
-    {{-- ─── Right: Tab Content ─────────────────────────────────────── --}}
+    {{-- ─── Tab Content ────────────────────────────────────────────── --}}
     <div class="col-md-9">
 
         {{-- ═══ Tab: All Settings ═════════════════════════════════════ --}}
         <div class="st-tab-pane active" id="tab-all-settings">
-            <div class="st-section-label">
-                <i class="ti-server" style="color:#667eea;font-size:12px;"></i>
-                All Settings
-            </div>
+            <div class="st-sec"><i class="ti-server" style="color:#6366f1;font-size:13px;"></i> All Settings</div>
             <div class="st-card">
-                <div class="st-card-head">
-                    <h6>
-                        <i class="ti-server" style="color:#667eea;"></i>
-                        Settings Index
-                        <span style="background:#eef2ff;color:#667eea;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;">
-                            {{ $allSettings->count() }}
-                        </span>
-                    </h6>
+                <div class="st-card-hd">
+                    <h6><span class="hd-ico" style="background:#eef2ff;color:#6366f1;"><i class="ti-server"></i></span> Manage Settings</h6>
                 </div>
-                <div class="st-card-body" style="padding:0;">
-                    <table class="table table-hover" style="margin-bottom:0;min-width:500px;">
+                <div class="st-tbl-wrap">
+                    <table class="st-tbl">
                         <thead>
                             <tr>
-                                <th style="width:35%;border-top:0;">Setting</th>
-                                <th style="width:18%;border-top:0;">Key</th>
-                                <th style="width:32%;border-top:0;">Value</th>
-                                <th style="width:15%;border-top:0;text-align:center;">Action</th>
+                                <th>Setting</th>
+                                <th>Key</th>
+                                <th>Value</th>
+                                <th style="text-align:center;width:80px;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($allSettings as $setting)
-                            <tr id="setting-row-{{ $setting->id }}">
-                                <td style="vertical-align:middle;">
+                            <tr id="sr-{{ $setting->id }}">
+                                <td>
                                     <strong style="font-size:13px;">{{ $setting->label ?? $setting->key }}</strong>
-                                    <div style="font-size:10px;color:#8a94a6;font-weight:600;text-transform:uppercase;letter-spacing:.3px;">
+                                    <div style="font-size:10px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.3px;">
                                         {{ $setting->group }}
                                     </div>
                                 </td>
-                                <td style="vertical-align:middle;">
-                                    <code style="font-size:11px;background:#f4f6fb;padding:2px 6px;border-radius:4px;">{{ $setting->key }}</code>
+                                <td>
+                                    <code style="font-size:11px;background:#f1f5f9;padding:2px 8px;border-radius:5px;color:#64748b;">{{ $setting->key }}</code>
                                 </td>
-                                <td style="vertical-align:middle;">
-                                    <span class="setting-value" id="sv-{{ $setting->id }}"
-                                          style="font-size:13px;color:#596579;max-width:200px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                        {{ $setting->value ?? '<empty>' }}
-                                    </span>
-                                    <form method="POST" action="{{ route('settings.update') }}"
-                                          id="sef-{{ $setting->id }}" style="display:none;" class="setting-edit-form">
-                                        @csrf
-                                        <input type="hidden" name="key" value="{{ $setting->key }}">
-                                        <div class="input-group input-group-sm" style="flex-wrap:nowrap;">
-                                            <input type="text" name="value" class="form-control"
-                                                   value="{{ $setting->value }}"
-                                                   style="height:32px;font-size:12px;border-radius:6px 0 0 6px;border:1.5px solid #667eea;">
-                                            <div class="input-group-append">
-                                                <button type="submit" class="btn btn-sm"
-                                                        style="background:#667eea;color:#fff;border-radius:0 6px 6px 0;border:none;height:32px;padding:0 10px;font-size:12px;font-weight:700;">
-                                                    Save
-                                                </button>
-                                                <button type="button" class="btn btn-sm"
-                                                        style="background:#f4f6fb;color:#596579;border:1.5px solid #e2e8f0;border-radius:6px;height:32px;padding:0 8px;font-size:12px;font-weight:600;margin-left:4px;"
-                                                        onclick="cancelEdit({{ $setting->id }})">
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </form>
+                                <td>
+                                <span class="sv" id="sv-{{ $setting->id }}"
+                                      style="font-size:13px;color:#334155;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+                                    {{ $setting->value ?? '<empty>' }}
+                                </span>
+                                <form method="POST" action="{{ route('settings.update') }}"
+                                      id="sef-{{ $setting->id }}" style="display:none;" class="sef">
+                                    @csrf
+                                    <input type="hidden" name="key" value="{{ $setting->key }}">
+                                    <div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center;">
+                                        <input type="text" name="value" class="form-control"
+                                               value="{{ $setting->value }}"
+                                               style="height:34px;font-size:12px;border-radius:8px;border:1.5px solid #6366f1;width:180px;padding:0 12px;box-shadow:none;">
+                                        <button type="submit" class="st-btn st-btn-primary" style="height:32px;padding:0 14px;font-size:11px;border-radius:8px;">
+                                            <i class="ti-check" style="font-size:10px;"></i> Save
+                                        </button>
+                                        <button type="button" class="st-btn st-btn-ghost" style="height:32px;padding:0 10px;font-size:11px;border-radius:8px;"
+                                                onclick="cancelEdit({{ $setting->id }})">
+                                            <i class="ti-close" style="font-size:10px;"></i>
+                                        </button>
+                                    </div>
+                                </form>
                                 </td>
-                                <td style="vertical-align:middle;text-align:center;">
-                                    <button class="st-icon-btn" style="background:#eef2ff;color:#667eea;"
-                                            onclick="toggleEdit({{ $setting->id }})"
-                                            title="Edit this setting">
+                                <td style="text-align:center;">
+                                    <button class="st-ib edit" onclick="toggleEdit({{ $setting->id }})" title="Edit">
                                         <i class="ti-pencil"></i>
                                     </button>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center py-4" style="color:#b0bac9;">
-                                    <i class="ti-server" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4;"></i>
-                                    <div style="font-size:13px;font-weight:600;">No settings found</div>
+                                <td colspan="4" class="text-center py-4" style="color:#cbd5e1;">
+                                    <i class="ti-server" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>
+                                    <div style="font-size:14px;font-weight:600;">No settings found</div>
                                 </td>
                             </tr>
                             @endforelse
@@ -325,57 +413,38 @@ select.st-input { padding: 0 10px; }
             </div>
         </div>{{-- /#tab-all-settings --}}
 
-        @if(userCan('view_settings_financial_year'))
+                @if(userCan('view_settings_financial_year'))
         <div class="st-tab-pane" id="tab-financial-year">
-
-            <div class="st-section-label">
-                <i class="ti-calendar" style="color:#667eea;font-size:12px;"></i>
-                Financial Year
-            </div>
-
+            <div class="st-sec"><i class="ti-calendar" style="color:#6366f1;font-size:13px;"></i> Financial Year</div>
             <div class="row">
-
-                {{-- Left: FY List ──────────────────────────────────── --}}
                 <div class="col-lg-8 col-md-12">
                     <div class="st-card">
-                        <div class="st-card-head">
-                            <h6>
-                                <i class="ti-calendar" style="color:#667eea;"></i>
-                                Financial Years
-                                <span style="background:#eef2ff;color:#667eea;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;">
-                                    {{ $financialYears->count() }}
-                                </span>
-                            </h6>
+                        <div class="st-card-hd">
+                            <h6><span class="hd-ico" style="background:#eef2ff;color:#6366f1;"><i class="ti-calendar"></i></span> Financial Years</h6>
                         </div>
-                        <div class="st-card-body">
-
-                            {{-- Active FY Banner --}}
+                        <div class="st-card-bd">
                             @if($currentFY)
-                            <div class="st-fy-active-banner">
-                                <div class="af-icon"><i class="ti-check"></i></div>
+                            <div class="st-fy-act">
+                                <div class="fa-ico"><i class="ti-check"></i></div>
                                 <div>
-                                    <div class="af-label">Active Financial Year</div>
-                                    <div class="af-value">FY {{ $currentFY->label }}</div>
-                                    <div class="af-range">
-                                        {{ $currentFY->start_date->format('d M Y') }} &mdash; {{ $currentFY->end_date->format('d M Y') }}
-                                    </div>
+                                    <div class="fa-lbl">Active Financial Year</div>
+                                    <div class="fa-val">FY {{ $currentFY->label }}</div>
+                                    <div class="fa-rng">{{ $currentFY->start_date->format('d M Y') }} &mdash; {{ $currentFY->end_date->format('d M Y') }}</div>
                                 </div>
                             </div>
                             @else
-                            <div class="st-no-fy-banner">
-                                <div style="width:32px;height:32px;border-radius:8px;background:#fde68a;color:#92400e;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+                            <div class="st-fy-miss">
+                                <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;box-shadow:0 3px 8px rgba(245,158,11,.3);">
                                     <i class="ti-alert"></i>
                                 </div>
                                 <div>
                                     <div style="font-size:12px;font-weight:700;color:#92400e;">No Active Financial Year</div>
-                                    <div style="font-size:11px;color:#b45309;">Data from all years is shown. Create and activate a year below.</div>
+                                    <div style="font-size:11px;color:#b45309;">Data from all years shown. Create and activate one below.</div>
                                 </div>
                             </div>
                             @endif
-
-                            {{-- FY Table --}}
-                            <div class="fy-table-wrap">
-                                <table class="table table-hover" id="fyTable">
+                            <div class="fy-tw">
+                                <table class="table table-hover" id="fyTbl">
                                     <thead>
                                         <tr>
                                             <th>Financial Year</th>
@@ -387,24 +456,20 @@ select.st-input { padding: 0 10px; }
                                     </thead>
                                     <tbody>
                                         @forelse($financialYears as $idx => $fy)
-                                        <tr class="{{ $fy->is_default ? 'fy-active' : '' }} {{ $idx >= 3 ? 'fy-hidden' : '' }}">
+                                        <tr class="{{ $fy->is_default ? 'fy-on' : '' }} {{ $idx >= 3 ? 'fy-hid' : '' }}">
                                             <td>
-                                                <strong style="color:{{ $fy->is_default ? '#276749' : '#1a2340' }};">
-                                                    FY {{ $fy->label }}
-                                                </strong>
+                                                <strong style="color:{{ $fy->is_default ? '#16a34a' : '#0f172a' }};">FY {{ $fy->label }}</strong>
                                                 @if($fy->is_default)
-                                                    <span class="st-badge ml-1" style="background:#c6f6d5;color:#276749;">
-                                                        <i class="ti-check" style="font-size:8px;"></i> Active
-                                                    </span>
+                                                    <span class="st-pill ml-1" style="background:#dcfce7;color:#16a34a;"><i class="ti-check" style="font-size:8px;"></i> Active</span>
                                                 @endif
                                             </td>
-                                            <td style="color:#596579;">{{ $fy->start_date->format('d M Y') }}</td>
-                                            <td style="color:#596579;">{{ $fy->end_date->format('d M Y') }}</td>
+                                            <td style="color:#64748b;">{{ $fy->start_date->format('d M Y') }}</td>
+                                            <td style="color:#64748b;">{{ $fy->end_date->format('d M Y') }}</td>
                                             <td class="text-center">
                                                 @if($fy->is_default)
-                                                    <span class="st-badge" style="background:#c6f6d5;color:#276749;">Current</span>
+                                                    <span class="st-pill" style="background:#dcfce7;color:#16a34a;">Current</span>
                                                 @else
-                                                    <span class="st-badge" style="background:#f4f6fb;color:#8a94a6;">Inactive</span>
+                                                    <span class="st-pill" style="background:#f1f5f9;color:#94a3b8;">Inactive</span>
                                                 @endif
                                             </td>
                                             <td class="text-center">
@@ -412,31 +477,28 @@ select.st-input { padding: 0 10px; }
                                                     @if(!$fy->is_default)
                                                     <form method="POST" action="{{ route('settings.fy.setDefault', $fy->id) }}" class="d-inline">
                                                         @csrf
-                                                        <button type="submit" class="btn btn-sm"
-                                                            style="height:30px;padding:0 10px;border-radius:7px;background:#eef2ff;color:#667eea;font-size:11px;font-weight:700;border:none;"
-                                                            title="Set as Active Year"
-                                                            onclick="return confirm('Set FY {{ $fy->label }} as active?\n\nAll modules will filter data for this year only.')">
+                                                        <button type="submit" class="st-btn st-btn-primary" style="height:32px;padding:0 12px;font-size:11px;"
+                                                                onclick="return confirm('Set FY {{ $fy->label }} as active? All modules will filter data for this year only.')">
                                                             <i class="ti-check mr-1"></i> Set Active
                                                         </button>
                                                     </form>
                                                     <form method="POST" action="{{ route('settings.fy.destroy', $fy->id) }}" class="d-inline">
                                                         @csrf @method('DELETE')
-                                                        <button type="submit" class="st-icon-btn del" title="Delete"
-                                                            onclick="return confirm('Delete FY {{ $fy->label }}? This cannot be undone.')">
+                                                        <button type="submit" class="st-ib del" onclick="return confirm('Delete FY {{ $fy->label }}? This cannot be undone.')">
                                                             <i class="ti-trash"></i>
                                                         </button>
                                                     </form>
                                                     @else
-                                                    <span style="font-size:11px;color:#8a94a6;">Active year</span>
+                                                    <span style="font-size:11px;color:#94a3b8;">Active year</span>
                                                     @endif
                                                 </div>
                                             </td>
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="5" class="text-center py-4" style="color:#b0bac9;">
-                                                <i class="ti-calendar" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4;"></i>
-                                                <div style="font-size:13px;font-weight:600;margin-bottom:4px;">No financial years yet</div>
+                                            <td colspan="5" class="text-center py-4" style="color:#cbd5e1;">
+                                                <i class="ti-calendar" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
+                                                <div style="font-size:14px;font-weight:600;margin-bottom:4px;">No financial years yet</div>
                                                 <div style="font-size:11px;">Use the form on the right to add one.</div>
                                             </td>
                                         </tr>
@@ -445,58 +507,44 @@ select.st-input { padding: 0 10px; }
                                 </table>
                             </div>
                             @if($financialYears->count() > 3)
-                            <div class="fy-show-more" id="fyShowMore" onclick="toggleFYRows(this)">
-                                <i class="ti-angle-down" id="fyToggleIcon"></i>
-                                <span id="fyToggleText">Show {{ $financialYears->count() - 3 }} more</span>
+                            <div class="fy-more" id="fyShowMore" onclick="toggleFY(this)">
+                                <i class="ti-angle-down" id="fyTI"></i>
+                                <span id="fyTT">Show {{ $financialYears->count() - 3 }} more</span>
                             </div>
                             @endif
-
                         </div>
                     </div>
                 </div>
-
-                {{-- Right: Add FY Form ─────────────────────────────── --}}
                 <div class="col-lg-4 col-md-12">
                     <div class="st-card">
-                        <div class="st-card-head">
-                            <h6><i class="ti-plus" style="color:#48bb78;"></i> Add Financial Year</h6>
+                        <div class="st-card-hd">
+                            <h6><span class="hd-ico" style="background:#dcfce7;color:#16a34a;"><i class="ti-plus"></i></span> Add Financial Year</h6>
                         </div>
-                        <div class="st-card-body">
+                        <div class="st-card-bd">
                             @php
                                 $lastFY       = $financialYears->sortByDesc('start_date')->first();
                                 $nextStartYear = $lastFY
                                     ? $lastFY->start_date->year + 1
                                     : (now()->month >= 4 ? now()->year : now()->year - 1);
                                 $nextLabel     = \App\Models\FinancialYear::generateLabel($nextStartYear);
-                                $nextStart     = $nextStartYear . '-04-01';
-                                $nextEnd       = ($nextStartYear + 1) . '-03-31';
                             @endphp
-
-                            <div style="background:#f5f7ff;border:1.5px dashed #c7d2fe;border-radius:8px;padding:14px;margin-bottom:14px;text-align:center;">
-                                <div style="font-size:10px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">
-                                    Next Financial Year to Create
-                                </div>
-                                <div style="font-size:22px;font-weight:800;color:#4f46e5;letter-spacing:.5px;margin-bottom:4px;">
-                                    FY {{ $nextLabel }}
-                                </div>
-                                <div style="font-size:12px;color:#6b7280;">
-                                    01 Apr {{ $nextStartYear }} &mdash; 31 Mar {{ $nextStartYear + 1 }}
-                                </div>
+                            <div class="fy-next">
+                                <div class="fn-lbl">Next Financial Year to Create</div>
+                                <div class="fn-val">FY {{ $nextLabel }}</div>
+                                <div class="fn-rng">01 Apr {{ $nextStartYear }} &mdash; 31 Mar {{ $nextStartYear + 1 }}</div>
                             </div>
-
                             <form method="POST" action="{{ route('settings.fy.store') }}">
                                 @csrf
                                 <input type="hidden" name="start_year" value="{{ $nextStartYear }}">
                                 @error('start_year')
-                                    <div style="color:#e53e3e;font-size:11px;margin-bottom:8px;">{{ $message }}</div>
+                                    <div style="color:#ef4444;font-size:11px;margin-bottom:8px;">{{ $message }}</div>
                                 @enderror
-                                <button type="submit" class="btn btn-primary btn-block" style="border-radius:8px;font-weight:700;height:42px;font-size:14px;">
+                                <button type="submit" class="st-btn-block">
                                     <i class="ti-plus mr-1"></i> Create FY {{ $nextLabel }}
                                 </button>
                             </form>
-
-                            <div class="st-info-box mt-3">
-                                <div class="ib-title"><i class="ti-info-alt mr-1"></i> How it works</div>
+                            <div class="st-inf mt-3">
+                                <div class="if-t"><i class="ti-info-alt mr-1"></i> How it works</div>
                                 <ul>
                                     <li>Create financial years as needed</li>
                                     <li>Click <strong>Set Active</strong> to activate a year</li>
@@ -507,31 +555,24 @@ select.st-input { padding: 0 10px; }
                         </div>
                     </div>
                 </div>
-
-            </div>{{-- /.row --}}
+            </div>
         </div>{{-- /#tab-financial-year --}}
         @endif
 
         @if(userCan('view_settings_branch_default'))
         <div class="st-tab-pane" id="tab-branch">
-
-            <div class="st-section-label">
-                <i class="ti-layers" style="color:#667eea;font-size:12px;"></i>
-                Branch Settings
-            </div>
-
+            <div class="st-sec"><i class="ti-layers" style="color:#6366f1;font-size:13px;"></i> Branch Settings</div>
             <div class="st-card">
-                <div class="st-card-head">
-                    <h6><i class="ti-layers" style="color:#667eea;"></i> Default Branch &amp; Preferences</h6>
+                <div class="st-card-hd">
+                    <h6><span class="hd-ico" style="background:#eef2ff;color:#6366f1;"><i class="ti-layers"></i></span> Default Branch &amp; Preferences</h6>
                 </div>
-                <div class="st-card-body">
+                <div class="st-card-bd">
                     <form method="POST" action="{{ route('settings.branch.update') }}">
                         @csrf
-
                         <div class="row">
                             <div class="col-md-6">
-                                <label class="st-form-label">Default Branch</label>
-                                <select name="default_branch" class="select2 form-control st-input">
+                                <label class="st-f" for="default_branch">Default Branch</label>
+                                <select name="default_branch" id="default_branch" class="select2 form-control st-i">
                                     <option value="">— Select Default Branch —</option>
                                     @foreach($branches as $branch)
                                         <option value="{{ $branch->id }}" {{ ($branchSettings['default_branch']->value ?? '') == $branch->id ? 'selected' : '' }}>
@@ -539,21 +580,17 @@ select.st-input { padding: 0 10px; }
                                         </option>
                                     @endforeach
                                 </select>
-                                <small style="color:#8a94a6;font-size:11px;">
-                                    This branch will be pre-selected when creating new records.
-                                </small>
+                                <small style="color:#94a3b8;font-size:11px;margin-top:4px;display:block;">This branch will be pre-selected when creating new records.</small>
                             </div>
                         </div>
-
                         <div style="margin-top:18px;">
-                            <button type="submit" class="btn btn-primary" style="border-radius:8px;font-weight:700;height:40px;padding:0 24px;font-size:13px;">
+                            <button type="submit" class="st-btn st-btn-primary">
                                 <i class="ti-check mr-1"></i> Save Branch Settings
                             </button>
                         </div>
                     </form>
-
-                    <div class="st-info-box mt-3">
-                        <div class="ib-title"><i class="ti-info-alt mr-1"></i> How it works</div>
+                    <div class="st-inf mt-3">
+                        <div class="if-t"><i class="ti-info-alt mr-1"></i> How it works</div>
                         <ul>
                             <li>Set a <strong>Default Branch</strong> to auto-select it on all forms</li>
                             <li>Branch settings are used globally across all modules</li>
@@ -566,53 +603,111 @@ select.st-input { padding: 0 10px; }
         @endif
 
         @if(showAllMenu())
-        <div class="st-tab-pane" id="tab-limits">
-
-            <div class="st-section-label">
-                <i class="ti-lock" style="color:#667eea;font-size:12px;"></i>
-                Account Limits
-            </div>
-
-            <div class="st-card">
-                <div class="st-card-head">
-                    <h6><i class="ti-lock" style="color:#667eea;"></i> Company &amp; Branch Add Limits</h6>
+        <div class="st-tab-pane" id="tab-gst">
+            <div class="st-sec"><i class="ti-receipt" style="color:#6366f1;font-size:13px;"></i> GST Settings</div>
+            <div class="row">
+                <div class="col-lg-8 col-md-12">
+                    <div class="st-card">
+                        <div class="st-card-hd">
+                            <h6><span class="hd-ico" style="background:#eef2ff;color:#6366f1;"><i class="ti-receipt"></i></span> GST Rates</h6>
+                            <span id="gstCountBadge" class="ni-badge" style="background:#eef2ff;color:#4f46e5;font-size:10px;font-weight:700;padding:2px 12px;border-radius:20px;">{{ $gstSettings->count() }}</span>
+                        </div>
+                        <div class="st-tbl-wrap">
+                            <table class="st-tbl">
+                                <thead>
+                                    <tr>
+                                        <th style="width:38%;">GST Name</th>
+                                        <th style="width:28%;">Type</th>
+                                        <th style="width:18%;">Percentage</th>
+                                        <th style="text-align:center;width:16%;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gstTableBody">
+                                    @include('Settings._gst_rows')
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="st-card-body">
+                <div class="col-lg-4 col-md-12">
+                    <div class="st-card" id="gstFormCard">
+                        <div class="st-card-hd">
+                            <h6><span class="hd-ico" id="gstFormIcon" style="background:#dcfce7;color:#16a34a;"><i class="ti-plus"></i></span> <span id="gstFormTitle">Add GST</span></h6>
+                        </div>
+                        <div class="st-card-bd">
+                            <form id="gstForm" onsubmit="return submitGst(event)">
+                                @csrf
+                                <input type="hidden" name="_method" id="gstMethod" value="POST">
+                                <div class="form-group" style="margin-bottom:16px;">
+                                    <label class="st-f" for="gstName">GST Name</label>
+                                    <input type="text" name="name" id="gstName" class="form-control st-i"
+                                           placeholder="e.g. Standard GST" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom:16px;">
+                                    <label class="st-f" for="gstType">GST Type</label>
+                                    <select name="type" id="gstType" class="form-control st-i select2" required>
+                                        <option value="">— Select Type —</option>
+                                        <option value="CGST+SGST">CGST+SGST</option>
+                                        <option value="IGST">IGST</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom:20px;">
+                                    <label class="st-f" for="gstPercentage">Percentage (%)</label>
+                                    <input type="number" name="percentage" id="gstPercentage" class="form-control st-i"
+                                           placeholder="e.g. 18" min="0" max="100" step="0.01" required>
+                                </div>
+                                <div style="display:flex;gap:8px;">
+                                    <button type="submit" class="st-btn st-btn-primary" id="gstSubmitBtn" style="flex:1;height:44px;font-size:13px;border-radius:10px;">
+                                        <i class="ti-plus mr-1"></i> Add GST
+                                    </button>
+                                    <button type="button" class="st-btn st-btn-ghost" id="gstCancelBtn" onclick="resetGstForm()" style="display:none;height:44px;padding:0 18px;border-radius:10px;font-size:12px;">
+                                        <i class="ti-close mr-1"></i> Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>{{-- /#tab-gst --}}
+        @endif
+
+        @if(showAllMenu())
+        <div class="st-tab-pane" id="tab-limits">
+            <div class="st-sec"><i class="ti-lock" style="color:#6366f1;font-size:13px;"></i> Account Limits</div>
+            <div class="st-card">
+                <div class="st-card-hd">
+                    <h6><span class="hd-ico" style="background:#eef2ff;color:#6366f1;"><i class="ti-lock"></i></span> Company &amp; Branch Add Limits</h6>
+                </div>
+                <div class="st-card-bd">
                     <form method="POST" action="{{ route('settings.limits.update') }}">
                         @csrf
-
                         <div class="row">
                             <div class="col-md-4">
-                                <label class="st-form-label">Company Add Limit</label>
-                                <input type="number" name="company_limit" class="form-control st-input"
+                                <label class="st-f" for="company_limit">Company Add Limit</label>
+                                <input type="number" name="company_limit" id="company_limit" class="form-control st-i"
                                        value="{{ $companyLimit }}" placeholder="e.g. 1" min="0">
-                                <small style="color:#8a94a6;font-size:11px;">
-                                    Maximum companies allowed to add. Leave empty for unlimited.
-                                </small>
+                                <small style="color:#94a3b8;font-size:11px;margin-top:6px;display:block;line-height:1.4;">Maximum companies allowed. Leave empty for unlimited.</small>
                             </div>
                             <div class="col-md-4">
-                                <label class="st-form-label">Branch Add Limit</label>
-                                <input type="number" name="branch_limit" class="form-control st-input"
+                                <label class="st-f" for="branch_limit">Branch Add Limit</label>
+                                <input type="number" name="branch_limit" id="branch_limit" class="form-control st-i"
                                        value="{{ $branchLimit }}" placeholder="e.g. 5" min="0">
-                                <small style="color:#8a94a6;font-size:11px;">
-                                    Maximum branches allowed to add. Leave empty for unlimited.
-                                </small>
+                                <small style="color:#94a3b8;font-size:11px;margin-top:6px;display:block;line-height:1.4;">Maximum branches allowed. Leave empty for unlimited.</small>
                             </div>
                         </div>
-
                         <div style="margin-top:18px;">
-                            <button type="submit" class="btn btn-primary" style="border-radius:8px;font-weight:700;height:40px;padding:0 24px;font-size:13px;">
+                            <button type="submit" class="st-btn st-btn-primary">
                                 <i class="ti-check mr-1"></i> Save Limits
                             </button>
                         </div>
                     </form>
-
-                    <div class="st-info-box mt-3">
-                        <div class="ib-title"><i class="ti-info-alt mr-1"></i> How it works</div>
+                    <div class="st-inf mt-3">
+                        <div class="if-t"><i class="ti-info-alt mr-1"></i> How it works</div>
                         <ul>
-                            <li>Set a <strong>Company Add Limit</strong> to restrict how many companies can be created</li>
-                            <li>Set a <strong>Branch Add Limit</strong> to restrict how many branches can be created</li>
-                            <li>When limit is reached, the "Add" button will be hidden and users will see a contact-support message</li>
+                            <li>Set a <strong>Company Add Limit</strong> to restrict company creation</li>
+                            <li>Set a <strong>Branch Add Limit</strong> to restrict branch creation</li>
+                            <li>When limit is reached, the "Add" button hides and users see a contact-support message</li>
                             <li>Leave a field empty for <strong>unlimited</strong> additions</li>
                         </ul>
                     </div>
@@ -630,78 +725,131 @@ select.st-input { padding: 0 10px; }
 @push('scripts')
 <script>
 function toggleEdit(id) {
-    var valSpan = document.getElementById('sv-' + id);
-    var form    = document.getElementById('sef-' + id);
-    if (form.style.display === 'none') {
-        form.style.display = 'block';
-        valSpan.style.display = 'none';
+    var v = document.getElementById('sv-' + id);
+    var f = document.getElementById('sef-' + id);
+    if (f.style.display === 'none') {
+        f.style.display = 'block';
+        v.style.display = 'none';
+        var inp = f.querySelector('input[name="value"]');
+        if (inp) { inp.focus(); inp.select(); }
     } else {
-        form.style.display = 'none';
-        valSpan.style.display = 'inline-block';
+        f.style.display = 'none';
+        v.style.display = 'inline-flex';
     }
 }
 function cancelEdit(id) {
-    var valSpan = document.getElementById('sv-' + id);
-    var form    = document.getElementById('sef-' + id);
-    form.style.display = 'none';
-    valSpan.style.display = 'inline-block';
+    document.getElementById('sv-' + id).style.display = 'inline-flex';
+    document.getElementById('sef-' + id).style.display = 'none';
 }
-
-function toggleFYRows(btn) {
-    var hidden  = document.querySelectorAll('#fyTable tbody tr.fy-hidden');
-    var visible = document.querySelectorAll('#fyTable tbody tr:not(.fy-hidden)');
-    var icon    = document.getElementById('fyToggleIcon');
-    var text    = document.getElementById('fyToggleText');
-    var wrap    = document.querySelector('.fy-table-wrap');
-
-    if (hidden.length > 0) {
-        hidden.forEach(function(r){ r.classList.remove('fy-hidden'); });
-        wrap.style.maxHeight = '320px';
-        icon.className = 'ti-angle-up';
-        text.textContent = 'Show less';
+function toggleFY(b) {
+    var h = document.querySelectorAll('#fyTbl tbody tr.fy-hid');
+    var i = document.getElementById('fyTI');
+    var t = document.getElementById('fyTT');
+    var w = document.querySelector('.fy-tw');
+    if (h.length > 0) {
+        h.forEach(function(r){ r.classList.remove('fy-hid'); });
+        w.style.maxHeight = '320px';
+        i.className = 'ti-angle-up';
+        t.textContent = 'Show less';
     } else {
-        var rows = document.querySelectorAll('#fyTable tbody tr');
-        rows.forEach(function(r, i){ if(i >= 3) r.classList.add('fy-hidden'); });
-        wrap.style.maxHeight = 'none';
-        wrap.style.overflowY = 'visible';
-        icon.className = 'ti-angle-down';
-        text.textContent = 'Show ' + (rows.length - 3) + ' more';
+        var rows = document.querySelectorAll('#fyTbl tbody tr');
+        rows.forEach(function(r, j){ if(j >= 3) r.classList.add('fy-hid'); });
+        w.style.maxHeight = 'none';
+        w.style.overflowY = 'visible';
+        i.className = 'ti-angle-down';
+        t.textContent = 'Show ' + (rows.length - 3) + ' more';
     }
 }
-
-// ── Tab switching ──────────────────────────────────────────────────
 (function() {
-    var navItems = document.querySelectorAll('#settingsNav .st-nav-item');
-
-    function switchTab(tabId) {
-        if (!tabId) return;
-        navItems.forEach(function(n) {
-            n.classList.toggle('active', n.getAttribute('data-tab') === tabId);
-        });
-        var panes = document.querySelectorAll('.st-tab-pane');
-        panes.forEach(function(p) { p.classList.remove('active'); });
-        var target = document.getElementById(tabId);
-        if (target) target.classList.add('active');
+    var nav = document.querySelectorAll('#settingsNav .st-nav-item');
+    function sw(t) {
+        if (!t) return;
+        nav.forEach(function(n){ n.classList.toggle('active', n.getAttribute('data-tab') === t); });
+        document.querySelectorAll('.st-tab-pane').forEach(function(p){ p.classList.remove('active'); });
+        var el = document.getElementById(t); if (el) el.classList.add('active');
     }
-
-    navItems.forEach(function(item) {
-        item.addEventListener('click', function() {
-            var tabId = this.getAttribute('data-tab');
-            switchTab(tabId);
-            if (history.pushState) {
-                history.pushState(null, null, '#' + tabId.replace('tab-', ''));
-            }
+    nav.forEach(function(n){
+        n.addEventListener('click', function(){
+            var id = this.getAttribute('data-tab'); sw(id);
+            if (history.pushState) history.pushState(null, null, '#' + id.replace('tab-', ''));
+            if (id === 'tab-gst') setTimeout(initGstSelect2, 50);
         });
     });
-
-    // Check URL hash on load
-    var hash = window.location.hash.replace('#', '');
-    if (hash) {
-        var matchedTab = 'tab-' + hash;
-        if (document.getElementById(matchedTab)) {
-            switchTab(matchedTab);
-        }
-    }
+    var h = window.location.hash.replace('#', '');
+    if (h) { var m = 'tab-' + h; if (document.getElementById(m)) { sw(m); if (m === 'tab-gst') setTimeout(initGstSelect2, 50); } }
 })();
+
+// ── GST: fetch CRUD + toastr ─────────────────────────────────────
+var gstEditId = null;
+
+function initGstSelect2() {
+    if (typeof $ !== 'undefined' && !$('#gstType').data('select2'))
+        $('#gstType').select2({ width: '100%', dropdownParent: $('#gstForm').closest('.st-card-bd') });
+}
+
+function submitGst(e) {
+    e.preventDefault();
+    var fd = new FormData(document.getElementById('gstForm'));
+    if (gstEditId) { fd.set('_method', 'PUT'); }
+    var url = gstEditId ? '{{ url('settings/gst') }}/' + gstEditId : '{{ route('settings.gst.store') }}';
+    fetch(url, { method: 'POST', body: fd, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function(r) { return r.json(); })
+        .then(function(r) {
+            document.getElementById('gstTableBody').innerHTML = r.rows;
+            document.querySelector('[data-tab="tab-gst"] .ni-badge').textContent = r.count;
+            document.getElementById('gstCountBadge').textContent = r.count;
+            resetGstForm(); toastr.success(r.success);
+        });
+    return false;
+}
+
+function deleteGst(id) {
+    var name = document.querySelector('#gst-row-' + id + ' td strong').textContent;
+    document.getElementById('globalDelName').textContent = name;
+    document.getElementById('globalDelType').textContent = 'GST';
+    window._gstDelOrigConfirm = window.globalDelConfirm;
+    window.globalDelConfirm = function() {
+        clearInterval(globalDelTimer); $('#globalDeleteModal').modal('hide');
+        var fd = new FormData(); fd.append('_token', '{{ csrf_token() }}'); fd.append('_method', 'DELETE');
+        fetch('{{ url('settings/gst') }}/' + id, { method: 'POST', body: fd, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function(r) { return r.json(); })
+            .then(function(r) {
+                document.getElementById('gstTableBody').innerHTML = r.rows;
+                document.querySelector('[data-tab="tab-gst"] .ni-badge').textContent = r.count;
+                document.getElementById('gstCountBadge').textContent = r.count;
+                toastr.success(r.success);
+            });
+        window.globalDelConfirm = window._gstDelOrigConfirm;
+    };
+    $('#globalDeleteModal').on('hidden.bs.modal.gst', function() { window.globalDelConfirm = window._gstDelOrigConfirm; $(this).off('hidden.bs.modal.gst'); });
+    $('#globalDeleteModal').modal('show');
+}
+
+function openGstEdit(id, name, type, percentage) {
+    gstEditId = id;
+    document.getElementById('gstName').value = name;
+    document.getElementById('gstType').value = type;
+    if (typeof $ !== 'undefined') { var $el = $('#gstType'); if (!$el.data('select2')) $el.select2({ width: '100%', dropdownParent: $('#gstForm').closest('.st-card-bd') }); $el.trigger('change'); }
+    document.getElementById('gstPercentage').value = percentage;
+    document.getElementById('gstFormTitle').textContent = 'Edit GST';
+    document.getElementById('gstFormIcon').className = 'ti-pencil';
+    document.getElementById('gstFormIcon').style.background = '#eef2ff';
+    document.getElementById('gstFormIcon').style.color = '#6366f1';
+    document.getElementById('gstSubmitBtn').innerHTML = '<i class="ti-check mr-1"></i> Update GST';
+    document.getElementById('gstCancelBtn').style.display = 'flex';
+}
+
+function resetGstForm() {
+    gstEditId = null;
+    document.getElementById('gstForm').reset();
+    document.getElementById('gstMethod').value = 'POST';
+    if (typeof $ !== 'undefined') { var $el = $('#gstType'); if ($el.data('select2')) { $el.val('').trigger('change'); } else { $el.select2({ width: '100%', dropdownParent: $('#gstForm').closest('.st-card-bd') }); } }
+    document.getElementById('gstFormTitle').textContent = 'Add GST';
+    document.getElementById('gstFormIcon').className = 'ti-plus';
+    document.getElementById('gstFormIcon').style.background = '#dcfce7';
+    document.getElementById('gstFormIcon').style.color = '#16a34a';
+    document.getElementById('gstSubmitBtn').innerHTML = '<i class="ti-plus mr-1"></i> Add GST';
+    document.getElementById('gstCancelBtn').style.display = 'none';
+}
 </script>
 @endpush

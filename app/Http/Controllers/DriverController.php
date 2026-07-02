@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bank;
 use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-
 
 class DriverController extends Controller
 {
@@ -15,7 +15,7 @@ class DriverController extends Controller
      */
     public function index()
     {
-        $drivers = Driver::where('is_active', true)
+        $drivers = Driver::with('bank')->where('is_active', true)
             ->where('is_deleted', false)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -28,7 +28,8 @@ class DriverController extends Controller
      */
     public function create()
     {
-        return view('Drivers_Master.New_Driver');
+        $banks = Bank::orderBy('name')->get();
+        return view('Drivers_Master.New_Driver', compact('banks'));
     }
 
     /**
@@ -37,23 +38,28 @@ class DriverController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
-            'driver_type'    => 'nullable|in:own,rental',
-            'license_number' => ['required', 'string', 'max:16', Rule::unique('drivers', 'license_number')->where('is_deleted', 0)],
-            'mobile'         => 'required|string|max:20',
-            'aadhar_number'  => ['required', 'string', 'max:12', Rule::unique('drivers', 'aadhar_number')->where('is_deleted', 0)],
-            'pan_number'     => ['required', 'string', 'max:10', Rule::unique('drivers', 'pan_number')->where('is_deleted', 0)],
-            'dob'            => 'required|string|max:20',
-            'state'          => 'nullable|string|max:100',
-            'district'       => 'nullable|string|max:100',
-            'city'           => 'nullable|string|max:100',
-            'postal_code'    => 'nullable|string|max:6',
-            'address'        => 'nullable|string',
-            'remarks'        => 'nullable|string',
-            'driver_photo'   => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
-            'aadhar_photo'   => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'pan_photo'      => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'license_photo'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'name'              => 'required|string|max:255',
+            'driver_type'       => 'nullable|in:own,rental',
+            'license_number'    => ['required', 'string', 'max:16', Rule::unique('drivers', 'license_number')->where('is_deleted', 0)],
+            'mobile'            => 'required|string|max:20',
+            'alternative_mobile'=> 'nullable|string|max:20',
+            'aadhar_number'     => ['required', 'string', 'max:12', Rule::unique('drivers', 'aadhar_number')->where('is_deleted', 0)],
+            'pan_number'        => ['required', 'string', 'max:10', Rule::unique('drivers', 'pan_number')->where('is_deleted', 0)],
+            'bank_name_id'      => 'nullable|exists:banks,id',
+            'account_number'    => 'nullable|string|max:30',
+            'ifsc_code'         => 'nullable|string|max:15',
+            'branch_name'       => 'nullable|string|max:100',
+            'dob'               => 'required|string|max:20',
+            'state'             => 'nullable|string|max:100',
+            'district'          => 'nullable|string|max:100',
+            'city'              => 'nullable|string|max:100',
+            'postal_code'       => 'nullable|string|max:6',
+            'address'           => 'nullable|string',
+            'remarks'           => 'nullable|string',
+            'driver_photo'      => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'aadhar_photo'      => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'pan_photo'         => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'license_photo'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
         $validated['driver_type'] = $validated['driver_type'] ?? 'own';
 
@@ -88,7 +94,7 @@ class DriverController extends Controller
      */
     public function view($id)
     {
-        $driver = Driver::findOrFail($id);
+        $driver = Driver::with('bank')->findOrFail($id);
 
         // Append public URLs for photos
         $data = $driver->toArray();
@@ -107,8 +113,9 @@ class DriverController extends Controller
     public function edit($id)
     {
         $driver = Driver::findOrFail($id);
+        $banks  = Bank::orderBy('name')->get();
 
-        return view('Drivers_Master.Edit_Driver', compact('driver'));
+        return view('Drivers_Master.Edit_Driver', compact('driver', 'banks'));
     }
 
     /**
@@ -119,23 +126,28 @@ class DriverController extends Controller
         $driver = Driver::findOrFail($id);
 
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
-            'driver_type'    => 'nullable|in:own,rental',
-            'license_number' => ['required', 'string', 'max:16', Rule::unique('drivers', 'license_number')->ignore($id)->where('is_deleted', 0)],
-            'mobile'         => 'required|string|max:20',
-            'aadhar_number'  => ['required', 'string', 'max:12', Rule::unique('drivers', 'aadhar_number')->ignore($id)->where('is_deleted', 0)],
-            'pan_number'     => ['required', 'string', 'max:10', Rule::unique('drivers', 'pan_number')->ignore($id)->where('is_deleted', 0)],
-            'dob'            => 'required|string|max:20',
-            'state'          => 'nullable|string|max:100',
-            'district'       => 'nullable|string|max:100',
-            'city'           => 'nullable|string|max:100',
-            'postal_code'    => 'nullable|string|max:6',
-            'address'        => 'nullable|string',
-            'remarks'        => 'nullable|string',
-            'driver_photo'   => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
-            'aadhar_photo'   => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'pan_photo'      => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'license_photo'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'name'              => 'required|string|max:255',
+            'driver_type'       => 'nullable|in:own,rental',
+            'license_number'    => ['required', 'string', 'max:16', Rule::unique('drivers', 'license_number')->ignore($id)->where('is_deleted', 0)],
+            'mobile'            => 'required|string|max:20',
+            'alternative_mobile'=> 'nullable|string|max:20',
+            'aadhar_number'     => ['required', 'string', 'max:12', Rule::unique('drivers', 'aadhar_number')->ignore($id)->where('is_deleted', 0)],
+            'pan_number'        => ['required', 'string', 'max:10', Rule::unique('drivers', 'pan_number')->ignore($id)->where('is_deleted', 0)],
+            'bank_name_id'      => 'nullable|exists:banks,id',
+            'account_number'    => 'nullable|string|max:30',
+            'ifsc_code'         => 'nullable|string|max:15',
+            'branch_name'       => 'nullable|string|max:100',
+            'dob'               => 'required|string|max:20',
+            'state'             => 'nullable|string|max:100',
+            'district'          => 'nullable|string|max:100',
+            'city'              => 'nullable|string|max:100',
+            'postal_code'       => 'nullable|string|max:6',
+            'address'           => 'nullable|string',
+            'remarks'           => 'nullable|string',
+            'driver_photo'      => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'aadhar_photo'      => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'pan_photo'         => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'license_photo'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
         $validated['driver_type'] = $validated['driver_type'] ?? 'own';
 

@@ -99,6 +99,7 @@ Route::post('/trip/{id}/payments', [TripController::class, 'addPayment'])->name(
 Route::delete('/trip/{id}/payments/{paymentId}', [TripController::class, 'deletePayment'])->name('trip.payment.delete');
 Route::delete('/trip/{id}', [TripController::class, 'destroy'])->name('trip.destroy');
 Route::get('/trip/generate-lr', [TripController::class, 'generateLrNo'])->name('trip.generate-lr');
+Route::get('/trip/{id}/consignor-document', [TripController::class, 'consignorDocument'])->name('trip.consignor-document');
 
 // ── Expense Module ─────────────────────────────────────────────────────────
 Route::post('/expense/category', [ExpenseController::class, 'storeCategory'])->name('expense.category.store');
@@ -119,6 +120,21 @@ Route::delete('/expense/{id}', [ExpenseController::class, 'destroy'])->name('exp
 // Credit payment collection
 Route::post('/expense/{id}/pay', [ExpenseController::class, 'collectPayment'])->name('expense.pay');
 Route::get('/expense/{id}/payments', [ExpenseController::class, 'paymentHistory'])->name('expense.payments');
+
+// ── Payroll Module ─────────────────────────────────────────────────────────
+Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll');
+Route::get('/payroll/add', [\App\Http\Controllers\PayrollController::class, 'create'])->name('payroll.create');
+Route::post('/payroll', [\App\Http\Controllers\PayrollController::class, 'store'])->name('payroll.store');
+Route::get('/payroll/edit/{id}', [\App\Http\Controllers\PayrollController::class, 'edit'])->name('payroll.edit');
+Route::get('/payroll/view/{id}', [\App\Http\Controllers\PayrollController::class, 'view'])->name('payroll.view');
+Route::put('/payroll/{id}', [\App\Http\Controllers\PayrollController::class, 'update'])->name('payroll.update');
+Route::delete('/payroll/{id}', [\App\Http\Controllers\PayrollController::class, 'destroy'])->name('payroll.destroy');
+// Salary Advance
+Route::post('/payroll/advance', [\App\Http\Controllers\PayrollController::class, 'advanceStore'])->name('payroll.advance.store');
+Route::get('/payroll/advance/{id}/edit', [\App\Http\Controllers\PayrollController::class, 'advanceEdit'])->name('payroll.advance.edit');
+Route::put('/payroll/advance/{id}', [\App\Http\Controllers\PayrollController::class, 'advanceUpdate'])->name('payroll.advance.update');
+Route::delete('/payroll/advance/{id}', [\App\Http\Controllers\PayrollController::class, 'advanceDestroy'])->name('payroll.advance.destroy');
+Route::get('/api/payroll/driver-advance/{driverId}', [\App\Http\Controllers\PayrollController::class, 'driverAdvanceBalance'])->name('payroll.driver.advance');
 
 // ── Vehicle EMI Module ─────────────────────────────────────────────────────
 Route::get('/emi', [VehicleEmiController::class, 'index'])->name('emi');
@@ -190,6 +206,10 @@ Route::middleware(CheckLogin::class)->group(function () {
     Route::post('/settings/branch', [SettingsController::class, 'updateBranchSettings'])->name('settings.branch.update');
     Route::post('/settings/limits', [SettingsController::class, 'updateLimitSettings'])->name('settings.limits.update');
     Route::post('/settings/update', [SettingsController::class, 'updateSetting'])->name('settings.update');
+    Route::post('/settings/gst', [SettingsController::class, 'storeGst'])->name('settings.gst.store');
+    Route::post('/settings/payroll', [SettingsController::class, 'updatePayrollSettings'])->name('settings.payroll.update');
+    Route::match(['put', 'post'], '/settings/gst/{id}', [SettingsController::class, 'updateGst'])->name('settings.gst.update');
+    Route::delete('/settings/gst/{id}', [SettingsController::class, 'destroyGst'])->name('settings.gst.destroy');
     Route::get('/settings/permissions', [SettingsController::class, 'permissionIndex'])->name('settings.permissions.index');
     Route::get('/settings/permissions/{id}/edit', [SettingsController::class, 'editPermissions'])->name('settings.permissions.edit');
     Route::post('/settings/permissions/{id}', [SettingsController::class, 'updatePermissions'])->name('settings.permissions.update');

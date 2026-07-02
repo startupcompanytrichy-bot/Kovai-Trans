@@ -73,6 +73,7 @@
 .photo-upload-card.has-file .card-icon { color: #38a169; }
 .photo-upload-card .card-title { font-size: 12px; font-weight: 700; color: #303549; margin-bottom: 4px; display: block; }
 .photo-upload-card .card-hint { font-size: 11px; color: #adb5bd; margin-bottom: 8px; }
+.photo-preview-img { width:72px; height:72px; object-fit:cover; border-radius:8px; border:2px solid #38a169; margin-bottom:6px; display:none; }
 .existing-photo-thumb { width:68px; height:68px; object-fit:cover; border-radius:8px; border:2px solid #38a169; margin-bottom:6px; cursor:pointer; }
 .existing-badge {
     display: inline-flex; align-items: center; gap: 5px;
@@ -197,7 +198,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group-drv">
                                 <label>Mobile Number <span class="req">*</span></label>
                                 <input type="text" name="mobile" class="form-control @error('mobile') is-invalid @enderror"
@@ -205,7 +206,15 @@
                                 @error('mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group-drv">
+                                <label>Alternative Mobile 2</label>
+                                <input type="text" name="alternative_mobile" class="form-control @error('alternative_mobile') is-invalid @enderror"
+                                    value="{{ old('alternative_mobile', $driver->alternative_mobile) }}" placeholder="Enter alternative number" maxlength="20">
+                                @error('alternative_mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group-drv">
                                 <label>License Number <span class="req">*</span></label>
                                 <input type="text" name="license_number" class="form-control @error('license_number') is-invalid @enderror"
@@ -279,12 +288,59 @@
                     <div class="form-group-drv mb-0">
                         <label>Full Address</label>
                         <textarea name="address" rows="2" class="form-control"
-                            placeholder="Enter full address">{{ old('address', $driver->address) }}</textarea>
+                    placeholder="Enter full address">{{ old('address', $driver->address) }}</textarea>
+                </div>
+            </div>
+
+            {{-- 3. Bank Details --}}
+            <div class="form-card">
+                <div class="form-card-header">
+                    <i class="ti-wallet" style="color:#667eea;"></i>
+                    <h6>Bank Details</h6>
+                </div>
+                <div class="form-card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-drv">
+                                <label>Bank Name</label>
+                                <select name="bank_name_id" class="form-control select2 @error('bank_name_id') is-invalid @enderror">
+                                    <option value="">Select Bank</option>
+                                    @foreach($banks as $bank)
+                                    <option value="{{ $bank->id }}" {{ old('bank_name_id', $driver->bank_name_id) == $bank->id ? 'selected' : '' }}>{{ $bank->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('bank_name_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-drv">
+                                <label>Account Number</label>
+                                <input type="text" name="account_number" class="form-control @error('account_number') is-invalid @enderror"
+                                    value="{{ old('account_number', $driver->account_number) }}" placeholder="Enter account number" maxlength="30">
+                                @error('account_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-drv">
+                                <label>IFSC Code</label>
+                                <input type="text" name="ifsc_code" class="form-control @error('ifsc_code') is-invalid @enderror"
+                                    value="{{ old('ifsc_code', $driver->ifsc_code) }}" placeholder="e.g. SBIN0001234" maxlength="15">
+                                @error('ifsc_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-drv">
+                                <label>Branch Name</label>
+                                <input type="text" name="branch_name" class="form-control @error('branch_name') is-invalid @enderror"
+                                    value="{{ old('branch_name', $driver->branch_name) }}" placeholder="Enter branch name" maxlength="100">
+                                @error('branch_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- 3. Documents & Photos --}}
+            {{-- 4. Documents & Photos --}}
             <div class="form-card">
                 <div class="form-card-header">
                     <i class="ti-files" style="color:#667eea;"></i>
@@ -305,7 +361,8 @@
                         @php $existing = $driver->$field; $ext = $existing ? pathinfo($existing, PATHINFO_EXTENSION) : ''; @endphp
                         <div class="col-md-3 mb-3">
                             <div class="photo-upload-card {{ $existing ? 'has-file' : '' }}" id="card_{{ $field }}">
-                                <i class="{{ $icon }} card-icon"></i>
+                                <img id="preview_{{ $field }}" class="photo-preview-img" src="#" alt="{{ $label }}">
+                                <i class="{{ $icon }} card-icon" id="icon_{{ $field }}"></i>
                                 <span class="card-title">{{ $label }}</span>
                                 <p class="card-hint">{{ strtoupper(str_replace(',', ' / ', $accept)) }}</p>
 
@@ -313,6 +370,7 @@
                                     @if(in_array(strtolower($ext), ['jpg','jpeg','png','gif','webp']))
                                         <img src="{{ asset('storage/' . $existing) }}"
                                             class="existing-photo-thumb"
+                                            id="existing_{{ $field }}"
                                             onclick="previewPhoto('{{ asset('storage/' . $existing) }}', '{{ $label }}')"
                                             title="Click to preview">
                                     @else
@@ -343,7 +401,7 @@
                 </div>
             </div>
 
-            {{-- 4. Remarks --}}
+            {{-- 5. Remarks --}}
             <div class="form-card">
                 <div class="form-card-header">
                     <i class="ti-comment" style="color:#667eea;"></i>
@@ -472,13 +530,23 @@ $(function () {
     $(stateEl).on('select2:select', function () {
         loadDistricts(null);
     });
+
+    /* ── bank name select2 ── */
+    $('select[name="bank_name_id"]').select2({
+        width: '100%',
+        allowClear: true,
+        placeholder: 'Select Bank'
+    });
 });
 
 /* ── Photo upload ── */
 var uploadXhr = {};
 function onPhotoChosen(input, field) {
-    var card   = document.getElementById('card_'  + field);
-    var nameEl = document.getElementById('name_'  + field);
+    var card    = document.getElementById('card_'   + field);
+    var nameEl  = document.getElementById('name_'   + field);
+    var preview = document.getElementById('preview_' + field);
+    var iconEl  = document.getElementById('icon_'   + field);
+    var existingEl = document.getElementById('existing_' + field);
     if (!input.files || !input.files[0]) return;
     var file = input.files[0];
     if (file.size > 2 * 1024 * 1024) { alert('File exceeds 2 MB limit.'); input.value = ''; return; }
@@ -488,6 +556,9 @@ function onPhotoChosen(input, field) {
     nameEl.textContent = '📎 ' + file.name;
     nameEl.style.display = 'block';
     card.classList.add('has-file');
+    preview.style.display = 'none';
+    iconEl.style.display  = 'block';
+    if (existingEl) existingEl.style.display = 'none';
 
     // Upload via AJAX immediately
     var fd = new FormData();
@@ -505,6 +576,12 @@ function onPhotoChosen(input, field) {
             try {
                 var data = JSON.parse(xhr.responseText);
                 document.getElementById(field + '_temp').value = data.path;
+                var ext = data.name.split('.').pop().toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1) {
+                    preview.src = data.url;
+                    preview.style.display = 'block';
+                    iconEl.style.display = 'none';
+                }
             } catch (e) {}
         }
     };
@@ -519,9 +596,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tempPath && tempPath.value) {
             var card = document.getElementById('card_' + field);
             var nameEl = document.getElementById('name_' + field);
+            var preview = document.getElementById('preview_' + field);
+            var iconEl = document.getElementById('icon_' + field);
+            var existingEl = document.getElementById('existing_' + field);
             card.classList.add('has-file');
             nameEl.textContent = '📎 ' + tempPath.value.split('/').pop();
             nameEl.style.display = 'block';
+            var ext = tempPath.value.split('.').pop().toLowerCase();
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1) {
+                preview.src = '/storage/' + tempPath.value;
+                preview.style.display = 'block';
+                iconEl.style.display = 'none';
+                if (existingEl) existingEl.style.display = 'none';
+            }
         }
     });
 });

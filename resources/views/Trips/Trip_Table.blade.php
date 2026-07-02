@@ -383,6 +383,16 @@ $payConfig = [
         color: #fff;
     }
 
+    .td-icon-btn.pdf {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .td-icon-btn.pdf:hover {
+        background: #d97706;
+        color: #fff;
+    }
+
     /* row checkbox */
     .td-row-check {
         width: 16px;
@@ -781,6 +791,9 @@ $payConfig = [
                                             <a href="{{ route('trip.edit', $trip->id) }}" class="td-icon-btn edit" title="Edit">
                                                 <i class="ti-pencil"></i>
                                             </a>
+                                            <a href="{{ route('trip.consignor-document', $trip->id) }}" class="td-icon-btn pdf" title="Consignor Document" target="_blank">
+                                                <i class="ti-printer"></i>
+                                            </a>
                                             <button type="button" class="td-icon-btn del" title="Delete"
                                                 onclick="showDeleteModal('deleteTripForm{{ $trip->id }}','{{ addslashes($trip->trip_no) }}','Trip')">
                                                 <i class="ti-trash"></i>
@@ -852,7 +865,7 @@ $payConfig = [
                                         <div class="inv-type-card" data-type="rcm" onclick="selectInvType(this,'rcm')">
                                             <div class="itc-icon">🔄</div>
                                             <div class="itc-title">RCM Invoice</div>
-                                            <div class="itc-tax">Tax 5%</div>
+                                            <div class="itc-tax">Tax 0%</div>
                                             <div class="itc-desc">Reverse Charge Mechanism</div>
                                         </div>
                                     </div>
@@ -1260,7 +1273,7 @@ $payConfig = [
     /* ── Invoice type card selector ───────────────────────────────────── */
     var invTypeNotes = {
         normal: '🧾 Normal Tax Invoice: CGST 9% + SGST 9% = GST 18% on freight amount.',
-        rcm: '🔄 RCM Invoice: Tax 5% under Reverse Charge Mechanism. Recipient pays GST.',
+        rcm: '🔄 RCM Invoice: Tax 0% under Reverse Charge Mechanism. Recipient pays GST.',
         exempt: '🆓 Exempted Invoice: Zero-rated supply. No GST applicable (0%).'
     };
     var invTypeLabels = {

@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('login')) {
+            return;
+        }
+
         Schema::create('login', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('company_id')->nullable();
@@ -22,6 +26,7 @@ return new class extends Migration
             $table->string('mobile')->unique()->nullable();
             $table->string('password');
             $table->boolean('status')->default(1);
+            $table->tinyInteger('is_deleted')->default(0)->after('status');
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->softDeletes();

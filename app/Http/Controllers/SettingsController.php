@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\FinancialYear;
+use App\Models\GstSetting;
 use App\Models\Login;
 use App\Models\Permission;
 use App\Models\Setting;
@@ -67,9 +68,10 @@ class SettingsController extends Controller
         $companyLimit   = $limitSettings['company_limit']->value ?? '';
         $branchLimit    = $limitSettings['branch_limit']->value ?? '';
 
-        $allSettings    = Setting::orderBy('group')->orderBy('label')->get();
+        $allSettings    = Setting::where('group', '!=', 'payroll')->orderBy('group')->orderBy('label')->get();
+        $gstSettings    = GstSetting::orderBy('name')->get();
 
-        return view('Settings.Settings', compact('financialYears', 'currentFY', 'branches', 'branchSettings', 'companyLimit', 'branchLimit', 'allSettings'));
+        return view('Settings.Settings', compact('financialYears', 'currentFY', 'branches', 'branchSettings', 'companyLimit', 'branchLimit', 'allSettings', 'gstSettings'));
     }
 
     // ── Financial Year CRUD ────────────────────────────────────────────────────
@@ -179,5 +181,109 @@ class SettingsController extends Controller
         $setting->update(['value' => $request->value]);
 
         return back()->with('success', "Setting \"{$setting->label}\" updated successfully.");
+    }
+
+    // ── Payroll Settings ──────────────────────────────────────────────────────
+
+    public function updatePayrollSettings(Request $request)
+    {
+        $request->validate([
+            'pf_percentage'         => 'required|numeric|min:0|max:100',
+            'esi_percentage'        => 'required|numeric|min:0|max:100',
+            'pf_employer_percentage'  => 'required|numeric|min:0|max:100',
+            'esi_employer_percentage' => 'required|numeric|min:0|max:100',
+            'pf_wage_ceiling'       => 'required|numeric|min:0',
+            'esi_wage_ceiling'      => 'required|numeric|min:0',
+            'tds_default'           => 'required|numeric|min:0',
+        ]);
+
+        $fields = [
+            'pf_percentage', 'esi_percentage',
+            'pf_employer_percentage', 'esi_employer_percentage',
+            'pf_wage_ceiling', 'esi_wage_ceiling', 'tds_default',
+        ];
+
+        $labels = [
+            'pf_percentage'          => 'PF Percentage (%)',
+            'esi_percentage'         => 'ESI Percentage (%)',
+            'pf_employer_percentage'  => 'PF Employer Percentage (%)',
+            'esi_employer_percentage' => 'ESI Employer Percentage (%)',
+            'pf_wage_ceiling'        => 'PF Wage Ceiling (₹)',
+            'esi_wage_ceiling'       => 'ESI Wage Ceiling (₹)',
+            'tds_default'            => 'TDS Default Amount (₹)',
+        ];
+
+        foreach ($fields as $field) {
+            Setting::updateOrCreate(
+                ['key' => $field],
+                ['value' => $request->input($field), 'group' => 'payroll', 'label' => $labels[$field]]
+            );
+        }
+
+        return back()->with('success', 'Payroll settings updated successfully.');
+    }
+
+    public function storeGst(Request $request)
+    {
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'type'       => 'required|in:CGST+SGST,IGST',
+            'percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        GstSetting::create($request->only('name', 'type', 'percentage'));
+
+        if ($request->ajax() || $request->expectsJson()) {
+            $gstSettings = GstSetting::orderBy('name')->get();
+            return response()->json([
+                'success' => "GST \"{$request->name}\" added successfully.",
+                'rows'    => view('Settings._gst_rows', compact('gstSettings'))->render(),
+                'count'   => $gstSettings->count(),
+            ]);
+        }
+
+        return back()->with('success', "GST \"{$request->name}\" added successfully.");
+    }
+
+    public function updateGst(Request $request, $id)
+    {
+        $gst = GstSetting::findOrFail($id);
+
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'type'       => 'required|in:CGST+SGST,IGST',
+            'percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $gst->update($request->only('name', 'type', 'percentage'));
+
+        if ($request->ajax() || $request->expectsJson()) {
+            $gstSettings = GstSetting::orderBy('name')->get();
+            return response()->json([
+                'success' => "GST \"{$gst->name}\" updated successfully.",
+                'rows'    => view('Settings._gst_rows', compact('gstSettings'))->render(),
+                'count'   => $gstSettings->count(),
+            ]);
+        }
+
+        return back()->with('success', "GST \"{$gst->name}\" updated successfully.");
+    }
+
+    public function destroyGst($id)
+    {
+        $gst = GstSetting::findOrFail($id);
+        $name = $gst->name;
+        $gst->delete();
+
+        if (request()->ajax() || request()->expectsJson()) {
+            $gstSettings = GstSetting::orderBy('name')->get();
+            return response()->json([
+                'success' => "GST \"{$name}\" deleted successfully.",
+                'rows'    => view('Settings._gst_rows', compact('gstSettings'))->render(),
+                'count'   => $gstSettings->count(),
+            ]);
+        }
+
+        return back()->with('success', "GST \"{$name}\" deleted.");
     }
 }

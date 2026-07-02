@@ -8,18 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('password_resets', function (Blueprint $table) {
+        Schema::create('banks', function (Blueprint $table) {
             $table->id();
-            $table->string('email')->index();
-            $table->string('otp', 6)->nullable();
-            $table->string('token', 64)->unique();
-            $table->timestamp('expires_at');
+            $table->string('name');
+            $table->string('ifsc_prefix', 11)->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('password_resets');
+        Schema::dropIfExists('banks');
     }
 };
