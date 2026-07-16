@@ -15,7 +15,7 @@ class Expense extends Model
         'company_id', 'branch_id',
         'fin_year',
         'trip_id', 'vehicle_id', 'driver_id', 'trader_id',
-        'category', 'amount', 'paid_amount', 'payment_status',
+        'category', 'amount', 'paid_amount', 'payment_status', 'advance_id',
         'expense_date', 'payment_mode',
         'notes', 'bill_image', 'status',
         'approved_by', 'approved_at',
@@ -57,6 +57,7 @@ class Expense extends Model
     public function vehicle() { return $this->belongsTo(Vehicle::class); }
     public function driver()  { return $this->belongsTo(Driver::class); }
     public function trader()  { return $this->belongsTo(Trader::class, 'trader_id'); }
+    public function salaryAdvance() { return $this->belongsTo(SalaryAdvance::class, 'advance_id'); }
     public function accessories() { return $this->hasMany(ExpenseAccessory::class, 'expense_id'); }
     public function payments()    { return $this->hasMany(ExpensePayment::class, 'expense_id')->orderBy('payment_date'); }
     public function approvedBy() { return $this->belongsTo(User::class, 'approved_by'); }

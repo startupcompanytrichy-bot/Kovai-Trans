@@ -258,35 +258,41 @@
 
 </form>
 </div></div></div></div>
+@endsection
 
 @push('scripts')
 <script>
 function fmt(n){ return parseFloat(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function recalc(){
-    var basic=parseFloat($('#basicSalary').val())||0,
-        oa=parseFloat($('#otherAllowance').val())||0,
-        bonus=parseFloat($('#bonus').val())||0,
-        gross=basic+oa+bonus,
-        pf=parseFloat($('#pf').val())||0,
-        esi=parseFloat($('#esi').val())||0,
-        tds=parseFloat($('#tds').val())||0,
-        adv=parseFloat($('#advanceDeduction').val())||0,
-        od=parseFloat($('#otherDeduction').val())||0,
-        totalDed=pf+esi+tds+adv+od,
-        net=Math.max(0,gross-totalDed);
+    var basic  = parseFloat($('#basicSalary').val())||0,
+        oa     = parseFloat($('#otherAllowance').val())||0,
+        bonus  = parseFloat($('#bonus').val())||0,
+        gross  = basic+oa+bonus,
+        pf     = parseFloat($('#pf').val())||0,
+        esi    = parseFloat($('#esi').val())||0,
+        tds    = parseFloat($('#tds').val())||0,
+        adv    = parseFloat($('#advanceDeduction').val())||0,
+        od     = parseFloat($('#otherDeduction').val())||0,
+        totalDed = pf+esi+tds+adv+od,
+        net    = Math.max(0, gross-totalDed);
     $('#sumBasic').text(fmt(basic));
-    $('#sumOA').text(fmt(oa)); $('#sumBonus').text(fmt(bonus));
+    $('#sumOA').text(fmt(oa));
+    $('#sumBonus').text(fmt(bonus));
     $('#sumGross').text('₹ '+fmt(gross));
-    $('#sumPF').text(fmt(pf)); $('#sumESI').text(fmt(esi)); $('#sumTDS').text(fmt(tds));
-    $('#sumAdv').text(fmt(adv)); $('#sumOD').text(fmt(od));
-    $('#sumTotalDed').text('₹ '+fmt(totalDed)); $('#sumNet').text(fmt(net));
+    $('#sumPF').text(fmt(pf));
+    $('#sumESI').text(fmt(esi));
+    $('#sumTDS').text(fmt(tds));
+    $('#sumAdv').text(fmt(adv));
+    $('#sumOD').text(fmt(od));
+    $('#sumTotalDed').text('₹ '+fmt(totalDed));
+    $('#sumNet').text(fmt(net));
 }
 $('.earn-input,.ded-input').on('input change', recalc);
-    var name = $(this).find('option:selected').data('name')||'';
+$('#driverSelect').on('change', function(){
+    var name=$(this).find('option:selected').data('name')||'';
     if(name) $('#employeeName').val(name);
 });
 recalc();
 $(document).on('keydown',function(e){ if(e.ctrlKey&&e.key==='s'){e.preventDefault();$('#payrollForm').submit();} });
 </script>
 @endpush
-@endsection

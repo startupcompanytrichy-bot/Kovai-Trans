@@ -130,11 +130,14 @@ Route::get('/payroll/view/{id}', [\App\Http\Controllers\PayrollController::class
 Route::put('/payroll/{id}', [\App\Http\Controllers\PayrollController::class, 'update'])->name('payroll.update');
 Route::delete('/payroll/{id}', [\App\Http\Controllers\PayrollController::class, 'destroy'])->name('payroll.destroy');
 // Salary Advance
+Route::get('/payroll/advances', [\App\Http\Controllers\PayrollController::class, 'advancesIndex'])->name('payroll.advances');
 Route::post('/payroll/advance', [\App\Http\Controllers\PayrollController::class, 'advanceStore'])->name('payroll.advance.store');
 Route::get('/payroll/advance/{id}/edit', [\App\Http\Controllers\PayrollController::class, 'advanceEdit'])->name('payroll.advance.edit');
 Route::put('/payroll/advance/{id}', [\App\Http\Controllers\PayrollController::class, 'advanceUpdate'])->name('payroll.advance.update');
 Route::delete('/payroll/advance/{id}', [\App\Http\Controllers\PayrollController::class, 'advanceDestroy'])->name('payroll.advance.destroy');
+Route::post('/payroll/advance/recovery', [\App\Http\Controllers\PayrollController::class, 'advanceRecoveryStore'])->name('payroll.advance.recovery.store');
 Route::get('/api/payroll/driver-advance/{driverId}', [\App\Http\Controllers\PayrollController::class, 'driverAdvanceBalance'])->name('payroll.driver.advance');
+Route::get('/api/payroll/employee-advance', [\App\Http\Controllers\PayrollController::class, 'employeeAdvanceBalance'])->name('payroll.employee.advance');
 
 // ── Vehicle EMI Module ─────────────────────────────────────────────────────
 Route::get('/emi', [VehicleEmiController::class, 'index'])->name('emi');
@@ -196,6 +199,7 @@ Route::get('/api/general/states', [GeneralApiController::class, 'getStates'])->n
 Route::get('/api/general/districts', [GeneralApiController::class, 'getDistricts'])->name('api.general.districts');
 Route::get('/api/general/cities', [GeneralApiController::class, 'getCities'])->name('api.general.cities');
 Route::get('/api/general/distance', [GeneralApiController::class, 'getDistance'])->name('api.general.distance');
+Route::get('/api/branches/by-company', [\App\Http\Controllers\Api\BranchController::class, 'byCompany'])->name('api.branches.by-company');
 
 // ── Settings ───────────────────────────────────────────────────────────────
 Route::middleware(CheckLogin::class)->group(function () {
@@ -205,11 +209,34 @@ Route::middleware(CheckLogin::class)->group(function () {
     Route::delete('/settings/financial-year/{id}', [SettingsController::class, 'destroyFY'])->name('settings.fy.destroy');
     Route::post('/settings/branch', [SettingsController::class, 'updateBranchSettings'])->name('settings.branch.update');
     Route::post('/settings/limits', [SettingsController::class, 'updateLimitSettings'])->name('settings.limits.update');
+    Route::post('/settings/whatsapp', [SettingsController::class, 'updateWhatsAppSettings'])->name('settings.whatsapp.update');
+    Route::post('/settings/whatsapp/test', [SettingsController::class, 'testWhatsApp'])->name('settings.whatsapp.test');
+    Route::get('/settings/whatsapp/qr', [SettingsController::class, 'getWhatsAppQr'])->name('settings.whatsapp.qr');
+    Route::post('/settings/whatsapp/connect', [SettingsController::class, 'connectWhatsApp'])->name('settings.whatsapp.connect');
+    Route::post('/settings/whatsapp/disconnect', [SettingsController::class, 'disconnectWhatsApp'])->name('settings.whatsapp.disconnect');
     Route::post('/settings/update', [SettingsController::class, 'updateSetting'])->name('settings.update');
     Route::post('/settings/gst', [SettingsController::class, 'storeGst'])->name('settings.gst.store');
     Route::post('/settings/payroll', [SettingsController::class, 'updatePayrollSettings'])->name('settings.payroll.update');
+    Route::post('/settings/vehicle-reminder', [SettingsController::class, 'storeVehicleReminderConfig'])->name('settings.vehicle-reminder.store');
+    Route::match(['put', 'post'], '/settings/vehicle-reminder/{id}', [SettingsController::class, 'updateVehicleReminderConfig'])->name('settings.vehicle-reminder.update');
+    Route::delete('/settings/vehicle-reminder/{id}', [SettingsController::class, 'destroyVehicleReminderConfig'])->name('settings.vehicle-reminder.destroy');
+
+    // ── Message Template CRUD ────────────────────────────────────────────
+    Route::post('/settings/message-template', [SettingsController::class, 'storeMessageTemplate'])->name('settings.message-template.store');
+    Route::match(['put', 'post'], '/settings/message-template/{id}', [SettingsController::class, 'updateMessageTemplate'])->name('settings.message-template.update');
+    Route::delete('/settings/message-template/{id}', [SettingsController::class, 'destroyMessageTemplate'])->name('settings.message-template.destroy');
+    Route::post('/settings/message-template/{id}/toggle', [SettingsController::class, 'toggleMessageTemplate'])->name('settings.message-template.toggle');
+
     Route::match(['put', 'post'], '/settings/gst/{id}', [SettingsController::class, 'updateGst'])->name('settings.gst.update');
     Route::delete('/settings/gst/{id}', [SettingsController::class, 'destroyGst'])->name('settings.gst.destroy');
+
+    // ── WhatsApp Reminder Contacts ─────────────────────────────────────────
+    Route::get('/whatsapp-contacts', [\App\Http\Controllers\WhatsAppContactController::class, 'index'])->name('whatsapp-contacts.index');
+    Route::post('/whatsapp-contacts', [\App\Http\Controllers\WhatsAppContactController::class, 'store'])->name('whatsapp-contacts.store');
+    Route::match(['put', 'post'], '/whatsapp-contacts/{id}', [\App\Http\Controllers\WhatsAppContactController::class, 'update'])->name('whatsapp-contacts.update');
+    Route::delete('/whatsapp-contacts/{id}', [\App\Http\Controllers\WhatsAppContactController::class, 'destroy'])->name('whatsapp-contacts.destroy');
+    Route::post('/whatsapp-contacts/{id}/toggle', [\App\Http\Controllers\WhatsAppContactController::class, 'toggle'])->name('whatsapp-contacts.toggle');
+
     Route::get('/settings/permissions', [SettingsController::class, 'permissionIndex'])->name('settings.permissions.index');
     Route::get('/settings/permissions/{id}/edit', [SettingsController::class, 'editPermissions'])->name('settings.permissions.edit');
     Route::post('/settings/permissions/{id}', [SettingsController::class, 'updatePermissions'])->name('settings.permissions.update');
@@ -226,4 +253,11 @@ Route::middleware(CheckLogin::class)->group(function () {
     Route::put('/user-permissions/{id}', [UserPermissionController::class, 'update'])->name('user-permissions.update');
     Route::delete('/user-permissions/{id}', [UserPermissionController::class, 'destroy'])->name('user-permissions.destroy');
     Route::post('/user-permissions/{id}/toggle-status', [UserPermissionController::class, 'toggleStatus'])->name('user-permissions.toggle-status');
+});
+
+// ── Daily Check In ───────────────────────────────────────────────────────────
+Route::middleware(CheckLogin::class)->group(function () {
+    Route::get('/daily-check-in', [\App\Http\Controllers\DailyCheckInController::class, 'index'])->name('daily-check-in');
+    Route::post('/daily-check-in/update-vehicle/{id}', [\App\Http\Controllers\DailyCheckInController::class, 'updateVehicle'])->name('daily-check-in.update-vehicle');
+    Route::post('/daily-check-in/send-reminder', [\App\Http\Controllers\DailyCheckInController::class, 'sendReminder'])->name('daily-check-in.send-reminder');
 });

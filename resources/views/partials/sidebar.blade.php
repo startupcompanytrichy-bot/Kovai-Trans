@@ -11,6 +11,7 @@ $isSupplier = str_starts_with($currentRoute, 'supplier');
 $isTrader = str_starts_with($currentRoute, 'trader');
 $isDriver = str_starts_with($currentRoute, 'driver');
 $isTrip = str_starts_with($currentRoute, 'trip');
+$isDailyCheckIn = str_starts_with($currentRoute, 'daily-check-in');
 $isExpense = str_starts_with($currentRoute, 'expense') || str_starts_with($currentRoute, 'expense.ledger') || $currentRoute === 'reports.expenses';
 $isEmi = str_starts_with($currentRoute, 'emi');
 $isPayroll = str_starts_with($currentRoute, 'payroll');
@@ -73,7 +74,7 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
         @if($sidebarMode === 'transport')
         {{-- ── OPERATIONS ─────────────────────────────────────────── --}}
         <ul class="pcoded-item pcoded-left-item">
-            @if($showAll || userCanSeeAnyMenu(['trips', 'expenses']))
+            @if($showAll || userCanSeeAnyMenu(['trips', 'daily_check_in', 'expenses']))
             <li class="pcoded-hasmenu-label"><span>Operations</span></li>
             @endif
 
@@ -130,6 +131,17 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
                 </ul>
             </li>
             @endif
+
+            {{-- Daily Check In --}}
+            @if($showAll || userCanSeeMenu('daily_check_in'))
+            <li class="{{ $isDailyCheckIn ? 'active' : '' }}">
+                <a href="{{ route('daily-check-in') }}">
+                    <span class="pcoded-micon"><i class="ti-clipboard"></i><b>D</b></span>
+                    <span class="pcoded-mtext">Daily Check In</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+            </li>
+            @endif
         </ul>
         @endif
 
@@ -170,6 +182,12 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
                         <a href="{{ route('payroll.create') }}">
                             <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
                             <span class="pcoded-mtext">Add Payroll</span>
+                        </a>
+                    </li>
+                    <li class="{{ $currentRoute === 'payroll.advances' ? 'active' : '' }}">
+                        <a href="{{ route('payroll.advances') }}">
+                            <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                            <span class="pcoded-mtext">Salary Advances</span>
                         </a>
                     </li>
                 </ul>

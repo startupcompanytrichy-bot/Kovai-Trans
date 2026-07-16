@@ -8,6 +8,9 @@ use Illuminate\Database\Seeder;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
+    /* Creates all system permissions grouped by module and builds
+       the role hierarchy (super_admin, admin, manager, operator,
+       accountant, viewer) with appropriate permission assignments. */
     public function run(): void
     {
         // Define permissions by module
@@ -55,6 +58,17 @@ class RolesAndPermissionsSeeder extends Seeder
                 ['name' => 'create_driver', 'display_name' => 'Create Driver'],
                 ['name' => 'edit_driver', 'display_name' => 'Edit Driver'],
                 ['name' => 'delete_driver', 'display_name' => 'Delete Driver'],
+            ],
+            'payroll' => [
+                ['name' => 'view_payroll', 'display_name' => 'View Payroll'],
+                ['name' => 'create_payroll', 'display_name' => 'Create Payroll'],
+                ['name' => 'edit_payroll', 'display_name' => 'Edit Payroll'],
+                ['name' => 'delete_payroll', 'display_name' => 'Delete Payroll'],
+                ['name' => 'view_advances', 'display_name' => 'View Advances'],
+                ['name' => 'create_advance', 'display_name' => 'Create Advance'],
+                ['name' => 'edit_advance', 'display_name' => 'Edit Advance'],
+                ['name' => 'delete_advance', 'display_name' => 'Delete Advance'],
+                ['name' => 'record_advance_recovery', 'display_name' => 'Record Advance Recovery'],
             ],
             'supplier' => [
                 ['name' => 'view_suppliers', 'display_name' => 'View Suppliers'],

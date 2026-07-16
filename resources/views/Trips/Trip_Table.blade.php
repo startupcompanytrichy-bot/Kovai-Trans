@@ -739,6 +739,7 @@ $payConfig = [
                                     data-search="{{ strtolower($trip->trip_no . ' ' . $vehicleText . ' ' . $partyText . ' ' . $trip->from_location . ' ' . $trip->to_location . ' ' . $trip->status . ' ' . ($trip->invoice_no ?? '')) }}"
                                     data-trip-no="{{ $trip->trip_no }}"
                                     data-party="{{ $partyText }}"
+                                    data-party-id="{{ $trip->party_id }}"
                                     data-party-has-gst="{{ optional($trip->party)->gst_no ? '1' : '0' }}"
                                     data-vehicle="{{ $vehicleText }}"
                                     data-from="{{ $trip->from_location }}"
@@ -952,13 +953,155 @@ $payConfig = [
             }
         }
 
+        /* Validate a single checked row — warn only if freight = 0 */
+        function warnSingleTrip($cb) {
+            var $row    = $cb.closest('tr.trip-row');
+            var tripNo  = $row.attr('data-trip-no') || 'this trip';
+            var freight = parseFloat($row.attr('data-freight') || 0);
+
+            if (freight === 0) {
+                showInvoiceWarning(
+                    'Warning for ' + tripNo,
+                    '⚠️ Freight Amount is ₹0\n\nPlease update the trip amount before generating an invoice.',
+                    'warning'
+                );
+                $cb.prop('checked', false);
+                return false;
+            }
+            return true;
+        }
+
+        /* Validate multiple selected rows for party mismatch */
+        function validateMultipleSelection() {
+            var $checked = $('.trip-check:checked:not(:disabled)');
+            if ($checked.length <= 1) return true;
+
+            var partyIds   = [];
+            var partyNames = {};
+            $checked.each(function() {
+                var $row = $(this).closest('tr.trip-row');
+                var pid  = $row.attr('data-party-id') || '0';
+                var pname = $row.attr('data-party') || '(No Party)';
+                if (partyIds.indexOf(pid) === -1) {
+                    partyIds.push(pid);
+                    partyNames[pid] = pname;
+                }
+            });
+
+            if (partyIds.length > 1) {
+                showInvoiceWarning(
+                    'Party Mismatch',
+                    'You have selected trips from different parties:\n\n' +
+                    partyIds.map(function(pid, i) { return '  ' + (i+1) + '. ' + partyNames[pid]; }).join('\n') +
+                    '\n\nAn invoice can only be generated for trips belonging to the same party.\n\nPlease deselect the trips from other parties and keep only one party.',
+                    'error'
+                );
+                return false;
+            }
+            return true;
+        }
+
+        /* Styled alert modal */
+        function showInvoiceWarning(title, message, type) {
+            var color  = type === 'error' ? '#e53e3e' : '#d97706';
+            var bg     = type === 'error' ? '#fff5f5'  : '#fffbeb';
+            var border = type === 'error' ? '#feb2b2'  : '#fde68a';
+            var icon   = type === 'error' ? '🚫' : '⚠️';
+
+            // Remove any existing warning modal
+            $('#invoiceWarnModal').remove();
+
+            var lines = message.split('\n').map(function(l) {
+                return l.trim() ? '<div style="margin-bottom:4px;">' + l + '</div>' : '<div style="margin-bottom:6px;"></div>';
+            }).join('');
+
+            var modal = $(
+                '<div id="invoiceWarnModal" class="modal fade" tabindex="-1" role="dialog">' +
+                  '<div class="modal-dialog modal-dialog-centered" style="max-width:440px;">' +
+                    '<div class="modal-content" style="border-radius:14px;border:none;box-shadow:0 16px 50px rgba(0,0,0,.18);">' +
+                      '<div class="modal-body" style="padding:28px 24px;text-align:center;">' +
+                        '<div style="font-size:38px;margin-bottom:12px;">' + icon + '</div>' +
+                        '<div style="font-size:15px;font-weight:800;color:#1a2340;margin-bottom:12px;">' + title + '</div>' +
+                        '<div style="background:' + bg + ';border:1px solid ' + border + ';border-radius:10px;padding:14px 16px;text-align:left;font-size:12px;font-weight:600;color:' + color + ';line-height:1.7;">' +
+                          lines +
+                        '</div>' +
+                        '<button type="button" onclick="$(\'#invoiceWarnModal\').modal(\'hide\')" ' +
+                          'style="margin-top:18px;background:' + color + ';color:#fff;border:none;padding:9px 28px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">' +
+                          'OK, Got it' +
+                        '</button>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>'
+            );
+            $('body').append(modal);
+            modal.modal('show');
+            modal.on('hidden.bs.modal', function() { modal.remove(); });
+        }
+
         $('#checkAll').on('change', function() {
-            $('#tripsTable tbody .trip-row:visible .trip-check:not(:disabled)').prop('checked', this.checked);
+            var $visibleChecks = $('#tripsTable tbody .trip-row:visible .trip-check:not(:disabled)');
+
+            if (this.checked) {
+                // Validate each row — block only freight = 0
+                var blocked = [];
+                $visibleChecks.each(function() {
+                    var $row    = $(this).closest('tr.trip-row');
+                    var freight = parseFloat($row.attr('data-freight') || 0);
+                    if (freight === 0) {
+                        blocked.push($row.attr('data-trip-no') || '?');
+                    }
+                });
+
+                // Select all first
+                $visibleChecks.prop('checked', true);
+
+                // Then uncheck only freight = 0 rows
+                $visibleChecks.each(function() {
+                    var $row    = $(this).closest('tr.trip-row');
+                    var freight = parseFloat($row.attr('data-freight') || 0);
+                    if (freight === 0) {
+                        $(this).prop('checked', false);
+                    }
+                });
+
+                if (blocked.length) {
+                    showInvoiceWarning(
+                        'Some Trips Skipped',
+                        blocked.length + ' trip(s) were not selected because their Freight Amount is ₹0:\n\n' +
+                        blocked.map(function(t) { return '  • ' + t; }).join('\n') +
+                        '\n\nPlease update the freight amount for those trips before generating invoices.',
+                        'warning'
+                    );
+                }
+
+                // Party mismatch check on what's now checked
+                validateMultipleSelection();
+
+            } else {
+                $visibleChecks.prop('checked', false);
+            }
             updateBulkBar();
         });
 
         $(document).on('change', '.trip-check:not(:disabled)', function() {
-            var total = $('#tripsTable tbody .trip-row:visible .trip-check:not(:disabled)').length;
+            if (this.checked) {
+                // Single trip — warn but don't block here (warn + uncheck)
+                var valid = warnSingleTrip($(this));
+                if (!valid) {
+                    var total   = $('#tripsTable tbody .trip-row:visible .trip-check:not(:disabled)').length;
+                    var checked = $('#tripsTable tbody .trip-row:visible .trip-check:not(:disabled):checked').length;
+                    $('#checkAll').prop('indeterminate', checked > 0 && checked < total);
+                    $('#checkAll').prop('checked', total > 0 && checked === total);
+                    updateBulkBar();
+                    return;
+                }
+
+                // Multiple — check party mismatch
+                validateMultipleSelection();
+            }
+
+            var total   = $('#tripsTable tbody .trip-row:visible .trip-check:not(:disabled)').length;
             var checked = $('#tripsTable tbody .trip-row:visible .trip-check:not(:disabled):checked').length;
             $('#checkAll').prop('indeterminate', checked > 0 && checked < total);
             $('#checkAll').prop('checked', total > 0 && checked === total);
@@ -1081,20 +1224,62 @@ $payConfig = [
 
         /* ── Generate Invoice button ─────────────────────────────────── */
         $('#btnInvoiceGenerate').on('click', function() {
-            var $checked = $('.trip-check:checked');
+            var $checked = $('.trip-check:checked:not(:disabled)');
             var ids = [];
-            $checked.each(function() {
-                ids.push($(this).data('id'));
-            });
+            $checked.each(function() { ids.push($(this).data('id')); });
+
             if (!ids.length) {
-                alert('Please select at least one trip.');
+                showInvoiceWarning('No Trips Selected', 'Please select at least one trip to generate an invoice.', 'warning');
                 return;
             }
 
-            var type = $('#selectedInvType').val() || 'normal';
+            // Final guard: zero freight only
+            var badTrips = [];
+            $checked.each(function() {
+                var $row    = $(this).closest('tr.trip-row');
+                var tripNo  = $row.attr('data-trip-no') || '?';
+                var freight = parseFloat($row.attr('data-freight') || 0);
+                if (freight === 0) {
+                    badTrips.push(tripNo + ' (Freight ₹0)');
+                }
+            });
+            if (badTrips.length) {
+                showInvoiceWarning(
+                    'Cannot Generate Invoice',
+                    'The following trips have ₹0 freight and cannot be invoiced:\n\n' +
+                    badTrips.map(function(t) { return '  • ' + t; }).join('\n') +
+                    '\n\nPlease update the freight amount first, then generate the invoice.',
+                    'error'
+                );
+                return;
+            }
+
+            // Final guard: party mismatch
+            var partyIds   = [];
+            var partyNames = {};
+            $checked.each(function() {
+                var $row  = $(this).closest('tr.trip-row');
+                var pid   = $row.attr('data-party-id') || '0';
+                var pname = $row.attr('data-party') || '(No Party)';
+                if (partyIds.indexOf(pid) === -1) {
+                    partyIds.push(pid);
+                    partyNames[pid] = pname;
+                }
+            });
+            if (partyIds.length > 1) {
+                showInvoiceWarning(
+                    'Party Mismatch',
+                    'Selected trips belong to different parties:\n\n' +
+                    partyIds.map(function(pid, i) { return '  ' + (i+1) + '. ' + partyNames[pid]; }).join('\n') +
+                    '\n\nPlease select trips from the same party only.',
+                    'error'
+                );
+                return;
+            }
+
+            var type      = $('#selectedInvType').val()      || 'normal';
             var typeLabel = $('#selectedInvTypeLabel').val() || 'TAX INVOICE';
 
-            // POST to generate in new tab (saves invoice + opens invoice view)
             var form = $('<form method="POST" action="' + urlInvGenerate + '" target="_blank"></form>');
             form.append('<input type="hidden" name="_token" value="{{ csrf_token() }}">');
             form.append('<input type="hidden" name="invoice_type" value="' + type + '">');
@@ -1106,11 +1291,8 @@ $payConfig = [
             form.submit();
             form.remove();
 
-            // Fade out selected rows
             $checked.each(function() {
-                $(this).closest('tr.trip-row').fadeOut(300, function() {
-                    $(this).remove();
-                });
+                $(this).closest('tr.trip-row').fadeOut(300, function() { $(this).remove(); });
             });
             setTimeout(function() {
                 $('#tripCountBadge').text($('#tripsTable tbody .trip-row').length);

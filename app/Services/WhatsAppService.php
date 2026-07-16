@@ -2,59 +2,97 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppService
 {
-    protected $apiKey;
-    protected $phoneNumberId;
-    protected $businessAccountId;
+    protected $dailyLimit;
+
+    protected function baileysUrl(): string
+    {
+        $url = Setting::getValue('whatsapp_baileys_url', '');
+        return rtrim($url ?: 'http://localhost:3001', '/');
+    }
 
     public function __construct()
     {
-        // Use environment variables or placeholder values for WhatsApp API
-        // You'll need to configure these in your .env file
-        $this->apiKey = env('WHATSAPP_API_KEY', '');
-        $this->phoneNumberId = env('WHATSAPP_PHONE_NUMBER_ID', '');
-        $this->businessAccountId = env('WHATSAPP_BUSINESS_ACCOUNT_ID', '');
+        $this->dailyLimit = (int) Setting::getValue('whatsapp_daily_limit', 100);
     }
 
-    /**
-     * Send WhatsApp message to a phone number
-     * 
-     * @param string $phoneNumber Phone number with country code (e.g., 919876543210)
-     * @param string $message Message text
-     * @return bool
-     */
+    public function getReminderNumbers(): array
+    {
+        $raw = Setting::getValue('whatsapp_reminder_number', '');
+        if (!$raw) return [];
+        return array_values(array_filter(array_map('trim', explode(',', $raw))));
+    }
+
+    public function getReminderNumber(): string
+    {
+        $nums = $this->getReminderNumbers();
+        return $nums[0] ?? '';
+    }
+
+    public function getRemainingCount(): int
+    {
+        $lastDate = Setting::getValue('whatsapp_last_send_date', '');
+        $today = date('Y-m-d');
+        if ($lastDate !== $today) {
+            return $this->dailyLimit;
+        }
+        $count = (int) Setting::getValue('whatsapp_today_count', 0);
+        return max(0, $this->dailyLimit - $count);
+    }
+
+    public function canSend(): bool
+    {
+        return $this->getRemainingCount() > 0;
+    }
+
+    protected function incrementCounter(): void
+    {
+        $today = date('Y-m-d');
+        $lastDate = Setting::getValue('whatsapp_last_send_date', '');
+
+        if ($lastDate !== $today) {
+            Setting::setValue('whatsapp_today_count', '1');
+            Setting::setValue('whatsapp_last_send_date', $today);
+        } else {
+            $count = (int) Setting::getValue('whatsapp_today_count', 0);
+            Setting::setValue('whatsapp_today_count', (string) ($count + 1));
+        }
+    }
+
     public function sendMessage($phoneNumber, $message)
     {
         try {
-            // If API key is not configured, log and return false
-            if (!$this->apiKey) {
-                Log::warning("WhatsApp API not configured. Message to {$phoneNumber}: {$message}");
+            if (!$this->canSend()) {
+                Log::warning("WhatsApp daily limit ({$this->dailyLimit}) reached. Message not sent.");
                 return false;
             }
 
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
-                'Content-Type' => 'application/json',
-            ])->post("https://graph.instagram.com/v18.0/{$this->phoneNumberId}/messages", [
-                'messaging_product' => 'whatsapp',
-                'to' => $phoneNumber,
-                'type' => 'text',
-                'text' => [
-                    'preview_url' => true,
-                    'body' => $message,
-                ],
+            $clean = preg_replace('/[^0-9]/', '', $phoneNumber);
+            if (strlen($clean) === 10) {
+                $clean = '91' . $clean;
+            }
+
+            $url = $this->baileysUrl() . '/send';
+
+            $response = Http::timeout(30)->post($url, [
+                'to'      => $clean,
+                'message' => $message,
             ]);
 
             if ($response->successful()) {
-                Log::info("WhatsApp message sent to {$phoneNumber}");
+                $this->incrementCounter();
+                Log::info("WhatsApp message sent to {$clean} via Baileys");
                 return true;
             }
 
-            Log::error("WhatsApp API error: " . $response->body());
+            $body = $response->json();
+            $error = $body['error'] ?? $response->body();
+            Log::error("Baileys error: {$error}");
             return false;
         } catch (\Exception $e) {
             Log::error("WhatsApp service error: " . $e->getMessage());
@@ -62,15 +100,58 @@ class WhatsAppService
         }
     }
 
-    /**
-     * Send EMI reminder notification
-     * 
-     * @param string $phoneNumber Customer phone number
-     * @param string $vehicleNumber Vehicle registration number
-     * @param float $emiAmount EMI amount
-     * @param string $dueDate Due date (Y-m-d format)
-     * @return bool
-     */
+    public function sendToReminderNumber($message)
+    {
+        $numbers = $this->getReminderNumbers();
+        if (empty($numbers)) {
+            Log::warning('WhatsApp reminder numbers not configured.');
+            return false;
+        }
+        $allSent = true;
+        foreach ($numbers as $number) {
+            if (!$this->sendMessage($number, $message)) {
+                $allSent = false;
+            }
+        }
+        return $allSent;
+    }
+
+    public function getBaileysStatus(): array
+    {
+        try {
+            $resp = Http::timeout(5)->get($this->baileysUrl() . '/status');
+            return $resp->successful() ? $resp->json() : ['connected' => false, 'error' => 'Unreachable'];
+        } catch (\Exception $e) {
+            return ['connected' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    public function getConnectedNumber(): ?string
+    {
+        try {
+            $resp = Http::timeout(5)->get($this->baileysUrl() . '/status');
+            if ($resp->successful()) {
+                $data = $resp->json();
+                return $data['number'] ?? null;
+            }
+        } catch (\Exception $e) {
+        }
+        return null;
+    }
+
+    public function getBaileysQr(): ?string
+    {
+        try {
+            $resp = Http::timeout(5)->get($this->baileysUrl() . '/qr');
+            if ($resp->successful()) {
+                $data = $resp->json();
+                return $data['dataUrl'] ?? $data['qr'] ?? null;
+            }
+        } catch (\Exception $e) {
+        }
+        return null;
+    }
+
     public function sendEmiReminder($phoneNumber, $vehicleNumber, $emiAmount, $dueDate)
     {
         $message = "🚗 *EMI Payment Reminder*\n\n";

@@ -29,6 +29,8 @@ class Vehicle extends Model
         'insurance_expiry_date',
         'fitness_expiry_date',
         'permit_expiry_date',
+        'permit_date',
+        'national_permit_date',
         'puc_expiry_date',
         'opening_balance',
         'opening_balance_date',

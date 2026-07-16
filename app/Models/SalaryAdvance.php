@@ -37,6 +37,11 @@ class SalaryAdvance extends Model
         return $this->belongsTo(\App\Models\Trip::class);
     }
 
+    public function expenses()
+    {
+        return $this->hasMany(\App\Models\Expense::class, 'advance_id');
+    }
+
     /** Outstanding balance */
     public function getPendingAmountAttribute(): float
     {

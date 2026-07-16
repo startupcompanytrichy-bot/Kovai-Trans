@@ -245,32 +245,46 @@
                         </div>
                         <div class="form-card-body">
                             <div class="row">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <div class="form-group-veh">
                                         <label>Insurance Expiry <span class="req">*</span></label>
                                         <input type="date" name="insurance_expiry_date" class="form-control"
                                             value="{{ old('insurance_expiry_date') }}" required>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <div class="form-group-veh">
                                         <label>Fitness Expiry <span class="req">*</span></label>
                                         <input type="date" name="fitness_expiry_date" class="form-control"
                                             value="{{ old('fitness_expiry_date') }}" required>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <div class="form-group-veh">
                                         <label>Permit Expiry</label>
                                         <input type="date" name="permit_expiry_date" class="form-control"
                                             value="{{ old('permit_expiry_date') }}">
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <div class="form-group-veh">
                                         <label>PUC Expiry</label>
                                         <input type="date" name="puc_expiry_date" class="form-control"
                                             value="{{ old('puc_expiry_date') }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group-veh">
+                                        <label>Permit Date</label>
+                                        <input type="date" name="permit_date" class="form-control"
+                                            value="{{ old('permit_date') }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group-veh">
+                                        <label>National Permit Date</label>
+                                        <input type="date" name="national_permit_date" class="form-control"
+                                            value="{{ old('national_permit_date') }}">
                                     </div>
                                 </div>
                             </div>

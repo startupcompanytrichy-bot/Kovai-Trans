@@ -11,6 +11,7 @@ $isSupplier = str_starts_with($currentRoute, 'supplier');
 $isTrader = str_starts_with($currentRoute, 'trader');
 $isDriver = str_starts_with($currentRoute, 'driver');
 $isTrip = str_starts_with($currentRoute, 'trip');
+$isDailyCheckIn = str_starts_with($currentRoute, 'daily-check-in');
 $isExpense = str_starts_with($currentRoute, 'expense') || str_starts_with($currentRoute, 'expense.ledger') || $currentRoute === 'reports.expenses';
 $isEmi = str_starts_with($currentRoute, 'emi');
 $isPayroll = str_starts_with($currentRoute, 'payroll');
@@ -73,7 +74,7 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
         <?php if($sidebarMode === 'transport'): ?>
         
         <ul class="pcoded-item pcoded-left-item">
-            <?php if($showAll || userCanSeeAnyMenu(['trips', 'expenses'])): ?>
+            <?php if($showAll || userCanSeeAnyMenu(['trips', 'daily_check_in', 'expenses'])): ?>
             <li class="pcoded-hasmenu-label"><span>Operations</span></li>
             <?php endif; ?>
 
@@ -130,6 +131,17 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
                 </ul>
             </li>
             <?php endif; ?>
+
+            
+            <?php if($showAll || userCanSeeMenu('daily_check_in')): ?>
+            <li class="<?php echo e($isDailyCheckIn ? 'active' : ''); ?>">
+                <a href="<?php echo e(route('daily-check-in')); ?>">
+                    <span class="pcoded-micon"><i class="ti-clipboard"></i><b>D</b></span>
+                    <span class="pcoded-mtext">Daily Check In</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+            </li>
+            <?php endif; ?>
         </ul>
         <?php endif; ?>
 
@@ -170,6 +182,12 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
                         <a href="<?php echo e(route('payroll.create')); ?>">
                             <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
                             <span class="pcoded-mtext">Add Payroll</span>
+                        </a>
+                    </li>
+                    <li class="<?php echo e($currentRoute === 'payroll.advances' ? 'active' : ''); ?>">
+                        <a href="<?php echo e(route('payroll.advances')); ?>">
+                            <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                            <span class="pcoded-mtext">Salary Advances</span>
                         </a>
                     </li>
                 </ul>

@@ -606,14 +606,59 @@ $selectedBilling = old('billing_type','fixed');
     .doc-drop-zone.has-file { border-color: #48bb78; background: #f0fff4; text-align: left; justify-content: flex-start; padding: 12px 16px; }
 
     /* ── Review Cards ─────────────────────────────────────────── */
+    #reviewContent {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    /* Summary banner at top */
+    .rv-summary-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+    .rv-summary-banner::before {
+        content: '';
+        position: absolute;
+        top: -30px; right: -30px;
+        width: 120px; height: 120px;
+        background: rgba(255,255,255,.07);
+        border-radius: 50%;
+    }
+    .rv-sb-item { position: relative; z-index: 1; text-align: center; }
+    .rv-sb-label { font-size: 10px; font-weight: 700; opacity: .75; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 4px; }
+    .rv-sb-value { font-size: 16px; font-weight: 800; line-height: 1; }
+    .rv-sb-divider { width: 1px; height: 40px; background: rgba(255,255,255,.2); flex-shrink: 0; position: relative; z-index: 1; }
+
+    /* Two-column card grid */
+    .rv-grid-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+    @media (max-width: 640px) {
+        .rv-grid-2col { grid-template-columns: 1fr; }
+        .rv-sb-divider { display: none; }
+    }
+
     .rv-card {
         background: #fff;
         border: 1px solid #edf0f7;
-        border-radius: 10px;
-        margin-bottom: 14px;
+        border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 1px 6px rgba(0,0,0,.04);
+        box-shadow: 0 2px 8px rgba(0,0,0,.05);
     }
+    .rv-card.rv-card-full { grid-column: 1 / -1; }
+
     .rv-card-header {
         display: flex;
         align-items: center;
@@ -623,79 +668,91 @@ $selectedBilling = old('billing_type','fixed');
         background: #fafbff;
     }
     .rv-icon {
-        width: 32px; height: 32px; border-radius: 8px;
+        width: 34px; height: 34px; border-radius: 9px;
         display: flex; align-items: center; justify-content: center;
         font-size: 15px; flex-shrink: 0;
     }
-    .rv-card-title {
-        font-size: 13px; font-weight: 700; color: #1a2340;
-    }
-    .rv-card-body { padding: 14px 16px; }
+    .rv-card-title { font-size: 13px; font-weight: 700; color: #1a2340; }
+    .rv-card-body  { padding: 14px 16px; }
 
-    /* Highlight bar (Party / Route / Distance) */
-    .rv-highlight {
+    /* Row list inside card */
+    .rv-rows { display: flex; flex-direction: column; gap: 0; }
+    .rv-row {
         display: flex;
-        align-items: center;
-        gap: 0;
-        background: #f8faff;
-        border: 1px solid #e8ecf7;
-        border-radius: 8px;
-        padding: 0;
-        margin-bottom: 14px;
-        overflow: hidden;
-    }
-    .rv-hl-item {
-        flex: 1;
-        padding: 10px 14px;
-        text-align: center;
-        min-width: 0;
-    }
-    .rv-hl-label {
-        display: block;
-        font-size: 10px;
-        font-weight: 700;
-        color: #8a94a6;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-        margin-bottom: 3px;
-    }
-    .rv-hl-value {
-        display: block;
-        font-size: 13px;
-        font-weight: 800;
-        color: #1a2340;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .rv-hl-divider {
-        width: 1px;
-        height: 36px;
-        background: #e0e4f0;
-        flex-shrink: 0;
-    }
-
-    /* Grid of fields */
-    .rv-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px 16px;
-    }
-    .rv-field {
-        padding: 6px 0;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 0;
         border-bottom: 1px solid #f4f6fb;
     }
-    .rv-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #8a94a6;
-        margin-bottom: 2px;
+    .rv-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .rv-row-label {
+        font-size: 11px; font-weight: 600;
+        color: #8a94a6; white-space: nowrap;
+        flex-shrink: 0; padding-top: 1px;
     }
-    .rv-value {
-        font-size: 13px;
+    .rv-row-value {
+        font-size: 12px; font-weight: 700;
+        color: #1a2340; text-align: right;
+        word-break: break-word;
+    }
+    .rv-row-value.highlight {
+        color: #667eea;
+    }
+    .rv-row-value.green { color: #38a169; }
+
+    /* Route pill */
+    .rv-route {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f4f6fb;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+    .rv-route-loc {
+        font-size: 13px; font-weight: 800; color: #1a2340;
+    }
+    .rv-route-arrow {
+        color: #b0bac9; font-size: 11px; flex-shrink: 0;
+    }
+    .rv-route-dist {
+        margin-left: auto;
+        font-size: 11px; font-weight: 700;
+        background: #eef2ff; color: #667eea;
+        border-radius: 20px; padding: 2px 10px;
+        white-space: nowrap;
+    }
+
+    /* Financial highlight */
+    .rv-freight-box {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    .rv-freight-label { font-size: 11px; font-weight: 700; color: #166534; opacity: .8; }
+    .rv-freight-value { font-size: 22px; font-weight: 900; color: #16a34a; }
+
+    /* Badge */
+    .rv-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 10px;
         font-weight: 700;
-        color: #1a2340;
+        text-transform: uppercase;
+        letter-spacing: .4px;
     }
+    .rv-badge-blue  { background: #eef2ff; color: #667eea; }
+    .rv-badge-green { background: #f0fff4; color: #38a169; }
+    .rv-badge-amber { background: #fffbeb; color: #d97706; }
 </style>
 
 <div class="pcoded-inner-content nt-page">
@@ -1129,12 +1186,12 @@ $selectedBilling = old('billing_type','fixed');
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="nt-label">Trip / Freight Amount <span class="req">*</span></label>
+                                        <label class="nt-label">Trip / Freight Amount</label>
                                         <div class="nt-input-group">
                                             <span class="nt-addon">₹</span>
-                                            <input type="number" step="0.01" min="0" name="freight_amount" id="freightAmt"
+                                            <input type="number" step="0.01" name="freight_amount" id="freightAmt"
                                                 class="form-control nt-input @error('freight_amount') is-invalid @enderror"
-                                                value="{{ old('freight_amount') }}" placeholder="0.00" required>
+                                                value="{{ old('freight_amount', 0) }}" placeholder="0.00">
                                         </div>
                                         @error('freight_amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                     </div>
@@ -1468,79 +1525,96 @@ $selectedBilling = old('billing_type','fixed');
             }
             function fmtAmt(v) {
                 var n = parseFloat(v);
-                return isNaN(n) || n === 0 ? '—' : '₹' + n.toLocaleString('en-IN');
+                return (isNaN(n) || n === 0) ? '₹0' : '₹' + n.toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+            }
+            function row(label, value, cls) {
+                cls = cls || '';
+                return '<div class="rv-row">'
+                    + '<span class="rv-row-label">' + label + '</span>'
+                    + '<span class="rv-row-value ' + cls + '">' + value + '</span>'
+                    + '</div>';
+            }
+            function badge(text, type) {
+                return '<span class="rv-badge rv-badge-' + (type||'blue') + '">' + text + '</span>';
             }
 
-            var data = {
-                bookingDate:   val('booking_date'),
-                tripDate:      val('trip_date'),
-                lrNo:          val('lr_no'),
-                party:         selText('[name="party_id"]'),
-                from:          $('#fromLocationVal').val() || '—',
-                to:            $('#toLocationVal').val()   || '—',
-                distance:      val('distance_km'),
-                material:      val('material'),
-                loadType:      selText('[name="load_type"]'),
-
-                vehicle:       selText('#ntVehicleIdSelect'),
-                driver:        selText('#ntDriverIdSelect'),
-                vendor:        selText('#ntSupplierSelect'),
-                startKms:      val('start_kms_reading'),
-
-                billingType:   $('[name="billing_type"]:checked').val() || '—',
-                freightAmt:    val('freight_amount'),
+            var from       = $('#fromLocationVal').val() || '—';
+            var to         = $('#toLocationVal').val()   || '—';
+            var distance   = val('distance_km');
+            var party      = selText('[name="party_id"]');
+            var vehicle    = selText('#ntVehicleIdSelect');
+            var driver     = selText('#ntDriverIdSelect');
+            var vendor     = selText('#ntSupplierSelect');
+            var freightRaw = $('#freightAmt').val();
+            var billingRaw = $('[name="billing_type"]:checked').val() || '—';
+            var billingLabels = {
+                fixed:'Fixed', per_tonne:'Per Tonne', per_kg:'Per Kg', per_km:'Per KM',
+                per_trip:'Per Trip', per_day:'Per Day', per_hour:'Per Hour',
+                per_litre:'Per Litre', per_bag:'Per Bag'
             };
-
-            function field(l, v) {
-                return '<div class="rv-field"><div class="rv-label">' + l + '</div><div class="rv-value">' + v + '</div></div>';
-            }
+            var billingLabel = billingLabels[billingRaw] || billingRaw;
 
             var html = '';
 
-            // ── Card 1: Basic Info ──
-            html += '<div class="rv-card">';
-            html += '  <div class="rv-card-header"><div class="rv-icon" style="background:#eef2ff;color:#667eea;"><i class="ti-file"></i></div><div><div class="rv-card-title">Basic Info</div></div></div>';
-            html += '  <div class="rv-card-body">';
-            html += '    <div class="rv-highlight">';
-            html += '      <div class="rv-hl-item"><span class="rv-hl-label">Party</span><span class="rv-hl-value">' + data.party + '</span></div>';
-            html += '      <div class="rv-hl-divider"></div>';
-            html += '      <div class="rv-hl-item"><span class="rv-hl-label">Route</span><span class="rv-hl-value">' + data.from + ' <i class="ti-arrow-right" style="font-size:10px;color:#b0bac9;"></i> ' + data.to + '</span></div>';
-            html += '      <div class="rv-hl-divider"></div>';
-            html += '      <div class="rv-hl-item"><span class="rv-hl-label">Distance</span><span class="rv-hl-value">' + data.distance + ' KM</span></div>';
-            html += '    </div>';
-            html += '    <div class="rv-grid">';
-            html += field('Booking Date', data.bookingDate);
-            html += field('Trip Start Date', data.tripDate);
-            html += field('LR Number', data.lrNo);
-            html += field('Material', data.material);
-            html += field('Load Type', data.loadType);
-            html += '    </div>';
-            html += '  </div>';
+            /* ── Summary Banner ── */
+            html += '<div class="rv-summary-banner">';
+            html +=   '<div class="rv-sb-item"><div class="rv-sb-label">Party</div><div class="rv-sb-value" style="font-size:13px;">' + party + '</div></div>';
+            html +=   '<div class="rv-sb-divider"></div>';
+            html +=   '<div class="rv-sb-item"><div class="rv-sb-label">Freight</div><div class="rv-sb-value">' + fmtAmt(freightRaw) + '</div></div>';
+            html +=   '<div class="rv-sb-divider"></div>';
+            html +=   '<div class="rv-sb-item"><div class="rv-sb-label">Vehicle</div><div class="rv-sb-value" style="font-size:13px;">' + vehicle + '</div></div>';
+            html +=   '<div class="rv-sb-divider"></div>';
+            html +=   '<div class="rv-sb-item"><div class="rv-sb-label">Distance</div><div class="rv-sb-value" style="font-size:13px;">' + (distance !== '—' ? distance + ' KM' : '—') + '</div></div>';
             html += '</div>';
 
-            // ── Card 2: Vehicle & Driver ──
+            /* ── Two column grid ── */
+            html += '<div class="rv-grid-2col">';
+
+            /* Card 1 — Trip Info */
             html += '<div class="rv-card">';
-            html += '  <div class="rv-card-header"><div class="rv-icon" style="background:#f0fff4;color:#38a169;"><i class="ti-truck"></i></div><div><div class="rv-card-title">Vehicle &amp; Driver</div></div></div>';
-            html += '  <div class="rv-card-body">';
-            html += '    <div class="rv-grid">';
-            html += field('Vehicle', data.vehicle);
-            html += field('Driver', data.driver);
-            html += field('Transport Vendor', data.vendor);
-            html += field('Start KMs', data.startKms);
-            html += '    </div>';
-            html += '  </div>';
+            html +=   '<div class="rv-card-header"><div class="rv-icon" style="background:#eef2ff;color:#667eea;"><i class="ti-file"></i></div><div class="rv-card-title">Trip Info</div></div>';
+            html +=   '<div class="rv-card-body">';
+            html +=     '<div class="rv-route">';
+            html +=       '<span class="rv-route-loc">' + from + '</span>';
+            html +=       '<span class="rv-route-arrow"><i class="ti-arrow-right"></i></span>';
+            html +=       '<span class="rv-route-loc">' + to + '</span>';
+            if (distance !== '—') html += '<span class="rv-route-dist">' + distance + ' KM</span>';
+            html +=     '</div>';
+            html +=     '<div class="rv-rows">';
+            html +=       row('Booking Date',    val('booking_date'));
+            html +=       row('Trip Start Date', val('trip_date'));
+            html +=       row('LR Number',       val('lr_no'));
+            html +=       row('Material',        val('material'));
+            html +=       row('Load Type',       val('load_type') !== '—' ? badge(val('load_type'), 'blue') : '—');
+            html +=     '</div>';
+            html +=   '</div>';
             html += '</div>';
 
-            // ── Card 3: Financials ──
+            /* Card 2 — Vehicle & Driver */
             html += '<div class="rv-card">';
-            html += '  <div class="rv-card-header"><div class="rv-icon" style="background:#fef3c7;color:#d97706;"><i class="ti-wallet"></i></div><div><div class="rv-card-title">Financials</div></div></div>';
-            html += '  <div class="rv-card-body">';
-            html += '    <div class="rv-grid">';
-            html += field('Billing Type', data.billingType);
-            html += field('Freight Amount', fmtAmt(data.freightAmt));
-            html += '    </div>';
-            html += '  </div>';
+            html +=   '<div class="rv-card-header"><div class="rv-icon" style="background:#f0fff4;color:#38a169;"><i class="ti-truck"></i></div><div class="rv-card-title">Vehicle &amp; Driver</div></div>';
+            html +=   '<div class="rv-card-body">';
+            html +=     '<div class="rv-rows">';
+            html +=       row('Vehicle',           vehicle !== '—' ? '<span style="font-weight:800;color:#667eea;">' + vehicle + '</span>' : '—');
+            html +=       row('Driver',            driver  !== '—' ? '<span style="font-weight:800;color:#1a2340;">' + driver  + '</span>' : '—');
+            html +=       row('Transport Vendor',  vendor);
+            html +=       row('Start KM Reading',  val('start_kms_reading') !== '—' ? val('start_kms_reading') + ' KM' : '—');
+            html +=     '</div>';
+            html +=   '</div>';
             html += '</div>';
+
+            /* Card 3 — Financials (full width) */
+            html += '<div class="rv-card rv-card-full">';
+            html +=   '<div class="rv-card-header"><div class="rv-icon" style="background:#fef3c7;color:#d97706;"><i class="ti-wallet"></i></div><div class="rv-card-title">Financials</div></div>';
+            html +=   '<div class="rv-card-body">';
+            html +=     '<div class="rv-freight-box">';
+            html +=       '<div><div class="rv-freight-label">Trip / Freight Amount</div><div style="font-size:11px;color:#166534;margin-top:2px;">' + badge(billingLabel, 'green') + '</div></div>';
+            html +=       '<div class="rv-freight-value">' + fmtAmt(freightRaw) + '</div>';
+            html +=     '</div>';
+            html +=   '</div>';
+            html += '</div>';
+
+            html += '</div>'; /* /rv-grid-2col */
 
             $('#reviewContent').html(html);
         }

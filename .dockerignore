@@ -1,0 +1,58 @@
+# =============================================================================
+# Docker Ignore - Exclude files not needed in production
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Node.js
+node_modules
+npm-debug.log*
+
+# Laravel
+storage/logs/*.log
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*.php
+
+# Docker
+docker-compose.yml
+docker-compose.override.yml
+.dockerignore
+
+# Environment files (use .env in production)
+.env
+.env.local
+.env.backup
+
+# Documentation
+README.md
+LICENSE
+
+# Tests
+tests
+phpunit.xml
+phpunit.xml.dist
+
+# Development files
+*.md
+!README.md
+database/database.sqlite
+database/database.sqlite-journal
+
+# Build artifacts
+public/build/hot
+public/build/manifest
+
+# Misc
+.DS_Store
+Thumbs.db
+*.cache

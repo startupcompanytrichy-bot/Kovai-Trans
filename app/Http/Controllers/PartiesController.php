@@ -33,8 +33,7 @@ class PartiesController extends Controller
             'party_type' => 'nullable',
             'gst_no' => 'nullable|string|max:15',
             'pan_no' => 'nullable|string|max:10',
-            'opening_balance' => 'nullable|numeric|min:0',
-            'opening_balance_date' => 'nullable|date',
+
         ]);
 
         $validated['status'] = 'active';

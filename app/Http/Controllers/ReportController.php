@@ -455,10 +455,9 @@ class ReportController extends Controller
             $query->where('party_id', $request->party_id);
         }
 
-        // Default to June 2026 when no date filter is set
+        // No date filter: show all data
         if (!$request->filled('date_type') && !$request->filled('date_from') && !$request->filled('date_to')) {
-            $query->whereMonth('trip_date', 6)->whereYear('trip_date', 2026);
-            $filterLabel = 'Month: June 2026';
+            $filterLabel = 'All Dates';
         } elseif ($request->filled('date_type')) {
             switch ($request->date_type) {
                 case 'month':
@@ -521,7 +520,7 @@ class ReportController extends Controller
                 'date'             => $invDate,
                 'transaction_type' => 'Invoice',
                 'details'          => $invNo,
-                'amount'           => (float) $trip->balance_amount,
+                'amount'           => (float) $trip->collected_amount,
                 'payment'          => 0,
                 'party'            => $trip->party,
                 'vehicle'          => $trip->vehicle,
@@ -590,8 +589,7 @@ class ReportController extends Controller
         }
 
         if (!$request->filled('date_type') && !$request->filled('date_from') && !$request->filled('date_to')) {
-            $query->whereMonth('trip_date', 6)->whereYear('trip_date', 2026);
-            $filterLabel = 'Month: June 2026';
+            $filterLabel = 'All Dates';
         } elseif ($request->filled('date_type')) {
             switch ($request->date_type) {
                 case 'month':
@@ -600,7 +598,7 @@ class ReportController extends Controller
                             ->whereYear('trip_date', date('Y', strtotime($request->month)));
                         $filterLabel = 'Month: ' . date('F Y', strtotime($request->month));
                     } else {
-                        $filterLabel = 'Financial Year';
+                        $filterLabel = 'All Dates';
                     }
                     break;
                 case 'year':
@@ -608,7 +606,7 @@ class ReportController extends Controller
                         $query->whereYear('trip_date', $request->year);
                         $filterLabel = 'Year: ' . $request->year;
                     } else {
-                        $filterLabel = 'Financial Year';
+                        $filterLabel = 'All Dates';
                     }
                     break;
                 case 'date':
@@ -616,7 +614,7 @@ class ReportController extends Controller
                         $query->whereDate('trip_date', $request->exact_date);
                         $filterLabel = 'Date: ' . date('d M Y', strtotime($request->exact_date));
                     } else {
-                        $filterLabel = 'Financial Year';
+                        $filterLabel = 'All Dates';
                     }
                     break;
                 case 'range':
@@ -626,17 +624,11 @@ class ReportController extends Controller
                     $filterLabel = $from . ' — ' . $to;
                     break;
                 default:
-                    if (!$request->filled('date_from') && !$request->filled('date_to')) {
-                        \applyFinYearFilter($query);
-                    }
                     $this->applyDateFilter($query, $request, 'trip_date');
-                    $filterLabel = 'Financial Year';
+                    $filterLabel = 'All Dates';
                     break;
             }
         } else {
-            if (!$request->filled('date_from') && !$request->filled('date_to')) {
-                \applyFinYearFilter($query);
-            }
             $this->applyDateFilter($query, $request, 'trip_date');
             $filterLabel = 'All Dates';
         }
@@ -653,7 +645,7 @@ class ReportController extends Controller
                 'date'             => $invDate,
                 'transaction_type' => 'Invoice',
                 'details'          => $invNo,
-                'amount'           => (float) $trip->balance_amount,
+                'amount'           => (float) $trip->collected_amount,
                 'payment'          => 0,
                 'party'            => $trip->party,
                 'vehicle'          => $trip->vehicle,

@@ -75,20 +75,20 @@ input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none;}
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="company">Company</label>
-                                <select name="company" id="company" class="form-control select2">
-                                    <option value="">Select Company</option>
-                                    @foreach($companies as $company)
-                                    <option value="{{ $company->id }}" {{ $user->company == $company->id ? 'selected' : '' }}>
-                                        {{ $company->company_name }}
-                                    </option>
-                                    @endforeach
-                                </select>
+                                        <select name="company" id="company" class="form-control select2">
+                                            <option value="">Select Company</option>
+                                            @foreach($companies as $company)
+                                            <option value="{{ $company->id }}" {{ old('company', request('company', $user->company)) == $company->id ? 'selected' : '' }}>
+                                                {{ $company->company_name }}
+                                            </option>
+                                            @endforeach
+                                        </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="branch">Branch</label>
-                                <select name="branch[]" id="branch" class="form-control select2" multiple>
+                                        <select name="branch[]" id="branch" class="form-control" multiple>
                                     @foreach($branches as $branch)
                                     <option value="{{ $branch->id }}" data-company-id="{{ $branch->company_id }}"
                                         {{ in_array($branch->id, explode(',', $user->branch ?? '')) ? 'selected' : '' }}>
@@ -193,7 +193,6 @@ input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none;}
 
 @push('scripts')
 <script>
-$(document).ready(function () {
     // ── Password toggle ──
     $('#togglePassword').on('click', function () {
         var $input = $('#password');
@@ -209,39 +208,15 @@ $(document).ready(function () {
         }
     });
 
-    // ── Company → Branch cascade (multi-select) ──
-    var $company = $('#company');
-    var $branch = $('#branch');
-    if ($branch.length) {
-        var allBranchOpts = $branch.find('option').clone();
+    // ── Initialise #branch Select2 (server rendered correct branches per ?company=) ──
+    $('#branch').select2({ width: '100%', placeholder: 'Select Branch' });
 
-        function refreshBranch() {
-            var companyId = $company.val();
-            var prevVals = $branch.val() || [];
-
-            if ($branch.hasClass('select2-hidden-accessible')) {
-                $branch.select2('destroy');
-            }
-
-            $branch.empty().append(allBranchOpts.clone());
-            $branch.find('option').each(function () {
-                var $opt = $(this);
-                if (companyId && $opt.data('company-id') != companyId) {
-                    $opt.remove();
-                }
-            });
-
-            var keep = prevVals.filter(function (v) {
-                return $branch.find('option[value="' + v + '"]').length;
-            });
-            $branch.val(keep);
-
-            $branch.select2({ width: '100%', placeholder: 'Select Branch', allowClear: true });
-        }
-
-        $company.on('change', refreshBranch);
-        refreshBranch();
-    }
-});
+    // ── Company change: reload page with ?company= so server renders filtered branches ──
+    $('#company').on('change', function () {
+        var companyId = $(this).val();
+        var url = window.location.pathname;
+        if (companyId) url += '?company=' + companyId;
+        window.location.href = url;
+    });
 </script>
 @endpush

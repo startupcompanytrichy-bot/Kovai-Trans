@@ -303,12 +303,12 @@ $billingTypes = [
     <div class="row">
         <div class="col-md-6">
             <div class="form-group">
-                <label>Party Freight Amount <span class="required-star">*</span></label>
+                <label>Party Freight Amount</label>
                 <div class="trip-input-group">
                     <span class="trip-input-addon">₹</span>
-                    <input type="number" step="0.01" min="0" name="freight_amount" id="freightAmount"
+                    <input type="number" step="0.01" name="freight_amount" id="freightAmount"
                         class="form-control @error('freight_amount') is-invalid @enderror"
-                        value="{{ old('freight_amount', $trip->freight_amount ?? '') }}" placeholder="Eg: 45,000" required>
+                        value="{{ old('freight_amount', $trip->freight_amount ?? 0) }}" placeholder="0.00">
                 </div>
                 @error('freight_amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
             </div>

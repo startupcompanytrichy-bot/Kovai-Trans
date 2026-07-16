@@ -41,7 +41,23 @@
 .btn-adv{background:linear-gradient(135deg,#d97706,#b45309);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
 .btn-add-pr{background:linear-gradient(135deg,#2c7be5,#1a5bbf);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
 
-@media(max-width:768px){.pr-stats{grid-template-columns:repeat(2,1fr);}}
+/* employee detail expand */
+.emp-name-link{color:#1a2340;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;}
+.emp-name-link:hover{color:#2c7be5;}
+.emp-name-link .toggle-icon{font-size:10px;color:#8a94a6;transition:transform .2s;}
+.emp-name-link.open .toggle-icon{transform:rotate(90deg);}
+
+.emp-detail-row{display:none;}
+.emp-detail-row.open{display:table-row;}
+.emp-detail-cell{padding:0 !important;}
+.emp-detail-inner{background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:2px solid #2c7be5;padding:14px 18px;}
+.emp-detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;}
+.emp-d-item{background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e2e8f0;}
+.emp-d-item .dl{font-size:10px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;}
+.emp-d-item .dv{font-size:15px;font-weight:800;color:#1a2340;line-height:1.2;}
+.emp-d-actions{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;}
+.emp-d-actions a{font-size:11px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
+@media(max-width:768px){.emp-detail-grid{grid-template-columns:repeat(2,1fr);}}
 </style>
 
 <div class="pcoded-inner-content pr-page">
@@ -52,7 +68,11 @@
     <div class="row align-items-center">
         <div class="col-md-7" style="position:relative;z-index:1;">
             <h4><i class="ti-money mr-2"></i>Payroll Management</h4>
-            <div class="sub">Manage employee salaries, allowances, deductions &amp; advances</div>
+            <div class="sub">Manage employee salaries, allowances, deductions &amp; advances
+                @if(!empty($currentFY))
+                &nbsp;·&nbsp; <span style="background:rgba(255,255,255,.2);border-radius:6px;padding:1px 8px;font-size:11px;font-weight:700;">FY {{ $currentFY->label }}</span>
+                @endif
+            </div>
         </div>
         <div class="col-md-5 text-right mt-2 mt-md-0" style="position:relative;z-index:1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
             <button class="btn-adv" data-toggle="modal" data-target="#advanceModal">
@@ -90,7 +110,65 @@
 {{-- TABS --}}
 <div class="pr-tabs">
     <button class="pr-tab active" onclick="showTab('payroll')">📋 Payroll Records</button>
+    <button class="pr-tab" onclick="showTab('summary')">📊 Employee Summary</button>
     <button class="pr-tab" onclick="showTab('advances')">💰 Salary Advances</button>
+</div>
+
+{{-- ═══════════════════ TAB: SUMMARY ═══════════════════ --}}
+<div id="tab-summary" style="display:none;">
+    <div class="pr-card">
+        <div class="pr-card-hd">
+            <h6><i class="ti-stats-up mr-2" style="color:#7c3aed;"></i>Employee Summary — All Employees</h6>
+            <span style="font-size:12px;color:#8a94a6;font-weight:600;">{{ count($employeeDetails) }} employees</span>
+        </div>
+        <div style="padding:0;">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="font-size:13px;">
+                    <thead style="background:#f8f9fb;">
+                        <tr>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;">#</th>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;">Employee</th>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;">Trip Advance</th>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;">Normal Advance</th>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;">Total Advance</th>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;">Advance Collected</th>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;">Balance Amount</th>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;">Paid Amount</th>
+                            <th style="padding:10px 14px;font-weight:700;color:#596579;font-size:11px;text-transform:uppercase;text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($employeeDetails as $empName => $ed)
+                        @php
+                            $totalAdv = $ed['trip_advances'] + $ed['normal_advances'];
+                        @endphp
+                        <tr>
+                            <td style="padding:10px 14px;color:#8a94a6;">{{ $loop->iteration }}</td>
+                            <td style="padding:10px 14px;font-weight:700;color:#1a2340;">{{ $empName }}</td>
+                            <td style="padding:10px 14px;color:#7c3aed;font-weight:600;">₹ {{ number_format($ed['trip_advances'],0) }}</td>
+                            <td style="padding:10px 14px;color:#d97706;font-weight:600;">₹ {{ number_format($ed['normal_advances'],0) }}</td>
+                            <td style="padding:10px 14px;font-weight:800;color:#1a2340;">₹ {{ number_format($totalAdv,0) }}</td>
+                            <td style="padding:10px 14px;color:#38a169;font-weight:600;">₹ {{ number_format($ed['advance_collected'],0) }}</td>
+                            <td style="padding:10px 14px;font-weight:800;color:#e53e3e;">₹ {{ number_format($ed['balance_amount'],0) }}</td>
+                            <td style="padding:10px 14px;font-weight:700;color:#1a5bbf;">₹ {{ number_format($ed['paid_amount'],0) }}</td>
+                            <td style="padding:10px 14px;text-align:right;">
+                                <a href="{{ route('payroll.create', ['employee' => $empName]) }}" class="btn-add-pr" style="padding:4px 10px;font-size:11px;" title="Add Payroll"><i class="ti-plus"></i></a>
+                                <a href="{{ route('payroll.advances', ['employee' => $empName]) }}" class="btn-view-pr" style="padding:4px 10px;font-size:11px;" title="View Advances"><i class="ti-wallet"></i></a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" style="text-align:center;padding:40px;color:#8a94a6;">
+                                <i class="ti-stats-up" style="font-size:32px;display:block;margin-bottom:8px;opacity:.3;"></i>
+                                No employee data available.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- ═══════════════════ TAB: PAYROLL ═══════════════════ --}}
@@ -135,11 +213,15 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @php $shownEmps = []; @endphp
                         @forelse($payrolls as $i => $p)
                         <tr>
                             <td style="padding:12px 16px;color:#8a94a6;">{{ $i+1 }}</td>
                             <td style="padding:12px 16px;">
-                                <div style="font-weight:700;color:#1a2340;">{{ $p->employee_name }}</div>
+                                <a class="emp-name-link" data-employee="{{ $p->employee_name }}">
+                                    <span>{{ $p->employee_name }}</span>
+                                    <span class="toggle-icon">▶</span>
+                                </a>
                                 @if($p->driver_id)
                                 <div style="font-size:11px;color:#8a94a6;"><i class="ti-truck mr-1"></i>Driver</div>
                                 @else
@@ -167,6 +249,46 @@
                                 </button>
                             </td>
                         </tr>
+                        @if(!in_array($p->employee_name, $shownEmps) && isset($employeeDetails[$p->employee_name]))
+                        @php $shownEmps[] = $p->employee_name; @endphp
+                        @php $ed = $employeeDetails[$p->employee_name]; @endphp
+                        <tr class="emp-detail-row" data-employee="{{ $p->employee_name }}">
+                            <td colspan="9" class="emp-detail-cell">
+                                <div class="emp-detail-inner">
+                                    <div class="emp-detail-grid">
+                                        <div class="emp-d-item" style="border-left:3px solid #7c3aed;">
+                                            <div class="dl">Trip Advance</div>
+                                            <div class="dv" style="color:#7c3aed;">₹ {{ number_format($ed['trip_advances'],0) }}</div>
+                                        </div>
+                                        <div class="emp-d-item" style="border-left:3px solid #d97706;">
+                                            <div class="dl">Normal Advance</div>
+                                            <div class="dv" style="color:#d97706;">₹ {{ number_format($ed['normal_advances'],0) }}</div>
+                                        </div>
+                                        <div class="emp-d-item" style="border-left:3px solid #38a169;">
+                                            <div class="dl">Advance Collected</div>
+                                            <div class="dv" style="color:#38a169;">₹ {{ number_format($ed['advance_collected'],0) }}</div>
+                                        </div>
+                                        <div class="emp-d-item" style="border-left:3px solid #e53e3e;">
+                                            <div class="dl">Balance Amount</div>
+                                            <div class="dv" style="color:#e53e3e;">₹ {{ number_format($ed['balance_amount'],0) }}</div>
+                                        </div>
+                                        <div class="emp-d-item" style="border-left:3px solid #1a5bbf;">
+                                            <div class="dl">Paid Amount</div>
+                                            <div class="dv" style="color:#1a5bbf;">₹ {{ number_format($ed['paid_amount'],0) }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="emp-d-actions">
+                                        <a href="{{ route('payroll.create', ['employee' => $p->employee_name]) }}" class="btn-add-pr" style="padding:5px 12px;font-size:11px;">
+                                            <i class="ti-plus"></i> Add Payroll
+                                        </a>
+                                        <a href="{{ route('payroll.advances', ['employee' => $p->employee_name]) }}" class="btn-view-pr" style="padding:5px 12px;font-size:11px;">
+                                            <i class="ti-wallet"></i> View Advances
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        @endif
                         @empty
                         <tr>
                             <td colspan="9" style="text-align:center;padding:40px;color:#8a94a6;">
@@ -372,14 +494,16 @@
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
 function showTab(tab) {
-    document.getElementById('tab-payroll').style.display  = tab === 'payroll'  ? '' : 'none';
-    document.getElementById('tab-advances').style.display = tab === 'advances' ? '' : 'none';
+    var tabs = ['tab-payroll', 'tab-summary', 'tab-advances'];
+    tabs.forEach(function(id) { document.getElementById(id).style.display = id === 'tab-' + tab ? '' : 'none'; });
     document.querySelectorAll('.pr-tab').forEach(function(el, i) {
-        el.classList.toggle('active', (i === 0 && tab === 'payroll') || (i === 1 && tab === 'advances'));
+        var t = ['payroll','summary','advances'][i];
+        el.classList.toggle('active', t === tab);
     });
 }
 
@@ -456,7 +580,22 @@ $(document).ready(function () {
         var name = $(this).find('option:selected').data('name') || '';
         if (name) { $('#advEmpName').val(name); }
     });
+
+    // ── Employee detail expand toggle ──
+    $(document).on('click', '.emp-name-link', function () {
+        var name = $(this).data('employee');
+        var $rows = $('.emp-detail-row[data-employee="' + name + '"]');
+
+        if ($rows.first().hasClass('open')) {
+            $rows.removeClass('open').hide();
+            $(this).removeClass('open');
+        } else {
+            $('.emp-detail-row.open').removeClass('open').hide();
+            $('.emp-name-link.open').removeClass('open');
+            $rows.addClass('open').show();
+            $(this).addClass('open');
+        }
+    });
 });
 </script>
 @endpush
-@endsection

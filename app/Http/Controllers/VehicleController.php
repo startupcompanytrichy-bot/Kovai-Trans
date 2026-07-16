@@ -55,6 +55,8 @@ class VehicleController extends Controller
             'insurance_expiry_date' => 'required|date',
             'fitness_expiry_date'   => 'required|date',
             'permit_expiry_date'    => 'nullable|date',
+            'permit_date'           => 'nullable|date',
+            'national_permit_date'  => 'nullable|date',
             'puc_expiry_date'       => 'nullable|date',
         ]);
 
@@ -208,6 +210,8 @@ class VehicleController extends Controller
             'insurance_expiry_date' => 'nullable|date',
             'fitness_expiry_date'   => 'nullable|date',
             'permit_expiry_date'    => 'nullable|date',
+            'permit_date'           => 'nullable|date',
+            'national_permit_date'  => 'nullable|date',
             'puc_expiry_date'       => 'nullable|date',
 
         ]);

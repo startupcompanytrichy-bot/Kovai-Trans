@@ -299,7 +299,7 @@ class TripController extends Controller
             'load_type'              => 'nullable|string|max:100',
             'quantity'               => 'nullable|numeric|min:0',
             'billing_type'           => 'required|string|in:fixed,per_tonne,per_kg,per_km,per_trip,per_day,per_hour,per_litre,per_bag',
-            'freight_amount'         => 'required|numeric|min:0',
+            'freight_amount'         => 'nullable|numeric|min:0',
             'advance_amount'         => 'nullable|numeric|min:0',
             'diesel_advance'         => 'nullable|numeric|min:0',
             'driver_bata'            => 'nullable|numeric|min:0',

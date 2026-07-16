@@ -33,7 +33,11 @@ class UserPermissionController extends Controller
     {
         $permissions = Permission::orderBy('module')->orderBy('name')->get();
         $companies = Company::where('status', 1)->orderBy('company_name')->get();
-        $branches = Branch::where('status', 1)->orderBy('branch_name')->get();
+        $companyId = request()->input('company');
+        $branches = Branch::where('status', 1)
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->orderBy('branch_name')
+            ->get();
         return view('UserPermission.create', compact('permissions', 'companies', 'branches'));
     }
 
@@ -88,7 +92,11 @@ class UserPermissionController extends Controller
     {
         $user = Login::active()->findOrFail($id);
         $companies = Company::where('status', 1)->orderBy('company_name')->get();
-        $branches = Branch::where('status', 1)->orderBy('branch_name')->get();
+        $companyId = request()->input('company', $user->company);
+        $branches = Branch::where('status', 1)
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->orderBy('branch_name')
+            ->get();
 
         return view('UserPermission.edit', compact('user', 'companies', 'branches'));
     }

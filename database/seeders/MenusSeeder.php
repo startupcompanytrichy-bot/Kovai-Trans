@@ -7,6 +7,9 @@ use Illuminate\Database\Seeder;
 
 class MenusSeeder extends Seeder
 {
+    /* Populates the menus table with all sidebar navigation items.
+       Each menu entry controls what appears in the sidebar and is
+       assigned to users via the user_menus pivot table. */
     public function run(): void
     {
         $menus = [
@@ -67,46 +70,60 @@ class MenusSeeder extends Seeder
                 'order' => 8,
             ],
             [
+                'name' => 'payroll',
+                'display_name' => 'Payroll',
+                'icon' => 'ti-wallet',
+                'route' => 'payroll',
+                'order' => 9,
+            ],
+            [
                 'name' => 'suppliers',
                 'display_name' => 'Suppliers',
                 'icon' => 'ti-user',
                 'route' => 'supplier',
-                'order' => 9,
+                'order' => 10,
             ],
             [
                 'name' => 'traders',
                 'display_name' => 'Traders',
                 'icon' => 'ti-package',
                 'route' => 'trader',
-                'order' => 10,
+                'order' => 11,
             ],
             [
                 'name' => 'organization',
                 'display_name' => 'Organization',
                 'icon' => 'ti-layout-grid2-alt',
                 'route' => null,
-                'order' => 11,
+                'order' => 12,
             ],
             [
                 'name' => 'users',
                 'display_name' => 'Users',
                 'icon' => 'ti-lock',
                 'route' => 'user-permissions.index',
-                'order' => 12,
+                'order' => 13,
             ],
             [
                 'name' => 'screen_permissions',
                 'display_name' => 'Screen Permissions',
                 'icon' => 'ti-lock',
                 'route' => 'user-permissions.authorization',
-                'order' => 13,
+                'order' => 14,
             ],
             [
                 'name' => 'settings',
                 'display_name' => 'Settings',
                 'icon' => 'ti-settings',
                 'route' => 'settings',
-                'order' => 14,
+                'order' => 15,
+            ],
+            [
+                'name' => 'daily_check_in',
+                'display_name' => 'Daily Check In',
+                'icon' => 'ti-clipboard',
+                'route' => 'daily-check-in',
+                'order' => 16,
             ],
         ];
 

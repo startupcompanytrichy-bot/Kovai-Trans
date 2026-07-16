@@ -120,61 +120,6 @@
         margin-top: 4px;
     }
 
-    /* ── Driver type cards ── */
-    .driver-type-card {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 16px 10px 12px;
-        border-radius: 10px;
-        border: 2px solid #e2e8f0;
-        background: #f7f8fc;
-        cursor: pointer;
-        transition: all .18s;
-        min-width: 160px;
-        user-select: none;
-    }
-
-    .driver-type-card:hover {
-        border-color: #b0bac9;
-        background: #eef0f7;
-    }
-
-    .driver-type-card.active[for="dt_own"] {
-        border-color: #38a169;
-        background: #f0fff4;
-        box-shadow: 0 2px 10px rgba(56, 161, 105, .12);
-    }
-
-    .driver-type-card.active[for="dt_rental"] {
-        border-color: #d97706;
-        background: #fffbeb;
-        box-shadow: 0 2px 10px rgba(217, 119, 6, .12);
-    }
-
-    .dtc-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 9px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 17px;
-        flex-shrink: 0;
-    }
-
-    .dtc-label {
-        font-size: 13px;
-        font-weight: 700;
-        color: #1a2340;
-    }
-
-    .dtc-sub {
-        font-size: 11px;
-        color: #8a94a6;
-        margin-top: 1px;
-    }
-
     /* ── Photo upload cards ── */
     .photo-upload-card {
         border: 2px dashed #d0d5e8;
@@ -319,7 +264,7 @@
                         </div>
                         <div class="form-card-body">
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group-drv">
                                         <label>Driver Name <span class="req">*</span></label>
                                         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
@@ -327,7 +272,7 @@
                                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group-drv">
                                         <label>Date of Birth <span class="req">*</span></label>
                                         <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror"
@@ -335,30 +280,15 @@
                                         @error('dob')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
-                            </div>
-
-                            {{-- Driver Type --}}
-                            <div class="form-group-drv">
-                                <label>Driver Type</label>
-                                <div class="d-flex" style="gap:10px;flex-wrap:wrap;">
-                                    <label class="driver-type-card {{ old('driver_type','own') === 'own' ? 'active' : '' }}" for="dt_own">
-                                        <input type="radio" name="driver_type" id="dt_own" value="own"
-                                            {{ old('driver_type','own') === 'own' ? 'checked' : '' }} style="display:none;">
-                                        <div class="dtc-icon" style="background:#f0fff4;color:#38a169;"><i class="ti-truck"></i></div>
-                                        <div>
-                                            <div class="dtc-label">Own Driver</div>
-                                            <div class="dtc-sub">Company payroll</div>
-                                        </div>
-                                    </label>
-                                    <label class="driver-type-card {{ old('driver_type') === 'rental' ? 'active' : '' }}" for="dt_rental">
-                                        <input type="radio" name="driver_type" id="dt_rental" value="rental"
-                                            {{ old('driver_type') === 'rental' ? 'checked' : '' }} style="display:none;">
-                                        <div class="dtc-icon" style="background:#fffbeb;color:#d97706;"><i class="ti-refresh"></i></div>
-                                        <div>
-                                            <div class="dtc-label">Rental Driver</div>
-                                            <div class="dtc-sub">Hired / external</div>
-                                        </div>
-                                    </label>
+                                <div class="col-md-4">
+                                    <div class="form-group-drv">
+                                        <label>Driver Type</label>
+                                        <select name="driver_type" id="driverTypeSelect" class="form-control select2 @error('driver_type') is-invalid @enderror">
+                                            <option value="own"   {{ old('driver_type', 'own') === 'own'    ? 'selected' : '' }}>Own Driver</option>
+                                            <option value="rental" {{ old('driver_type') === 'rental' ? 'selected' : '' }}>Rental Driver</option>
+                                        </select>
+                                        @error('driver_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
                                 </div>
                             </div>
 
@@ -375,7 +305,7 @@
                                     <div class="form-group-drv">
                                         <label>Alternative Mobile 2</label>
                                         <input type="text" name="alternative_mobile" class="form-control @error('alternative_mobile') is-invalid @enderror"
-                                            value="{{ old('alternative_mobile') }}" placeholder="Enter alternative number" maxlength="20">
+                                            value="{{ old('alternative_mobile') }}" placeholder="Enter alternative number" maxlength="10">
                                         @error('alternative_mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
@@ -710,6 +640,12 @@
             placeholder: 'Select Bank'
         });
 
+        /* ── driver type select2 ── */
+        $('#driverTypeSelect').select2({
+            width: '100%',
+            minimumResultsForSearch: Infinity
+        });
+
     });
 
 
@@ -794,14 +730,6 @@
         btn.innerHTML = '<i class="ti-reload mr-1"></i> Saving...';
     });
 
-    /* Driver Type Card Toggle */
-    document.querySelectorAll('input[name="driver_type"]').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            document.querySelectorAll('.driver-type-card').forEach(function(card) {
-                card.classList.remove('active');
-            });
-            if (this.checked) this.closest('.driver-type-card').classList.add('active');
-        });
-    });
+    /* Driver Type — handled by select2, no radio toggle needed */
 </script>
 @endpush
