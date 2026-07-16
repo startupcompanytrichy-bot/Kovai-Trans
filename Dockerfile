@@ -1,7 +1,23 @@
 # =============================================================================
 # Kovai-Trans Production Dockerfile (Render.com)
+# Multi-stage: Node for frontend, PHP for backend
 # =============================================================================
 
+# ---------------------------------------------------------------------------
+# Stage 1: Build frontend assets
+# ---------------------------------------------------------------------------
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts
+COPY vite.config.js ./
+COPY resources/ ./resources/
+RUN npm run build
+
+# ---------------------------------------------------------------------------
+# Stage 2: PHP runtime
+# ---------------------------------------------------------------------------
 FROM php:8.3-cli
 
 # Install system dependencies
@@ -27,11 +43,8 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interactio
 # Copy application files
 COPY . .
 
-# Install npm dependencies and build frontend
-RUN npm ci --ignore-scripts && npm run build
-
-# Generate app key if not set (will be overridden by env)
-RUN php artisan key:generate --force 2>/dev/null || true
+# Copy built frontend assets from Node stage
+COPY --from=frontend-build /app/public/build /var/www/html/public/build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
@@ -45,4 +58,4 @@ RUN echo "* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>
 EXPOSE 10000
 
 # Start PHP built-in server + cron
-CMD sh -c "php artisan serve --host=0.0.0.0 --port=\${PORT:-10000} & crond -f & wait"
+CMD sh -c "php artisan serve --host=0.0.0.0 --port=${PORT:-10000} & crond -f & wait"
