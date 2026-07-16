@@ -105,7 +105,10 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 
 # Copy Supervisor configuration
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/supervisord.conf /etc/supervisord.conf
+
+# Create supervisor log directory
+RUN mkdir -p /var/log/supervisor
 
 # Expose ports: 80 (Nginx), 9000 (PHP-FPM)
 EXPOSE 80 9000
@@ -115,4 +118,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
 
 # Start Supervisor (manages Nginx + PHP-FPM + Node.js services)
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
