@@ -28,10 +28,8 @@ docker-compose.yml
 docker-compose.override.yml
 .dockerignore
 
-# Environment files (use .env in production)
-.env
-.env.local
-.env.backup
+# Environment files
+.env.example
 
 # Documentation
 README.md
