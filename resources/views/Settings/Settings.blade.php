@@ -1874,6 +1874,17 @@
                     container.innerHTML = '<img src="' + data.dataUrl + '" width="220" height="220" alt="QR Code" style="image-rendering:pixelated;border-radius:4px;">';
                 } else {
                     waQrRetries++;
+                    if (waQrRetries >= 3) {
+                        if (waQrTimer) { clearTimeout(waQrTimer); waQrTimer = null; }
+                        container.innerHTML =
+                            '<div style="padding:30px 0;text-align:center;">' +
+                            '<div style="font-size:36px;margin-bottom:10px;opacity:0.4;">&#128241;</div>' +
+                            '<div style="font-size:14px;font-weight:600;color:#64748b;margin-bottom:4px;">WhatsApp Not Configured</div>' +
+                            '<div style="font-size:12px;color:#94a3b8;max-width:280px;margin:0 auto;">The WhatsApp Baileys service is not running on this server.<br><br>To use WhatsApp reminders, deploy the Baileys service and set the URL in WhatsApp Settings above.</div>' +
+                            '</div>';
+                        if (reconnectBtn) reconnectBtn.style.display = 'none';
+                        return;
+                    }
                     var dots = '';
                     for (var i = 0; i < (waQrRetries % 4); i++) dots += '.';
                     container.innerHTML =
@@ -1890,15 +1901,23 @@
             })
             .catch(function() {
                 waQrRetries++;
+                if (waQrRetries >= 3) {
+                    if (waQrTimer) { clearTimeout(waQrTimer); waQrTimer = null; }
+                    container.innerHTML =
+                        '<div style="padding:30px 0;text-align:center;">' +
+                        '<div style="font-size:36px;margin-bottom:10px;opacity:0.4;">&#128241;</div>' +
+                        '<div style="font-size:14px;font-weight:600;color:#64748b;margin-bottom:4px;">WhatsApp Not Configured</div>' +
+                        '<div style="font-size:12px;color:#94a3b8;max-width:280px;margin:0 auto;">The WhatsApp Baileys service is not running on this server.<br><br>To use WhatsApp reminders, deploy the Baileys service and set the URL in WhatsApp Settings above.</div>' +
+                        '</div>';
+                    if (reconnectBtn) reconnectBtn.style.display = 'none';
+                    return;
+                }
                 container.innerHTML =
                     '<div style="padding:30px 0;text-align:center;">' +
-                    '<div style="font-size:36px;margin-bottom:10px;opacity:0.4;">&#9888;</div>' +
-                    '<div style="font-size:14px;font-weight:600;color:#ef4444;margin-bottom:4px;">Service Not Available</div>' +
-                    '<div style="font-size:12px;color:#94a3b8;">Baileys service is not running.<br>Retrying in 5 seconds...</div>' +
+                    '<div style="font-size:36px;margin-bottom:10px;opacity:0.4;">&#9203;</div>' +
+                    '<div style="font-size:14px;font-weight:600;color:#f59e0b;margin-bottom:4px;">Connecting...</div>' +
+                    '<div style="font-size:12px;color:#94a3b8;">Checking WhatsApp service</div>' +
                     '</div>';
-                if (waQrRetries >= 3 && reconnectBtn) {
-                    reconnectBtn.style.display = '';
-                }
                 waQrTimer = setTimeout(refreshWaQr, 5000);
             });
     }
