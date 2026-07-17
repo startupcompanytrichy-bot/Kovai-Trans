@@ -125,7 +125,7 @@ class SettingsController extends Controller
         $whatsappSettings = Setting::where('group', 'whatsapp')->get()->keyBy('key');
 
         $svc = app(\App\Services\WhatsAppService::class);
-        $waStatus = $svc->getBaileysStatus();
+        $waStatus = @ $svc->getBaileysStatus();
         if (!empty($waStatus['connected']) && !empty($waStatus['number'])) {
             $fullNumber = ltrim($waStatus['number'], '0');
             if (strlen($fullNumber) === 12 && str_starts_with($fullNumber, '91')) {

@@ -79,7 +79,7 @@ class WhatsAppService
 
             $url = $this->baileysUrl() . '/send';
 
-            $response = Http::timeout(30)->post($url, [
+            $response = Http::timeout(10)->post($url, [
                 'to'      => $clean,
                 'message' => $message,
             ]);
@@ -95,7 +95,7 @@ class WhatsAppService
             Log::error("Baileys error: {$error}");
             return false;
         } catch (\Exception $e) {
-            Log::error("WhatsApp service error: " . $e->getMessage());
+            Log::warning("WhatsApp service unavailable: " . $e->getMessage());
             return false;
         }
     }
@@ -119,10 +119,10 @@ class WhatsAppService
     public function getBaileysStatus(): array
     {
         try {
-            $resp = Http::timeout(5)->get($this->baileysUrl() . '/status');
+            $resp = Http::timeout(2)->get($this->baileysUrl() . '/status');
             return $resp->successful() ? $resp->json() : ['connected' => false, 'error' => 'Unreachable'];
         } catch (\Exception $e) {
-            return ['connected' => false, 'error' => $e->getMessage()];
+            return ['connected' => false, 'error' => 'WhatsApp service not available'];
         }
     }
 
