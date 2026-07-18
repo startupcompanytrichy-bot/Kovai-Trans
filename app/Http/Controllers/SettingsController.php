@@ -506,21 +506,50 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function disconnectWhatsApp(WhatsAppService $whatsapp)
+    public function reconnectWhatsApp()
     {
-        $rawUrl = Setting::getValue('whatsapp_baileys_url', '');
+        $rawUrl     = Setting::getValue('whatsapp_baileys_url', '');
         $baileysUrl = rtrim($rawUrl ?: 'http://localhost:3001', '/');
         $authDir    = base_path('node-services/whatsapp-baileys/auth_info');
 
+        // Wipe stale auth so Baileys generates a fresh QR
         if (is_dir($authDir)) {
             $files = glob($authDir . '/*');
             foreach ($files as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                }
+                if (is_file($file)) unlink($file);
             }
         }
 
-        return response()->json(['success' => true, 'message' => 'WhatsApp disconnected. Restart the Baileys service and scan the QR code again.']);
+        try {
+            \Illuminate\Support\Facades\Http::timeout(5)->post($baileysUrl . '/reconnect');
+        } catch (\Exception $e) {
+            // Baileys will restart via supervisord — not fatal
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function disconnectWhatsApp(WhatsAppService $whatsapp)
+    {
+        $rawUrl     = Setting::getValue('whatsapp_baileys_url', '');
+        $baileysUrl = rtrim($rawUrl ?: 'http://localhost:3001', '/');
+        $authDir    = base_path('node-services/whatsapp-baileys/auth_info');
+
+        // Delete local auth files so the session is cleared
+        if (is_dir($authDir)) {
+            $files = glob($authDir . '/*');
+            foreach ($files as $file) {
+                if (is_file($file)) unlink($file);
+            }
+        }
+
+        // Tell Baileys to reconnect (clears its in-memory state and generates new QR)
+        try {
+            \Illuminate\Support\Facades\Http::timeout(5)->post($baileysUrl . '/reconnect');
+        } catch (\Exception $e) {
+            // Baileys may already be restarting — not fatal
+        }
+
+        return response()->json(['success' => true, 'message' => 'WhatsApp disconnected. Scan the new QR code to reconnect.']);
     }
 }

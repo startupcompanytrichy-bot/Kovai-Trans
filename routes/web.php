@@ -216,6 +216,7 @@ Route::middleware(CheckLogin::class)->group(function () {
     Route::post('/settings/whatsapp/test', [SettingsController::class, 'testWhatsApp'])->name('settings.whatsapp.test');
     Route::get('/settings/whatsapp/qr', [SettingsController::class, 'getWhatsAppQr'])->name('settings.whatsapp.qr');
     Route::post('/settings/whatsapp/connect', [SettingsController::class, 'connectWhatsApp'])->name('settings.whatsapp.connect');
+    Route::post('/settings/whatsapp/reconnect', [SettingsController::class, 'reconnectWhatsApp'])->name('settings.whatsapp.reconnect');
     Route::post('/settings/whatsapp/disconnect', [SettingsController::class, 'disconnectWhatsApp'])->name('settings.whatsapp.disconnect');
     Route::post('/settings/update', [SettingsController::class, 'updateSetting'])->name('settings.update');
     Route::post('/settings/gst', [SettingsController::class, 'storeGst'])->name('settings.gst.store');

@@ -1796,8 +1796,12 @@
         if (reconnectBtn) reconnectBtn.style.display = 'none';
         waQrRetries = 0;
 
-        fetch('http://localhost:3001/reconnect', {
-                method: 'POST'
+        fetch('{{ route("settings.whatsapp.reconnect") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
             })
             .then(function() {
                 setTimeout(refreshWaQr, 3000);

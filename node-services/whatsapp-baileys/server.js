@@ -107,11 +107,15 @@ app.post('/reconnect', async (_req, res) => {
   starting = false;
   connectedNumber = null;
   try {
-    if (sock) { try { sock.end(null); } catch {} }
-    sock = null;
-    fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+    if (sock) { try { sock.end(null); } catch {} sock = null; }
+    // Wipe auth_info so a fresh QR is always generated
+    if (fs.existsSync(AUTH_DIR)) {
+      fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+    }
+    fs.mkdirSync(AUTH_DIR, { recursive: true });
   } catch {}
-  startSocket();
+  // Small delay so the socket fully closes before restarting
+  setTimeout(startSocket, 1000);
   res.json({ ok: true, message: 'Reconnecting...' });
 });
 
