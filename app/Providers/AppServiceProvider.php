@@ -11,6 +11,7 @@ class AppServiceProvider extends ServiceProvider
     {
         require_once app_path('Helpers/FinancialYearHelper.php');
         require_once app_path('Helpers/SettingsHelper.php');
+        require_once app_path('Helpers/StorageHelper.php');
     }
 
     public function boot(): void
@@ -38,6 +39,13 @@ class AppServiceProvider extends ServiceProvider
             view()->share('globalSettings', $settings);
         } catch (\Exception $e) {
             view()->share('globalSettings', collect());
+        }
+
+        // When using S3/R2, make asset('storage/path') return the correct cloud URL
+        if (config('filesystems.disks.public.driver') === 's3') {
+            $this->app['url']->macro('storagePath', function (string $path) {
+                return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+            });
         }
     }
 }
