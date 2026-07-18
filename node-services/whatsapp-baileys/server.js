@@ -8,7 +8,7 @@ import fs from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const AUTH_DIR = join(__dirname, 'auth_info');
-const PORT = parseInt(process.env.PORT || '3001', 10);
+const PORT = 3001; // always internal — do not use process.env.PORT (that belongs to Nginx)
 
 let sock = null;
 let connected = false;

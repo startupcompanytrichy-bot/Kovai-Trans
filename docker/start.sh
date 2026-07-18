@@ -8,6 +8,13 @@ APP_DIR="/var/www/html"
 cd "$APP_DIR"
 
 # ---------------------------------------------------------------------------
+# 1. Set the port Nginx listens on (Render sets $PORT, default 80)
+# ---------------------------------------------------------------------------
+LISTEN_PORT="${PORT:-80}"
+echo "[start.sh] Configuring Nginx to listen on port $LISTEN_PORT..."
+sed -i "s/listen 80;/listen ${LISTEN_PORT};/" /etc/nginx/http.d/default.conf
+
+# ---------------------------------------------------------------------------
 # 1. Clear stale bootstrap caches (file-only, no DB contact)
 # ---------------------------------------------------------------------------
 echo "[start.sh] Clearing bootstrap caches..."
