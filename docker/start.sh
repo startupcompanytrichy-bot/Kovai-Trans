@@ -2,12 +2,13 @@
 # =============================================================================
 # Production Start Script for Kovai-Trans (Render.com)
 # =============================================================================
+set -e
 
 APP_DIR="/var/www/html"
 cd "$APP_DIR"
 
 # ---------------------------------------------------------------------------
-# 1. Clear stale bootstrap caches (file-only, safe before DB is touched)
+# 1. Clear stale bootstrap caches (file-only, no DB contact)
 # ---------------------------------------------------------------------------
 echo "[start.sh] Clearing bootstrap caches..."
 rm -f "$APP_DIR/bootstrap/cache/config.php"
@@ -24,12 +25,11 @@ php artisan migrate --force
 echo "[start.sh] Migrations done."
 
 # ---------------------------------------------------------------------------
-# 3. Cache config, routes, views for production performance
+# 3. Cache config and routes (NOT views - view:cache causes issues in prod boot)
 # ---------------------------------------------------------------------------
-echo "[start.sh] Caching for production..."
+echo "[start.sh] Caching config and routes..."
 php artisan config:cache
 php artisan route:cache
-php artisan view:cache
 echo "[start.sh] Caching done."
 
 # ---------------------------------------------------------------------------
@@ -47,5 +47,5 @@ chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 # ---------------------------------------------------------------------------
 # 6. Start supervisord (nginx + php-fpm + queue + scheduler)
 # ---------------------------------------------------------------------------
-echo "[start.sh] Starting supervisord..."
+echo "[start.sh] All done. Starting supervisord..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
