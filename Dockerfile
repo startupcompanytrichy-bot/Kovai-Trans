@@ -94,6 +94,9 @@ WORKDIR /var/www/html
 COPY --from=composer-build /app/vendor /var/www/html/vendor
 COPY . .
 
+# Explicitly copy .env for production
+COPY .env /var/www/html/.env
+
 # Copy built frontend assets
 COPY --from=frontend-build /app/public/build /var/www/html/public/build
 
