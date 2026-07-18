@@ -1,14 +1,18 @@
-#!/bin/bash
+#!/bin/sh
 # =============================================================================
-# Production Start Script for Kovai-Trans
-# Writes .env from Render environment variables, then starts all services
+# Production Start Script for Kovai-Trans (Render.com)
+# Bootstraps Laravel then starts services via Supervisord
 # =============================================================================
+set -e
 
-# Write .env from environment variables
-cat > /var/www/html/.env <<EOF
+APP_DIR="/var/www/html"
+cd "$APP_DIR"
+
+echo "[start.sh] Writing .env from environment variables..."
+cat > "$APP_DIR/.env" <<EOF
 APP_NAME="${APP_NAME:-Kovai Trans}"
 APP_ENV=${APP_ENV:-production}
-APP_KEY=${APP_KEY:-base64:j6BiCL6/o4a3MPU4Lv7CBUZvrKJkaiuW4UYy9Km2wVo=}
+APP_KEY=${APP_KEY}
 APP_DEBUG=${APP_DEBUG:-false}
 APP_URL=${APP_URL:-https://kovai-trans.onrender.com}
 
@@ -24,11 +28,11 @@ LOG_DEPRECATIONS_CHANNEL=null
 LOG_LEVEL=${LOG_LEVEL:-error}
 
 DB_CONNECTION=${DB_CONNECTION:-pgsql}
-DB_HOST=${DB_HOST:-dpg-d901jhbeo5us73boin5g-a.oregon-postgres.render.com}
+DB_HOST=${DB_HOST}
 DB_PORT=${DB_PORT:-5432}
-DB_DATABASE=${DB_DATABASE:-kovai_transport}
-DB_USERNAME=${DB_USERNAME:-kovai_transport_user}
-DB_PASSWORD=${DB_PASSWORD:-Hh6TAg5LuiS5MNIV5fDEoUKpeNpCJHZu}
+DB_DATABASE=${DB_DATABASE}
+DB_USERNAME=${DB_USERNAME}
+DB_PASSWORD=${DB_PASSWORD}
 
 SESSION_DRIVER=${SESSION_DRIVER:-database}
 SESSION_LIFETIME=120
@@ -42,28 +46,49 @@ CACHE_STORE=${CACHE_STORE:-database}
 BROADCAST_CONNECTION=log
 FILESYSTEM_DISK=local
 
-JWT_SECRET=${JWT_SECRET:-a0UwWVJWOUk2R1FJTzhHMG9JM3JDZG95RzZidVdmOXFGTHZ0SzZDVkJoSXd1aWxnTWl5VEx0QjdmNkdSTnBWbw==}
+JWT_SECRET=${JWT_SECRET}
 JWT_TTL=120
 JWT_REMEMBER_TTL=43200
 JWT_COOKIE=auth_token
 
-MAIL_MAILER=log
+MAIL_MAILER=${MAIL_MAILER:-log}
+MAIL_HOST=${MAIL_HOST:-127.0.0.1}
+MAIL_PORT=${MAIL_PORT:-2525}
+MAIL_USERNAME=${MAIL_USERNAME:-null}
+MAIL_PASSWORD=${MAIL_PASSWORD:-null}
+MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@kovai-trans.com}
+MAIL_FROM_NAME="${APP_NAME:-Kovai Trans}"
+
+WHATSAPP_BAILEYS_URL=${WHATSAPP_BAILEYS_URL:-http://localhost:3001}
+WHATSAPP_DAILY_LIMIT=${WHATSAPP_DAILY_LIMIT:-100}
+
+GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY:-}
+GEOAPIFY_API_KEY=${GEOAPIFY_API_KEY:-}
+ORS_API_KEY=${ORS_API_KEY:-}
+
+VITE_APP_NAME="${APP_NAME:-Kovai Trans}"
 EOF
 
-# Run migrations
-php artisan config:clear 2>/dev/null
-php artisan migrate --force 2>/dev/null
+echo "[start.sh] Clearing caches..."
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
 
-# Start WhatsApp Baileys service in background
-cd /var/www/html/node-services/whatsapp-baileys
-node server.js &
-BAILEYS_PID=$!
+echo "[start.sh] Running migrations..."
+php artisan migrate --force
 
-# Go back to app root
-cd /var/www/html
+echo "[start.sh] Caching config, routes, and views for production..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
-# Start PHP built-in server
-php artisan serve --host=0.0.0.0 --port=${PORT:-10000} &
-PHP_PID=$!
+echo "[start.sh] Creating storage symlink..."
+php artisan storage:link --force 2>/dev/null || true
 
-wait $BAILEYS_PID $PHP_PID
+echo "[start.sh] Fixing storage permissions..."
+chown -R www-data:www-data "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
+chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
+
+echo "[start.sh] Starting supervisord..."
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

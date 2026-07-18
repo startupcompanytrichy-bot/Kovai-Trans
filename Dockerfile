@@ -107,6 +107,10 @@ COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 # Copy Supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Copy startup script
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh
+
 # Create required runtime directories
 RUN mkdir -p /var/log/supervisor /var/run
 
@@ -117,5 +121,5 @@ EXPOSE 80 9000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
 
-# Start Supervisor (manages Nginx + PHP-FPM + Node.js services)
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start via bootstrap script (writes .env, runs migrations, starts supervisord)
+CMD ["/start.sh"]
