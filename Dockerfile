@@ -107,6 +107,9 @@ COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 # Copy Supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Create required runtime directories
+RUN mkdir -p /var/log/supervisor /var/run
+
 # Expose ports: 80 (Nginx), 9000 (PHP-FPM)
 EXPOSE 80 9000
 
