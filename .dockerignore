@@ -16,11 +16,14 @@
 node_modules
 npm-debug.log*
 
-# Laravel
+# Laravel - exclude runtime files but keep directory structure (.gitkeep files)
 storage/logs/*.log
-storage/framework/cache/*
+storage/framework/cache/data/*
+!storage/framework/cache/data/.gitkeep
 storage/framework/sessions/*
+!storage/framework/sessions/.gitkeep
 storage/framework/views/*
+!storage/framework/views/.gitkeep
 bootstrap/cache/*.php
 
 # Docker
