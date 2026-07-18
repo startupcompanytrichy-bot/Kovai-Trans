@@ -1,26 +1,18 @@
 # =============================================================================
 # Kovai-Trans Production Dockerfile
-# Multi-stage build for Laravel + Node.js WhatsApp Baileys Service
+# Multi-stage build: Vite assets + Composer deps + Baileys Node deps + PHP image
 # =============================================================================
 
 # ---------------------------------------------------------------------------
-# Stage 1: Build frontend assets (Node.js)
+# Stage 1: Build frontend assets (Vite)
 # ---------------------------------------------------------------------------
 FROM node:20-alpine AS frontend-build
 
 WORKDIR /app
-
-# Copy package files first for better layer caching
 COPY package.json package-lock.json* ./
-
-# Install npm dependencies
 RUN npm ci --ignore-scripts
-
-# Copy Vite config and source files
 COPY vite.config.js ./
 COPY resources/ ./resources/
-
-# Build production assets
 RUN npm run build
 
 # ---------------------------------------------------------------------------
@@ -29,22 +21,29 @@ RUN npm run build
 FROM composer:2 AS composer-build
 
 WORKDIR /app
-
-# Copy composer files first for better layer caching
 COPY composer.json composer.lock* ./
-
-# Install dependencies (no dev for production)
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
 # ---------------------------------------------------------------------------
-# Stage 3: Final production image
+# Stage 3: WhatsApp Baileys Node.js dependencies
+# ---------------------------------------------------------------------------
+FROM node:20-alpine AS baileys-build
+
+WORKDIR /app
+COPY node-services/whatsapp-baileys/package.json node-services/whatsapp-baileys/package-lock.json* ./
+RUN npm ci --omit=dev
+
+# ---------------------------------------------------------------------------
+# Stage 4: Final production image
 # ---------------------------------------------------------------------------
 FROM php:8.3-fpm-alpine AS production
 
-# Install system dependencies
+# Install system dependencies + Node.js
 RUN apk add --no-cache \
     nginx \
     supervisor \
+    nodejs \
+    npm \
     libzip-dev \
     libpq-dev \
     libpng-dev \
@@ -68,7 +67,7 @@ RUN apk add --no-cache \
         opcache \
         gd
 
-# Install Redis extension
+# Install Redis PHP extension
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && pecl install redis \
     && docker-php-ext-enable redis \
@@ -76,8 +75,6 @@ RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
 
 # PHP production configuration
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
-
-# Custom PHP settings for production
 RUN echo "upload_max_filesize = 64M" >> "$PHP_INI_DIR/conf.d/custom.ini" \
     && echo "post_max_size = 64M" >> "$PHP_INI_DIR/conf.d/custom.ini" \
     && echo "memory_limit = 512M" >> "$PHP_INI_DIR/conf.d/custom.ini" \
@@ -90,8 +87,10 @@ RUN echo "upload_max_filesize = 64M" >> "$PHP_INI_DIR/conf.d/custom.ini" \
 
 WORKDIR /var/www/html
 
-# Copy application files from composer stage
+# Copy PHP vendor dependencies
 COPY --from=composer-build /app/vendor /var/www/html/vendor
+
+# Copy application source
 COPY . .
 
 # Explicitly copy .env for production
@@ -100,11 +99,10 @@ COPY .env /var/www/html/.env
 # Copy built frontend assets
 COPY --from=frontend-build /app/public/build /var/www/html/public/build
 
-# Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Copy Baileys node_modules (built in stage 3)
+COPY --from=baileys-build /app/node_modules /var/www/html/node-services/whatsapp-baileys/node_modules
 
-# Ensure required Laravel storage directories exist
+# Ensure required Laravel storage directories exist and are writable
 RUN mkdir -p /var/www/html/storage/framework/views \
              /var/www/html/storage/framework/cache/data \
              /var/www/html/storage/framework/sessions \
@@ -128,12 +126,12 @@ RUN chmod +x /start.sh
 # Create required runtime directories
 RUN mkdir -p /var/log/supervisor /var/run
 
-# Expose ports: 80 (Nginx), 9000 (PHP-FPM)
-EXPOSE 80 9000
+# Expose port 80 (Nginx)
+EXPOSE 80
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
 
-# Start via bootstrap script (writes .env, runs migrations, starts supervisord)
+# Start via bootstrap script
 CMD ["/start.sh"]
