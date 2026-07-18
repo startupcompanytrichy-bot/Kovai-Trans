@@ -18,7 +18,7 @@ let starting = false;
 let connectedNumber = null;
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 
 async function startSocket() {
   if (starting) return;
@@ -147,6 +147,36 @@ app.post('/send', async (req, res) => {
     res.json({ ok: true, id: result?.key?.id });
   } catch (err) {
     console.error('Send error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Send a document (PDF) — accepts base64-encoded file
+app.post('/send-document', async (req, res) => {
+  const { to, filename, mimetype, base64, caption } = req.body;
+
+  if (!to || !base64 || !filename) {
+    return res.status(400).json({ error: 'Missing to, filename, or base64' });
+  }
+
+  if (!connected || !sock) {
+    return res.status(503).json({ error: 'WhatsApp not connected' });
+  }
+
+  try {
+    const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
+    const buffer = Buffer.from(base64, 'base64');
+
+    const result = await sock.sendMessage(jid, {
+      document: buffer,
+      fileName: filename,
+      mimetype: mimetype || 'application/pdf',
+      caption: caption || '',
+    });
+
+    res.json({ ok: true, id: result?.key?.id });
+  } catch (err) {
+    console.error('Send document error:', err);
     res.status(500).json({ error: err.message });
   }
 });

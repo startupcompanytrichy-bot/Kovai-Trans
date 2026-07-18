@@ -7,10 +7,11 @@ use App\Models\FinancialYear;
 use App\Models\GstSetting;
 use App\Models\Login;
 use App\Models\Permission;
-use App\Models\MessageTemplate;
 use App\Models\Setting;
-use App\Models\User;
+use App\Models\VehicleReminderSend;
+use App\Models\WhatsAppHistory;
 use App\Models\WhatsAppReminderContact;
+use App\Jobs\SendDocumentReminderJob;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -88,28 +89,6 @@ class SettingsController extends Controller
         return $query;
     }
 
-    /**
-     * Get scoped VehicleReminderConfig records for AJAX responses.
-     */
-    private function scopedVehicleConfigs()
-    {
-        return $this->scopeToOrg(
-            \App\Models\VehicleReminderConfig::with(['template', 'company', 'branch'])->latest(),
-            $this->sessionOrgIds()
-        )->get();
-    }
-
-    /**
-     * Get scoped MessageTemplate records for AJAX responses.
-     */
-    private function scopedMessageTemplates()
-    {
-        return $this->scopeToOrg(
-            MessageTemplate::latest(),
-            $this->sessionOrgIds()
-        )->get();
-    }
-
     public function index()
     {
         $financialYears = FinancialYear::orderBy('start_date', 'desc')->get();
@@ -120,12 +99,12 @@ class SettingsController extends Controller
         $companyLimit   = $limitSettings['company_limit']->value ?? '';
         $branchLimit    = $limitSettings['branch_limit']->value ?? '';
 
-        $allSettings     = Setting::where('group', '!=', 'payroll')->orderBy('group')->orderBy('label')->get();
-        $gstSettings     = GstSetting::orderBy('name')->get();
+        $gstSettings      = GstSetting::orderBy('name')->get();
         $whatsappSettings = Setting::where('group', 'whatsapp')->get()->keyBy('key');
+        $whatsappConfig   = Setting::where('group', 'whatsapp_config')->get()->keyBy('key');
 
         $svc = app(\App\Services\WhatsAppService::class);
-        $waStatus = @ $svc->getBaileysStatus();
+        $waStatus = $svc->getBaileysStatus();
         if (!empty($waStatus['connected']) && !empty($waStatus['number'])) {
             $fullNumber = ltrim($waStatus['number'], '0');
             if (strlen($fullNumber) === 12 && str_starts_with($fullNumber, '91')) {
@@ -144,28 +123,20 @@ class SettingsController extends Controller
         $userCompanyId = $loginUser->company_id ?? null;
         $userBranchId  = $loginUser->branch_id  ?? null;
 
-        // Scope contacts, configs, and templates to the current session company/branch.
+        // Scope contacts to the current session company/branch.
         // Super-admin (no company_id) sees all records.
         $contactQuery = WhatsAppReminderContact::orderBy('name');
-        $configQuery  = \App\Models\VehicleReminderConfig::with(['template', 'company', 'branch'])->latest();
-        $tmplQuery    = MessageTemplate::latest();
 
         if ($userCompanyId) {
             $contactQuery->where('company_id', $userCompanyId);
-            $configQuery->where('company_id', $userCompanyId);
-            $tmplQuery->where('company_id', $userCompanyId);
         }
         if ($userBranchId) {
             $contactQuery->where('branch_id', $userBranchId);
-            $configQuery->where('branch_id', $userBranchId);
-            $tmplQuery->where('branch_id', $userBranchId);
         }
 
-        $waContacts       = $contactQuery->get();
-        $vehicleConfigs   = $configQuery->get();
-        $messageTemplates = $tmplQuery->get();
+        $waContacts = $contactQuery->get();
 
-        return view('Settings.Settings', compact('financialYears', 'currentFY', 'branches', 'branchSettings', 'companyLimit', 'branchLimit', 'allSettings', 'gstSettings', 'whatsappSettings', 'waContacts', 'vehicleConfigs', 'userCompanyId', 'userBranchId', 'messageTemplates'));
+        return view('Settings.Settings', compact('financialYears', 'currentFY', 'branches', 'branchSettings', 'companyLimit', 'branchLimit', 'gstSettings', 'whatsappSettings', 'whatsappConfig', 'waContacts', 'userCompanyId', 'userBranchId'));
     }
 
     // ── Financial Year CRUD ────────────────────────────────────────────────────
@@ -260,6 +231,38 @@ class SettingsController extends Controller
         );
 
         return back()->with('success', 'Account limits updated successfully.');
+    }
+
+    // ── WhatsApp Message Configuration ────────────────────────────────────────
+
+    public function updateWhatsAppConfig(Request $request)
+    {
+        $request->validate([
+            'whatsapp_send_time'     => 'required|date_format:H:i',
+            'whatsapp_reminder_days' => 'required|integer|min:1|max:365',
+        ]);
+
+        Setting::updateOrCreate(
+            ['key' => 'whatsapp_send_time'],
+            ['value' => $request->whatsapp_send_time, 'group' => 'whatsapp_config', 'label' => 'WhatsApp Message Send Time']
+        );
+
+        Setting::updateOrCreate(
+            ['key' => 'whatsapp_reminder_days'],
+            ['value' => $request->whatsapp_reminder_days, 'group' => 'whatsapp_config', 'label' => 'WhatsApp Reminder Days Before Expiry']
+        );
+
+        // Clear today's sent records so the updated config fires fresh
+        VehicleReminderSend::whereDate('sent_at', today())->where('send_status', 'sent')->delete();
+        WhatsAppHistory::whereDate('sent_at', today())->where('send_status', 'sent')->delete();
+
+        // Immediately dispatch reminder job to queue
+        SendDocumentReminderJob::dispatch();
+
+        return back()->with('success',
+            'Configuration saved — Send time: ' . $request->whatsapp_send_time .
+            ' IST, Reminder window: ' . $request->whatsapp_reminder_days . ' days before expiry. Reminders dispatched to queue.'
+        );
     }
 
     // ── WhatsApp Settings ──────────────────────────────────────────────────────
@@ -519,199 +522,5 @@ class SettingsController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'WhatsApp disconnected. Restart the Baileys service and scan the QR code again.']);
-    }
-
-    // ── Vehicle Reminder Settings ────────────────────────────────────────────
-
-    public function storeVehicleReminderConfig(Request $request)
-    {
-        $request->validate([
-            'template_id' => 'required|integer|exists:message_templates,id',
-            'duration'    => 'required|string|max:50',
-            'time'        => 'required|string|max:20',
-        ]);
-
-        $org  = $this->sessionOrgIds();
-        $tmpl = MessageTemplate::findOrFail($request->template_id);
-
-        \App\Models\VehicleReminderConfig::create([
-            'company_id'  => $org['company_id'],
-            'branch_id'   => $org['branch_id'],
-            'template_id' => $tmpl->id,
-            'message'     => $tmpl->message,
-            'duration'    => $request->duration,
-            'time'        => $request->time,
-            'created_by'  => Auth::id(),
-            'updated_by'  => Auth::id(),
-        ]);
-
-        if ($request->ajax() || $request->expectsJson()) {
-            $vehicleConfigs = $this->scopedVehicleConfigs();
-            return response()->json([
-                'success' => 'Vehicle reminder config added successfully.',
-                'rows'    => view('Settings._vehicle_reminder_rows', compact('vehicleConfigs'))->render(),
-                'count'   => $vehicleConfigs->count(),
-            ]);
-        }
-
-        return back()->with('success', 'Vehicle reminder config added successfully.');
-    }
-
-    public function updateVehicleReminderConfig(Request $request, $id)
-    {
-        $config = \App\Models\VehicleReminderConfig::findOrFail($id);
-
-        $request->validate([
-            'template_id' => 'required|integer|exists:message_templates,id',
-            'duration'    => 'required|string|max:50',
-            'time'        => 'required|string|max:20',
-        ]);
-
-        $tmpl = MessageTemplate::findOrFail($request->template_id);
-
-        $config->update([
-            'template_id' => $tmpl->id,
-            'message'     => $tmpl->message,
-            'duration'    => $request->duration,
-            'time'        => $request->time,
-            'updated_by'  => Auth::id(),
-        ]);
-
-        if ($request->ajax() || $request->expectsJson()) {
-            $vehicleConfigs = $this->scopedVehicleConfigs();
-            return response()->json([
-                'success' => 'Vehicle reminder config updated successfully.',
-                'rows'    => view('Settings._vehicle_reminder_rows', compact('vehicleConfigs'))->render(),
-                'count'   => $vehicleConfigs->count(),
-            ]);
-        }
-
-        return back()->with('success', 'Vehicle reminder config updated successfully.');
-    }
-
-    public function destroyVehicleReminderConfig(Request $request, $id)
-    {
-        $config = \App\Models\VehicleReminderConfig::findOrFail($id);
-        $config->delete();
-
-        if ($request->ajax() || $request->expectsJson()) {
-            $vehicleConfigs = $this->scopedVehicleConfigs();
-            return response()->json([
-                'success' => 'Vehicle reminder config deleted.',
-                'rows'    => view('Settings._vehicle_reminder_rows', compact('vehicleConfigs'))->render(),
-                'count'   => $vehicleConfigs->count(),
-            ]);
-        }
-
-        return back()->with('success', 'Vehicle reminder config deleted.');
-    }
-
-    // ── Message Template CRUD ─────────────────────────────────────────────────
-
-    public function storeMessageTemplate(Request $request)
-    {
-        $request->validate([
-            'template_name' => 'required|string|max:150',
-            'message'       => 'required|string',
-        ]);
-
-        $org = $this->sessionOrgIds();
-
-        MessageTemplate::create([
-            'company_id'    => $org['company_id'],
-            'branch_id'     => $org['branch_id'],
-            'template_name' => trim($request->template_name),
-            'message'       => trim($request->message),
-            'status'        => true,
-            'created_by'    => Auth::id(),
-            'updated_by'    => Auth::id(),
-        ]);
-
-        if ($request->ajax() || $request->expectsJson()) {
-            $messageTemplates = $this->scopedMessageTemplates();
-            return response()->json([
-                'success' => "Template \"{$request->template_name}\" added successfully.",
-                'rows'    => view('Settings._message_template_rows', compact('messageTemplates'))->render(),
-                'count'   => $messageTemplates->count(),
-            ]);
-        }
-
-        return back()->with('success', "Template \"{$request->template_name}\" added successfully.");
-    }
-
-    public function updateMessageTemplate(Request $request, $id)
-    {
-        $template = MessageTemplate::findOrFail($id);
-
-        $request->validate([
-            'template_name' => 'required|string|max:150',
-            'message'       => 'required|string',
-        ]);
-
-        $template->update([
-            'template_name' => trim($request->template_name),
-            'message'       => trim($request->message),
-            'status'        => $request->boolean('status', $template->status),
-            'updated_by'    => Auth::id(),
-        ]);
-
-        if ($request->ajax() || $request->expectsJson()) {
-            $messageTemplates = $this->scopedMessageTemplates();
-            return response()->json([
-                'success' => "Template \"{$template->template_name}\" updated successfully.",
-                'rows'    => view('Settings._message_template_rows', compact('messageTemplates'))->render(),
-                'count'   => $messageTemplates->count(),
-            ]);
-        }
-
-        return back()->with('success', "Template \"{$template->template_name}\" updated successfully.");
-    }
-
-    public function destroyMessageTemplate(Request $request, $id)
-    {
-        $template = MessageTemplate::findOrFail($id);
-        $name = $template->template_name;
-
-        // Check if any vehicle reminder config references this template
-        $usedCount = \App\Models\VehicleReminderConfig::where('template_id', $id)->count();
-        if ($usedCount > 0) {
-            if ($request->ajax() || $request->expectsJson()) {
-                return response()->json([
-                    'error' => "Cannot delete \"{$name}\": it is used by {$usedCount} vehicle reminder config(s). Remove those configs first.",
-                ], 422);
-            }
-            return back()->withErrors(['template' => "Cannot delete \"{$name}\": it is used by {$usedCount} vehicle reminder config(s). Remove those configs first."]);
-        }
-
-        $template->delete();
-
-        if ($request->ajax() || $request->expectsJson()) {
-            $messageTemplates = $this->scopedMessageTemplates();
-            return response()->json([
-                'success' => "Template \"{$name}\" deleted successfully.",
-                'rows'    => view('Settings._message_template_rows', compact('messageTemplates'))->render(),
-                'count'   => $messageTemplates->count(),
-            ]);
-        }
-
-        return back()->with('success', "Template \"{$name}\" deleted.");
-    }
-
-    public function toggleMessageTemplate(Request $request, $id)
-    {
-        $template = MessageTemplate::findOrFail($id);
-        $template->update([
-            'status'     => !$template->status,
-            'updated_by' => Auth::id(),
-        ]);
-
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'success' => 'Status updated.',
-                'status'  => $template->status,
-            ]);
-        }
-
-        return back()->with('success', 'Template status updated.');
     }
 }

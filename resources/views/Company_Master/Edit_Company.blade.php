@@ -448,6 +448,57 @@
                 </div>
             </div>
 
+            {{-- ⑤ Company Logo (bottom of left column) --}}
+            <div class="ec-card">
+                <div class="ec-card-header">
+                    <div class="card-icon" style="background:#f0f9ff;color:#0369a1;"><i class="ti-image"></i></div>
+                    <div>
+                        <h6>Company Logo</h6>
+                        <p class="card-subtitle">Upload or replace your company logo</p>
+                    </div>
+                </div>
+                <div class="ec-card-body">
+                    <div class="row align-items-center">
+                        {{-- Current / Preview --}}
+                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                            <div style="border:2px solid #e8f0fe;border-radius:12px;padding:14px;background:#f8fbff;display:inline-flex;align-items:center;justify-content:center;min-width:120px;min-height:90px;">
+                                @if($company->logo)
+                                    <img id="ecLogoPreviewMain"
+                                         src="{{ asset('storage/' . $company->logo) }}"
+                                         alt="Current Logo"
+                                         style="max-height:80px;max-width:160px;object-fit:contain;border-radius:6px;">
+                                @else
+                                    <div id="ecLogoPreviewMain"
+                                         style="width:70px;height:70px;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:800;">
+                                        {{ strtoupper(substr($company->company_name, 0, 1)) }}
+                                    </div>
+                                @endif
+                            </div>
+                            <div style="font-size:10px;color:#8a94a6;margin-top:6px;">
+                                {{ $company->logo ? 'Current logo' : 'No logo yet' }}
+                            </div>
+                        </div>
+                        {{-- Upload zone --}}
+                        <div class="col-md-8">
+                            <div class="ec-upload-zone" id="ecLogoUploadZoneMain"
+                                 onclick="document.getElementById('ecLogoInputMain').click()">
+                                <i class="ti-cloud-up"></i>
+                                <div class="uz-title">{{ $company->logo ? 'Click to replace logo' : 'Click to upload logo' }}</div>
+                                <div class="uz-sub">JPG, PNG, WEBP — max 2 MB</div>
+                            </div>
+                            <input id="ecLogoInputMain" name="logo" type="file" class="d-none"
+                                   accept="image/jpeg,image/png,image/webp"
+                                   onchange="ecPreviewLogoMain(this)">
+                            @error('logo')<small class="text-danger mt-1 d-block">{{ $message }}</small>@enderror
+                            <small class="text-muted d-block mt-2" style="font-size:11px;">
+                                <i class="ti-info-alt mr-1"></i>
+                                The logo appears on invoices, packing slips and other printed documents.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         {{-- RIGHT COLUMN ─────────────────────────────────────────── --}}
@@ -513,7 +564,7 @@
                         <div class="uz-title">Click to change logo</div>
                         <div class="uz-sub">JPG, PNG, WEBP — max 2 MB</div>
                     </div>
-                    <input id="logoInput" name="logo" type="file" class="d-none"
+                    <input id="logoInput" type="file" class="d-none"
                         accept="image/jpeg,image/png,image/webp"
                         onchange="ecPreviewLogo(this)">
                     @error('logo')<small class="text-danger">{{ $message }}</small>@enderror
@@ -560,25 +611,71 @@ $(document).ready(function () {
         this.value = this.value.toUpperCase();
     });
 
-    // Logo preview
+    // Logo preview (right sidebar upload zone)
     window.ecPreviewLogo = function (input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
             reader.onload = function (e) {
                 var p = document.getElementById('logoPreview');
-                if (p.tagName === 'IMG') {
+                if (p && p.tagName === 'IMG') {
                     p.src = e.target.result;
-                } else {
+                } else if (p) {
                     var img = document.createElement('img');
                     img.src = e.target.result;
                     img.id = 'logoPreview';
                     img.style.cssText = 'max-height:80px;max-width:160px;border-radius:8px;object-fit:contain;';
                     p.replaceWith(img);
                 }
+                // Transfer the file to the real input (bottom card)
+                var realInput = document.getElementById('ecLogoInputMain');
+                if (realInput && input.files[0]) {
+                    var dt = new DataTransfer();
+                    dt.items.add(input.files[0]);
+                    realInput.files = dt.files;
+                }
+                // Sync to main logo preview at bottom
+                ecSyncMainPreview(e.target.result);
             };
             reader.readAsDataURL(input.files[0]);
         }
     };
+
+    // Logo preview (bottom left-column upload zone)
+    window.ecPreviewLogoMain = function (input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var p = document.getElementById('ecLogoPreviewMain');
+                if (p && p.tagName === 'IMG') {
+                    p.src = e.target.result;
+                } else if (p) {
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.id = 'ecLogoPreviewMain';
+                    img.style.cssText = 'max-height:80px;max-width:160px;object-fit:contain;border-radius:6px;';
+                    p.replaceWith(img);
+                }
+                // Sync to sidebar preview
+                ecSyncMainPreview(e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
+    // Sync preview to right sidebar logoPreview element
+    function ecSyncMainPreview(src) {
+        var p = document.getElementById('logoPreview');
+        if (!p) return;
+        if (p.tagName === 'IMG') {
+            p.src = src;
+        } else {
+            var img = document.createElement('img');
+            img.src = src;
+            img.id = 'logoPreview';
+            img.style.cssText = 'max-height:80px;max-width:160px;border-radius:8px;object-fit:contain;';
+            p.replaceWith(img);
+        }
+    }
 
     // Form submit guard
     $('#companyEditForm').on('submit', function () {

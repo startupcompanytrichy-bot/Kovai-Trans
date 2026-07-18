@@ -17,9 +17,9 @@ class Kernel extends ConsoleKernel
             ->dailyAt('09:00')
             ->timezone('Asia/Kolkata');
 
-        // Send vehicle document reminders daily at 9 AM
+        // Send vehicle document reminders daily at 9:25 AM IST
         $schedule->command('vehicle:send-document-reminders')
-            ->dailyAt('09:00')
+            ->dailyAt('09:25')
             ->timezone('Asia/Kolkata');
     }
 

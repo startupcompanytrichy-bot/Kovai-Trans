@@ -6,47 +6,39 @@ use App\Models\Vehicle;
 use App\Models\VehicleReminderConfig;
 use App\Models\WhatsAppReminderContact;
 use App\Models\VehicleReminderSend;
+use App\Models\WhatsAppHistory;
 use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 /**
- * Artisan Command: Send Document Expiry Reminders
+ * Artisan Command: Send Vehicle Document Expiry Reminders
  *
- * Uses the existing Settings flow:
- *   1. Message Templates (message_templates) - message content with placeholders
- *   2. Vehicle Reminder Configs (vehicle_reminder_configs) - links template + duration + time
- *   3. WhatsApp Reminder Contacts (whatsapp_reminder_contacts) - recipients
+ * Runs daily at 12:00 noon IST (Asia/Kolkata).
  *
- * Duration options (from Settings form):
- *   - "Last 30 Days" → send when 30 days or less remaining
- *   - "Last 15 Days" → send when 15 days or less remaining
- *   - "Last 10 Days" → send when 10 days or less remaining
- *   - "Last 5 Days"  → send when 5 days or less remaining
- *   - "Last 1 Day"   → send when 1 day or less remaining
+ * Logic:
+ *   1. Load all VehicleReminderConfigs + active WhatsAppReminderContacts.
+ *   2. For every active vehicle × 5 document types:
+ *        - Calculate days until expiry.
+ *        - Match a config whose duration threshold covers the remaining days.
+ *        - Skip if a "sent" record already exists for today (same vehicle + doc + expiry).
+ *        - Build message from config template (placeholders replaced).
+ *        - Send to every active contact via WhatsAppService.
+ *        - Log in vehicle_reminder_sends (detailed tracking) AND whatsapp_histories (audit log).
  *
- * Placeholders in message template:
- *   - {{vehicle_number}}  → e.g. "TN 47 AY 4817"
- *   - {{document_type}}   → e.g. "Insurance", "Fitness", "PUC"
- *   - {{expiry_date}}     → e.g. "15 Aug 2026"
- *   - {{days_remaining}}  → e.g. "10" (negative if overdue)
+ * Placeholders supported in message template:
+ *   {{vehicle_number}}  {{document_type}}  {{expiry_date}}  {{days_remaining}}
  *
  * Usage:
  *   php artisan vehicle:send-document-reminders
- *
- * Schedule (in Kernel.php):
- *   Runs daily at 9:00 AM IST
  */
 class SendDocumentReminders extends Command
 {
     protected $signature = 'vehicle:send-document-reminders';
 
-    protected $description = 'Send WhatsApp reminders for vehicle document expiries based on reminder configs';
+    protected $description = 'Send WhatsApp reminders for vehicle document expiries (runs daily at 12:00 noon)';
 
-    /**
-     * Document types to check for expiry
-     * Maps database column → display label
-     */
+    /** DB column → display label */
     protected $documentTypes = [
         'insurance_expiry_date' => 'Insurance',
         'fitness_expiry_date'   => 'Fitness',
@@ -55,9 +47,7 @@ class SendDocumentReminders extends Command
         'permit_expiry_date'    => 'Permit',
     ];
 
-    /**
-     * Duration options from Settings form → days mapping
-     */
+    /** Duration label → days (from Settings form options) */
     protected $durationDays = [
         'Last 30 Days' => 30,
         'Last 15 Days' => 15,
@@ -66,76 +56,68 @@ class SendDocumentReminders extends Command
         'Last 1 Day'   => 1,
     ];
 
-    /**
-     * Execute the command
-     *
-     * @return int Exit code
-     */
-    public function handle()
+    public function handle(): int
     {
-        $this->info('Starting vehicle document reminder check...');
+        $this->info('=== Vehicle Document Reminder — Daily Run ===');
         $this->newLine();
 
         $today = Carbon::now()->startOfDay();
 
-        // Get all vehicle reminder configs (from Settings → Vehicle Reminder)
+        // Load configs and contacts once
         $configs = VehicleReminderConfig::with('template')->get();
 
         if ($configs->isEmpty()) {
-            $this->warn('No vehicle reminder configs found. Please add configs in Settings → Vehicle Reminder.');
+            $this->warn('No vehicle reminder configs found. Add configs in Settings → Vehicle Reminder.');
             return Command::SUCCESS;
         }
 
-        // Get all active WhatsApp contacts (from Settings → Reminder Contacts)
         $contacts = WhatsAppReminderContact::where('is_active', true)->get();
 
         if ($contacts->isEmpty()) {
-            $this->error('No active WhatsApp contacts found. Please add contacts in Settings → Reminder Contacts.');
+            $this->error('No active WhatsApp contacts. Add contacts in Settings → Reminder Contacts.');
             return Command::FAILURE;
         }
 
-        $this->info("Found {$configs->count()} reminder config(s), {$contacts->count()} contact(s)");
+        $this->info("Configs: {$configs->count()}  |  Contacts: {$contacts->count()}");
         $this->newLine();
 
         $whatsappService = app(WhatsAppService::class);
-        $vehicles = Vehicle::where('status', 'active')->get();
-        $totalSent = 0;
-        $totalFailed = 0;
+        $vehicles        = Vehicle::where('status', 'active')->get();
+        $totalSent       = 0;
+        $totalFailed     = 0;
+        $totalSkipped    = 0;
 
-        // Process each vehicle
         foreach ($vehicles as $vehicle) {
-            // Check each document type
             foreach ($this->documentTypes as $field => $label) {
                 $expiryDate = $vehicle->{$field} ? Carbon::parse($vehicle->{$field}) : null;
                 if (!$expiryDate) continue;
 
-                // Calculate days until expiry (negative = overdue)
-                $daysRemaining = (int) $today->diffInDays($expiryDate, false);
+                $daysRemaining  = (int) $today->diffInDays($expiryDate, false);
 
-                // Find matching config based on duration
+                // Find best (tightest) matching config
                 $matchingConfig = $this->findMatchingConfig($configs, $daysRemaining);
                 if (!$matchingConfig) continue;
 
-                // Skip if already sent today
+                // Skip if already sent today for this vehicle + doc + expiry date
                 $alreadySentToday = VehicleReminderSend::where('vehicle_id', $vehicle->id)
                     ->where('document_type', $field)
+                    ->where('expiry_date', $expiryDate->format('Y-m-d'))
                     ->whereDate('sent_at', $today->toDateString())
                     ->where('send_status', 'sent')
                     ->exists();
 
                 if ($alreadySentToday) {
-                    $this->line("  Skip: {$vehicle->vehicle_number} - {$label} (already sent today)");
+                    $this->line("  ⏭  Skip (already sent today): {$vehicle->vehicle_number} — {$label}");
+                    $totalSkipped++;
                     continue;
                 }
 
-                // Build message using the template from config
                 $message = $this->buildMessage($vehicle, $label, $expiryDate, $daysRemaining, $matchingConfig);
 
-                $this->info("  Processing: {$vehicle->vehicle_number} - {$label} ({$daysRemaining} days remaining)");
+                $this->info("  ▶  {$vehicle->vehicle_number} — {$label} ({$daysRemaining} days)");
 
-                // Send to all active contacts
                 foreach ($contacts as $contact) {
-                    // Create tracking record
+                    // vehicle_reminder_sends
                     $sendRecord = VehicleReminderSend::create([
                         'company_id'     => $vehicle->company_id,
                         'branch_id'      => $vehicle->branch_id,
@@ -148,123 +130,101 @@ class SendDocumentReminders extends Command
                         'message'        => $message,
                         'contact_number' => $contact->mobile,
                         'send_status'    => 'pending',
+                        'created_by'     => null, // automated
+                    ]);
+
+                    // whatsapp_histories
+                    $history = WhatsAppHistory::create([
+                        'company_id'     => $vehicle->company_id,
+                        'branch_id'      => $vehicle->branch_id,
+                        'source'         => 'scheduled',
+                        'vehicle_id'     => $vehicle->id,
+                        'contact_id'     => $contact->id,
+                        'document_type'  => $field,
+                        'document_label' => $label,
+                        'expiry_date'    => $expiryDate->format('Y-m-d'),
+                        'days_remaining' => $daysRemaining,
+                        'contact_number' => $contact->mobile,
+                        'message'        => $message,
+                        'send_status'    => 'pending',
                         'created_by'     => null,
                     ]);
 
-                    // Send via WhatsApp
                     $sent = $whatsappService->sendMessage($contact->mobile, $message);
+                    $now  = now();
 
                     if ($sent) {
-                        $sendRecord->update([
-                            'send_status' => 'sent',
-                            'sent_at'     => now(),
-                        ]);
-                        $contact->update([
-                            'last_send_status' => 'sent',
-                            'last_sent_at'     => now(),
-                        ]);
+                        $sendRecord->update(['send_status' => 'sent', 'sent_at' => $now]);
+                        $history->update(['send_status' => 'sent', 'sent_at' => $now]);
+                        $contact->update(['last_send_status' => 'sent', 'last_sent_at' => $now]);
                         $totalSent++;
-                        $this->line("    ✓ Sent to {$contact->name} ({$contact->mobile})");
+                        $this->line("     ✓ {$contact->name} ({$contact->mobile})");
                     } else {
-                        $sendRecord->update([
-                            'send_status'   => 'failed',
-                            'error_message' => 'WhatsApp send failed',
-                        ]);
+                        $err = 'WhatsApp send failed';
+                        $sendRecord->update(['send_status' => 'failed', 'error_message' => $err]);
+                        $history->update(['send_status' => 'failed', 'error_message' => $err]);
                         $totalFailed++;
-                        $this->error("    ✗ Failed to send to {$contact->name} ({$contact->mobile})");
+                        $this->error("     ✗ {$contact->name} ({$contact->mobile})");
                     }
                 }
             }
         }
 
         $this->newLine();
-        $this->info("Completed: {$totalSent} messages sent, {$totalFailed} failed");
+        $this->info("Done — Sent: {$totalSent}  |  Failed: {$totalFailed}  |  Skipped (dup): {$totalSkipped}");
         return Command::SUCCESS;
     }
 
     /**
-     * Find matching config based on days remaining
-     *
-     * Duration options from Settings form:
-     *   "Last 30 Days" → matches when days_remaining <= 30
-     *   "Last 15 Days" → matches when days_remaining <= 15
-     *   "Last 10 Days" → matches when days_remaining <= 10
-     *   "Last 5 Days"  → matches when days_remaining <= 5
-     *   "Last 1 Day"   → matches when days_remaining <= 1
-     *
-     * @param  \Illuminate\Database\Eloquent\Collection  $configs
-     * @param  int  $daysRemaining
-     * @return VehicleReminderConfig|null
+     * Return the config with the tightest (smallest) matching duration window.
+     * Example: daysRemaining=10, configs for 15 and 30 days → returns 15-day config.
      */
-    protected function findMatchingConfig($configs, $daysRemaining)
+    protected function findMatchingConfig($configs, int $daysRemaining)
     {
+        $best    = null;
+        $bestMax = PHP_INT_MAX;
+
         foreach ($configs as $config) {
             $maxDays = $this->durationDays[$config->duration] ?? null;
-            if ($maxDays !== null && $daysRemaining <= $maxDays) {
-                return $config;
+            if ($maxDays !== null && $daysRemaining <= $maxDays && $maxDays < $bestMax) {
+                $best    = $config;
+                $bestMax = $maxDays;
             }
         }
-        return null;
+
+        return $best;
     }
 
     /**
-     * Build the message using the template from config
-     *
-     * The message is stored in vehicle_reminder_configs.message (copied from
-     * message_templates.message when config was created/updated).
-     *
-     * Supported placeholders:
-     *   - {{vehicle_number}}  → Vehicle registration number
-     *   - {{document_type}}   → Document type label
-     *   - {{expiry_date}}     → Formatted expiry date
-     *   - {{days_remaining}}  → Days until expiry (negative if overdue)
-     *
-     * @param  Vehicle  $vehicle
-     * @param  string  $docLabel
-     * @param  Carbon  $expiryDate
-     * @param  int  $daysRemaining
-     * @param  VehicleReminderConfig  $config
-     * @return string
+     * Build the reminder message using config template or fallback text.
      */
-    protected function buildMessage($vehicle, $docLabel, $expiryDate, $daysRemaining, $config)
+    protected function buildMessage(Vehicle $vehicle, string $docLabel, Carbon $expiryDate, int $daysRemaining, $config): string
     {
-        // Use the message from the config (copied from Message Template)
         if ($config && $config->message) {
             return str_replace(
-                [
-                    '{{vehicle_number}}',
-                    '{{document_type}}',
-                    '{{expiry_date}}',
-                    '{{days_remaining}}',
-                ],
-                [
-                    $vehicle->vehicle_number,
-                    $docLabel,
-                    $expiryDate->format('d M Y'),
-                    $daysRemaining,
-                ],
+                ['{{vehicle_number}}', '{{document_type}}', '{{expiry_date}}', '{{days_remaining}}'],
+                [$vehicle->vehicle_number, $docLabel, $expiryDate->format('d M Y'), $daysRemaining],
                 $config->message
             );
         }
 
-        // Fallback: build default message if no template found
         if ($daysRemaining < 0) {
-            $message = "🚨 *{$docLabel} Expired*\n\n";
-            $message .= "Vehicle: {$vehicle->vehicle_number}\n";
-            $message .= "{$docLabel} expired on {$expiryDate->format('d M Y')} (" . abs($daysRemaining) . " days ago)\n\n";
-            $message .= "Please renew immediately to avoid penalties.";
-        } elseif ($daysRemaining === 0) {
-            $message = "⚠️ *{$docLabel} Expiry Today*\n\n";
-            $message .= "Vehicle: {$vehicle->vehicle_number}\n";
-            $message .= "{$docLabel} expires today ({$expiryDate->format('d M Y')})\n\n";
-            $message .= "Please renew immediately.";
-        } else {
-            $message = "📋 *{$docLabel} Expiry Reminder*\n\n";
-            $message .= "Vehicle: {$vehicle->vehicle_number}\n";
-            $message .= "{$docLabel} expires on {$expiryDate->format('d M Y')} ({$daysRemaining} days left)\n\n";
-            $message .= "Please renew before expiry.";
+            return "🚨 *{$docLabel} Expired*\n\n"
+                . "Vehicle: {$vehicle->vehicle_number}\n"
+                . "{$docLabel} expired on {$expiryDate->format('d M Y')} (" . abs($daysRemaining) . " days ago)\n\n"
+                . "Please renew immediately to avoid penalties.";
         }
 
-        return $message;
+        if ($daysRemaining === 0) {
+            return "⚠️ *{$docLabel} Expiry Today*\n\n"
+                . "Vehicle: {$vehicle->vehicle_number}\n"
+                . "{$docLabel} expires today ({$expiryDate->format('d M Y')})\n\n"
+                . "Please renew immediately.";
+        }
+
+        return "📋 *{$docLabel} Expiry Reminder*\n\n"
+            . "Vehicle: {$vehicle->vehicle_number}\n"
+            . "{$docLabel} expires on {$expiryDate->format('d M Y')} ({$daysRemaining} days left)\n\n"
+            . "Please renew before expiry.";
     }
 }

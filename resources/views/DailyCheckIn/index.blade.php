@@ -29,13 +29,6 @@
 .btn-make-change{padding:4px 12px;font-size:11px;font-weight:700;border-radius:6px;border:none;background:#d1d5db;color:#9ca3af;cursor:not-allowed;transition:all .15s;white-space:nowrap;}
 .btn-make-change.active{background:#0ea5e9;color:#fff;cursor:pointer;}
 .btn-make-change.active:hover{background:#0284c7;}
-.vehicle-tbl .expired{color:#ef4444;font-weight:700;}
-.vehicle-tbl .expiring-soon{color:#f59e0b;font-weight:600;}
-.btn-send-reminder{padding:3px 8px;font-size:10px;font-weight:700;border-radius:4px;border:none;cursor:pointer;transition:all .15s;white-space:nowrap;}
-.btn-send-reminder.send{background:#22c55e;color:#fff;}
-.btn-send-reminder.send:hover{background:#16a34a;}
-.btn-send-reminder.sent{background:#e8f5e9;color:#2e7d32;cursor:default;}
-.btn-send-reminder.sending{background:#f59e0b;color:#fff;cursor:wait;}
 </style>
 
 <div class="pcoded-inner-content dci-page">
@@ -81,72 +74,76 @@
                     <tbody>
                         @forelse($vehicles as $i => $v)
                         @php
-                            $today = now()->startOfDay();
-                            $insExp     = $v->insurance_expiry_date ? \Carbon\Carbon::parse($v->insurance_expiry_date) : null;
-                            $fitExp     = $v->fitness_expiry_date ? \Carbon\Carbon::parse($v->fitness_expiry_date) : null;
-                            $pucExp     = $v->puc_expiry_date ? \Carbon\Carbon::parse($v->puc_expiry_date) : null;
-                            $natPermit  = $v->national_permit_date ? \Carbon\Carbon::parse($v->national_permit_date) : null;
-                            $permitExp  = $v->permit_expiry_date ? \Carbon\Carbon::parse($v->permit_expiry_date) : null;
-                            $insDays     = $insExp    ? (int) $today->diffInDays($insExp, false) : null;
-                            $fitDays     = $fitExp    ? (int) $today->diffInDays($fitExp, false) : null;
-                            $pucDays     = $pucExp    ? (int) $today->diffInDays($pucExp, false) : null;
-                            $natDays     = $natPermit ? (int) $today->diffInDays($natPermit, false) : null;
-                            $permitDays  = $permitExp ? (int) $today->diffInDays($permitExp, false) : null;
-                        @endphp
-                        @php
+                            $today      = now()->startOfDay();
+                            $insExp     = $v->insurance_expiry_date  ? \Carbon\Carbon::parse($v->insurance_expiry_date)  : null;
+                            $fitExp     = $v->fitness_expiry_date    ? \Carbon\Carbon::parse($v->fitness_expiry_date)    : null;
+                            $pucExp     = $v->puc_expiry_date        ? \Carbon\Carbon::parse($v->puc_expiry_date)        : null;
+                            $natPermit  = $v->national_permit_date   ? \Carbon\Carbon::parse($v->national_permit_date)   : null;
+                            $permitExp  = $v->permit_expiry_date     ? \Carbon\Carbon::parse($v->permit_expiry_date)     : null;
+                            $insDays    = $insExp    ? (int) $today->diffInDays($insExp,    false) : null;
+                            $fitDays    = $fitExp    ? (int) $today->diffInDays($fitExp,    false) : null;
+                            $pucDays    = $pucExp    ? (int) $today->diffInDays($pucExp,    false) : null;
+                            $natDays    = $natPermit ? (int) $today->diffInDays($natPermit, false) : null;
+                            $permitDays = $permitExp ? (int) $today->diffInDays($permitExp, false) : null;
+
                             $dayLabel = function($days) {
                                 if ($days === null) return '<span style="font-size:10px;color:#b0bac9;">—</span>';
-                                if ($days < 0) return '<span style="font-size:10px;color:#ef4444;font-weight:700;">' . abs($days) . ' day' . (abs($days) > 1 ? 's' : '') . ' overdue</span>';
+                                if ($days < 0)  return '<span style="font-size:10px;color:#ef4444;font-weight:700;">' . abs($days) . ' day' . (abs($days) > 1 ? 's' : '') . ' overdue</span>';
                                 if ($days === 0) return '<span style="font-size:10px;color:#ef4444;font-weight:700;">Due today</span>';
-                                if ($days <= 7) return '<span style="font-size:10px;color:#ef4444;font-weight:600;">' . $days . ' day' . ($days > 1 ? 's' : '') . ' left</span>';
-                                if ($days <= 30) return '<span style="font-size:10px;color:#f59e0b;font-weight:600;">' . $days . ' days left</span>';
-                                return '<span style="font-size:10px;color:#22c55e;font-weight:600;">' . $days . ' days left</span>';
-                            };
-                            $sendBtn = function($vehicleId, $field, $reminderData, $v) {
-                                $data = $reminderData[$v->id][$field] ?? null;
-                                if (!$data) return '';
-                                $days = $data['days_remaining'];
-                                $sent = $data['already_sent'];
-                                if ($days > 30) return '';
-                                if ($sent) {
-                                    return '<button class="btn-send-reminder sent" disabled>Sent</button>';
-                                }
-                                return '<button class="btn-send-reminder send" onclick="sendReminder(' . $vehicleId . ', \'' . $field . '\', this)">Send</button>';
+                                if ($days <= 7)  return '<span style="font-size:10px;color:#ef4444;font-weight:600;">'  . $days . ' day'  . ($days > 1 ? 's' : '') . ' left</span>';
+                                if ($days <= 30) return '<span style="font-size:10px;color:#f59e0b;font-weight:600;">'  . $days . ' days left</span>';
+                                return              '<span style="font-size:10px;color:#22c55e;font-weight:600;">'  . $days . ' days left</span>';
                             };
                         @endphp
                         <tr id="vehicle-row-{{ $v->id }}">
                             <td style="color:#b0bac9;font-weight:600;">{{ $i + 1 }}</td>
                             <td style="font-weight:700;color:#1a2340;">{{ $v->vehicle_number }}</td>
+
+                            {{-- Insurance --}}
                             <td>
-                                <input type="date" class="form-control vehicle-date" data-vehicle="{{ $v->id }}" data-field="insurance_expiry_date"
+                                <input type="date" class="form-control vehicle-date"
+                                    data-vehicle="{{ $v->id }}" data-field="insurance_expiry_date"
                                     value="{{ $v->insurance_expiry_date ? date('Y-m-d', strtotime($v->insurance_expiry_date)) : '' }}"
                                     style="{{ $insExp && $insExp->lt($today) ? 'border-color:#ef4444;' : ($insExp && $insExp->lte($today->copy()->addDays(30)) ? 'border-color:#f59e0b;' : '') }}">
-                                    <div class="d-flex align-items-center gap-2">{!! $dayLabel($insDays) !!} {!! $sendBtn($v->id, 'insurance_expiry_date', $reminderData, $v) !!}</div>
+                                <div>{!! $dayLabel($insDays) !!}</div>
                             </td>
+
+                            {{-- Fitness --}}
                             <td>
-                                <input type="date" class="form-control vehicle-date" data-vehicle="{{ $v->id }}" data-field="fitness_expiry_date"
+                                <input type="date" class="form-control vehicle-date"
+                                    data-vehicle="{{ $v->id }}" data-field="fitness_expiry_date"
                                     value="{{ $v->fitness_expiry_date ? date('Y-m-d', strtotime($v->fitness_expiry_date)) : '' }}"
                                     style="{{ $fitExp && $fitExp->lt($today) ? 'border-color:#ef4444;' : ($fitExp && $fitExp->lte($today->copy()->addDays(30)) ? 'border-color:#f59e0b;' : '') }}">
-                                    <div class="d-flex align-items-center gap-2">{!! $dayLabel($fitDays) !!} {!! $sendBtn($v->id, 'fitness_expiry_date', $reminderData, $v) !!}</div>
+                                <div>{!! $dayLabel($fitDays) !!}</div>
                             </td>
+
+                            {{-- PUC --}}
                             <td>
-                                <input type="date" class="form-control vehicle-date" data-vehicle="{{ $v->id }}" data-field="puc_expiry_date"
+                                <input type="date" class="form-control vehicle-date"
+                                    data-vehicle="{{ $v->id }}" data-field="puc_expiry_date"
                                     value="{{ $v->puc_expiry_date ? date('Y-m-d', strtotime($v->puc_expiry_date)) : '' }}"
                                     style="{{ $pucExp && $pucExp->lt($today) ? 'border-color:#ef4444;' : ($pucExp && $pucExp->lte($today->copy()->addDays(30)) ? 'border-color:#f59e0b;' : '') }}">
-                                    <div class="d-flex align-items-center gap-2">{!! $dayLabel($pucDays) !!} {!! $sendBtn($v->id, 'puc_expiry_date', $reminderData, $v) !!}</div>
+                                <div>{!! $dayLabel($pucDays) !!}</div>
                             </td>
+
+                            {{-- National Permit --}}
                             <td>
-                                <input type="date" class="form-control vehicle-date" data-vehicle="{{ $v->id }}" data-field="national_permit_date"
+                                <input type="date" class="form-control vehicle-date"
+                                    data-vehicle="{{ $v->id }}" data-field="national_permit_date"
                                     value="{{ $v->national_permit_date ? date('Y-m-d', strtotime($v->national_permit_date)) : '' }}"
                                     style="{{ $natPermit && $natPermit->lt($today) ? 'border-color:#ef4444;' : ($natPermit && $natPermit->lte($today->copy()->addDays(30)) ? 'border-color:#f59e0b;' : '') }}">
-                                    <div class="d-flex align-items-center gap-2">{!! $dayLabel($natDays) !!} {!! $sendBtn($v->id, 'national_permit_date', $reminderData, $v) !!}</div>
+                                <div>{!! $dayLabel($natDays) !!}</div>
                             </td>
+
+                            {{-- Permit --}}
                             <td>
-                                <input type="date" class="form-control vehicle-date" data-vehicle="{{ $v->id }}" data-field="permit_expiry_date"
+                                <input type="date" class="form-control vehicle-date"
+                                    data-vehicle="{{ $v->id }}" data-field="permit_expiry_date"
                                     value="{{ $v->permit_expiry_date ? date('Y-m-d', strtotime($v->permit_expiry_date)) : '' }}"
                                     style="{{ $permitExp && $permitExp->lt($today) ? 'border-color:#ef4444;' : ($permitExp && $permitExp->lte($today->copy()->addDays(30)) ? 'border-color:#f59e0b;' : '') }}">
-                                    <div class="d-flex align-items-center gap-2">{!! $dayLabel($permitDays) !!} {!! $sendBtn($v->id, 'permit_expiry_date', $reminderData, $v) !!}</div>
+                                <div>{!! $dayLabel($permitDays) !!}</div>
                             </td>
+
                             <td style="text-align:center;">
                                 <button class="btn-make-change" id="change-btn-{{ $v->id }}" data-vehicle="{{ $v->id }}" disabled>Make Change</button>
                             </td>
@@ -203,15 +200,15 @@
                             </td>
                             <td style="padding:10px 14px;">
                                 @if($emiDays === null)
-                                <span style="font-size:12px;color:#b0bac9;">—</span>
+                                    <span style="font-size:12px;color:#b0bac9;">—</span>
                                 @elseif($emiDays < 0)
-                                <span style="font-size:12px;color:#ef4444;font-weight:700;">{{ abs($emiDays) }} day{{ abs($emiDays) > 1 ? 's' : '' }} overdue</span>
+                                    <span style="font-size:12px;color:#ef4444;font-weight:700;">{{ abs($emiDays) }} day{{ abs($emiDays) > 1 ? 's' : '' }} overdue</span>
                                 @elseif($emiDays === 0)
-                                <span style="font-size:12px;color:#ef4444;font-weight:700;">Due today</span>
+                                    <span style="font-size:12px;color:#ef4444;font-weight:700;">Due today</span>
                                 @elseif($emiDays <= 7)
-                                <span style="font-size:12px;color:#ef4444;font-weight:600;">{{ $emiDays }} day{{ $emiDays > 1 ? 's' : '' }} left</span>
+                                    <span style="font-size:12px;color:#ef4444;font-weight:600;">{{ $emiDays }} day{{ $emiDays > 1 ? 's' : '' }} left</span>
                                 @else
-                                <span style="font-size:12px;color:#22c55e;font-weight:600;">{{ $emiDays }} days left</span>
+                                    <span style="font-size:12px;color:#22c55e;font-weight:600;">{{ $emiDays }} days left</span>
                                 @endif
                             </td>
                             <td style="padding:10px 14px;font-weight:700;">₹{{ number_format($e->outstanding_balance, 0) }}</td>
@@ -239,62 +236,11 @@
 @push('scripts')
 <script>
 function showDciTab(tab) {
-    var tabs = ['tab-vehicle', 'tab-emi'];
-    tabs.forEach(function(id) {
-        document.getElementById(id).style.display = id === 'tab-' + tab ? '' : 'none';
-    });
+    document.getElementById('tab-vehicle').style.display = tab === 'vehicle' ? '' : 'none';
+    document.getElementById('tab-emi').style.display     = tab === 'emi'     ? '' : 'none';
     document.querySelectorAll('.dci-tab').forEach(function(el) {
         var t = el.textContent.trim().toLowerCase().includes('vehicle general') ? 'vehicle' : 'emi';
         el.classList.toggle('active', t === tab);
-    });
-}
-
-function sendReminder(vehicleId, documentType, btn) {
-    if (!confirm('Send WhatsApp reminder for this document?')) return;
-
-    btn.classList.remove('send');
-    btn.classList.add('sending');
-    btn.textContent = 'Sending...';
-    btn.disabled = true;
-
-    fetch('{{ route("daily-check-in.send-reminder") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            vehicle_id: vehicleId,
-            document_type: documentType
-        })
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(resp) {
-        if (resp.success) {
-            btn.classList.remove('sending');
-            btn.classList.add('sent');
-            btn.textContent = 'Sent';
-            if (typeof toastr !== 'undefined') {
-                toastr['success'](resp.message, 'Success');
-            }
-        } else {
-            btn.classList.remove('sending');
-            btn.classList.add('send');
-            btn.textContent = 'Send';
-            btn.disabled = false;
-            if (typeof toastr !== 'undefined') {
-                toastr['error'](resp.message, 'Error');
-            }
-        }
-    })
-    .catch(function(err) {
-        btn.classList.remove('sending');
-        btn.classList.add('send');
-        btn.textContent = 'Send';
-        btn.disabled = false;
-        if (typeof toastr !== 'undefined') {
-            toastr['error']('Error: ' + err.message, 'Error');
-        }
     });
 }
 
@@ -334,6 +280,7 @@ function sendReminder(vehicleId, documentType, btn) {
             .then(function(resp) {
                 if (resp.success) {
                     delete changedData[vehicleId];
+                    // Refresh the vehicle tab to show updated dates
                     fetch(window.location.href)
                         .then(function(r) { return r.text(); })
                         .then(function(html) {
@@ -341,18 +288,22 @@ function sendReminder(vehicleId, documentType, btn) {
                             var doc = parser.parseFromString(html, 'text/html');
                             var newTab = doc.getElementById('tab-vehicle');
                             var oldTab = document.getElementById('tab-vehicle');
-                            if (newTab && oldTab) {
-                                oldTab.innerHTML = newTab.innerHTML;
-                            }
+                            if (newTab && oldTab) oldTab.innerHTML = newTab.innerHTML;
                         });
                     if (typeof toastr !== 'undefined') {
                         toastr['success']('Vehicle dates updated successfully.', 'Success');
                     }
                 } else {
+                    e.target.textContent = 'Make Change';
+                    e.target.disabled = false;
+                    e.target.classList.add('active');
                     alert('Update failed. Please try again.');
                 }
             })
             .catch(function(err) {
+                e.target.textContent = 'Make Change';
+                e.target.disabled = false;
+                e.target.classList.add('active');
                 alert('Error: ' + err.message);
             });
         }

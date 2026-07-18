@@ -329,6 +329,50 @@
             </div>
         </div>
 
+        {{-- ⑤ Company Logo --}}
+        <div class="vc-card">
+            <div class="vc-card-header">
+                <div class="card-icon" style="background:#f0f9ff;color:#0369a1;"><i class="ti-image"></i></div>
+                <div><h6>Company Logo</h6><p class="card-subtitle">Brand logo used on invoices and documents</p></div>
+            </div>
+            <div class="vc-card-body">
+                @if($company->logo)
+                    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+                        <div style="border:2px solid #e8f0fe;border-radius:12px;padding:16px;background:#f8fbff;display:inline-flex;align-items:center;justify-content:center;min-width:160px;min-height:100px;">
+                            <img src="{{ asset('storage/' . $company->logo) }}" alt="Company Logo"
+                                 style="max-height:90px;max-width:200px;object-fit:contain;border-radius:6px;">
+                        </div>
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:#596579;margin-bottom:4px;">
+                                <i class="ti-check-box mr-1" style="color:#38a169;"></i> Logo uploaded
+                            </div>
+                            <div style="font-size:11px;color:#8a94a6;margin-bottom:10px;">
+                                This logo will appear on invoices, packing slips and other documents.
+                            </div>
+                            <a href="{{ route('company.edit', $company->id) }}"
+                               class="btn btn-sm btn-outline-primary"
+                               style="font-size:12px;border-radius:7px;">
+                                <i class="ti-pencil mr-1"></i> Change Logo
+                            </a>
+                        </div>
+                    </div>
+                @else
+                    <div style="text-align:center;padding:30px 20px;background:#f8fbff;border:2px dashed #d0e4f7;border-radius:10px;">
+                        <i class="ti-image" style="font-size:36px;color:#c0d4f5;display:block;margin-bottom:10px;"></i>
+                        <div style="font-size:13px;font-weight:700;color:#8a94a6;margin-bottom:6px;">No logo uploaded</div>
+                        <div style="font-size:11px;color:#b0bac9;margin-bottom:14px;">
+                            A company logo helps identify your brand on invoices and documents.
+                        </div>
+                        <a href="{{ route('company.edit', $company->id) }}"
+                           class="btn btn-sm btn-primary"
+                           style="font-size:12px;border-radius:7px;">
+                            <i class="ti-cloud-up mr-1"></i> Upload Logo
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+
     </div>
 
     {{-- RIGHT COLUMN ─────────────────────────────────────────────── --}}

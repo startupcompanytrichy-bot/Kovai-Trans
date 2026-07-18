@@ -219,6 +219,142 @@ class InvoiceController extends Controller
     }
 
     /**
+     * GET /invoice/{invoiceNo}/download-pdf
+     * Download the invoice as a PDF file.
+     */
+    public function downloadPdf(string $invoiceNo)
+    {
+        $trips = Trip::with(['vehicle', 'driver', 'party', 'supplier'])
+            ->where('invoice_no', $invoiceNo)
+            ->where('is_deleted', false)
+            ->orderBy('trip_date')
+            ->get();
+
+        if ($trips->isEmpty()) {
+            abort(404, 'Invoice not found.');
+        }
+
+        $company         = Company::where('is_deleted', false)->first();
+        $invoiceType     = $trips->first()->invoice_type ?? 'normal';
+        $invoiceTypeName = match ($invoiceType) {
+            'rcm'    => 'RCM INVOICE',
+            'exempt' => 'EXEMPTED INVOICE',
+            default  => 'TAX INVOICE',
+        };
+        $cgstRate = 0.0;
+        $sgstRate = 0.0;
+
+        $html = view('Invoice.Invoice_Pdf_Download', compact(
+            'trips', 'company', 'invoiceNo', 'invoiceType', 'invoiceTypeName', 'cgstRate', 'sgstRate'
+        ))->render();
+
+        $pdf      = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+        $filename = 'Invoice_' . $invoiceNo . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * POST /invoice/{invoiceNo}/whatsapp
+     * Generate the invoice as PDF and send it to the customer (party) via WhatsApp.
+     */
+    public function sendWhatsApp(string $invoiceNo)
+    {
+        $trips = Trip::with(['vehicle', 'driver', 'party', 'supplier'])
+            ->where('invoice_no', $invoiceNo)
+            ->where('is_deleted', false)
+            ->orderBy('trip_date')
+            ->get();
+
+        if ($trips->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Invoice not found.'], 404);
+        }
+
+        $first   = $trips->first();
+        $party   = optional($first->party);
+        $phone   = $party->phone ?? null;
+
+        if (!$phone) {
+            return response()->json(['success' => false, 'message' => 'No phone number found for this customer. Please add a phone number to the party record.']);
+        }
+
+        $company         = Company::where('is_deleted', false)->first();
+        $invoiceType     = $first->invoice_type ?? 'normal';
+        $invoiceTypeName = match ($invoiceType) {
+            'rcm'    => 'RCM INVOICE',
+            'exempt' => 'EXEMPTED INVOICE',
+            default  => 'TAX INVOICE',
+        };
+        [$cgstRate, $sgstRate] = [0.0, 0.0]; // rates as per existing logic
+
+        // Generate PDF using DomPDF from the invoice blade
+        $html = view('Invoice.Invoice_Pdf_Download', compact(
+            'trips', 'company', 'invoiceNo', 'invoiceType', 'invoiceTypeName', 'cgstRate', 'sgstRate'
+        ))->render();
+        $pdf    = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait');
+
+        $pdfContent = $pdf->output();
+        $filename   = 'Invoice_' . $invoiceNo . '.pdf';
+
+        // Build caption message
+        $partyName  = $party->company_name ?: ($party->name ?? 'Customer');
+        $appName    = config('app.name', 'Trans ERP');
+        $subtotal   = (float) $trips->sum('freight_amount');
+        $grandTotal = $subtotal; // no tax in current config
+        $collected  = (float) $trips->sum('collected_amount');
+        $balance    = max(0, $grandTotal - $collected);
+        $invoiceDate = $first->invoiced_at ? $first->invoiced_at->format('d M Y') : now()->format('d M Y');
+
+        $caption = implode("\n", array_filter([
+            "📋 *Invoice — {$invoiceNo}*",
+            "🏢 *{$appName}*",
+            "👤 *Customer:* {$partyName}",
+            "📅 *Date:* {$invoiceDate}",
+            "💵 *Amount:* ₹" . number_format($grandTotal, 2),
+            ($balance > 0 ? "🔴 *Balance Due:* ₹" . number_format($balance, 2) : "✅ *Fully Paid*"),
+        ]));
+
+        // Send via WhatsApp service directly (PDF is generated synchronously)
+        $whatsappService = app(\App\Services\WhatsAppService::class);
+
+        $clean = preg_replace('/[^0-9]/', '', $phone);
+        if (strlen($clean) === 10) $clean = '91' . $clean;
+
+        $sent = $whatsappService->sendDocument($phone, $pdfContent, $filename, $caption);
+
+        // Log in whatsapp_histories
+        \App\Models\WhatsAppHistory::create([
+            'company_id'     => $first->company_id,
+            'branch_id'      => $first->branch_id,
+            'source'         => 'invoice',
+            'vehicle_id'     => null,
+            'contact_id'     => null,
+            'document_type'  => 'invoice_pdf',
+            'document_label' => "Invoice PDF {$invoiceNo}",
+            'expiry_date'    => null,
+            'days_remaining' => null,
+            'contact_number' => $phone,
+            'message'        => $caption . "\n[PDF: {$filename}]",
+            'send_status'    => $sent ? 'sent' : 'failed',
+            'sent_at'        => $sent ? now() : null,
+            'created_by'     => auth()->id(),
+        ]);
+
+        if ($sent) {
+            return response()->json([
+                'success' => true,
+                'message' => "Invoice PDF ({$invoiceNo}) sent to +91 {$phone} via WhatsApp.",
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to send PDF. Check Baileys service is running.',
+        ]);
+    }
+
+    /**
      * POST /invoice/{invoiceNo}/payment
      * Update payment status + collection date for all trips under this invoice.
      */

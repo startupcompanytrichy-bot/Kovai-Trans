@@ -743,132 +743,50 @@
                     {{-- ─── Sidebar Navigation ─────────────────────────────────────── --}}
                     <div class="col-md-3 mb-3 mb-md-0">
                         <div class="st-nav-wrap" id="settingsNav">
-                            <div class="st-nav-item active" data-tab="tab-all-settings">
-                                <div class="ni-ico"><i class="ti-server"></i></div>
-                                <span>All Settings</span>
-                                <span class="ni-badge">{{ $allSettings->count() }}</span>
-                            </div>
                             @if(userCan('view_settings_financial_year'))
-                            <div class="st-nav-item" data-tab="tab-financial-year">
+                            <div class="st-nav-item active" data-tab="tab-financial-year">
                                 <div class="ni-ico"><i class="ti-calendar"></i></div>
                                 Financial Year
                                 <span class="ni-badge">{{ $financialYears->count() }}</span>
                             </div>
-                            @endif
+                            @else
                             @if(userCan('view_settings_branch_default'))
-                            <div class="st-nav-item" data-tab="tab-branch">
+                            <div class="st-nav-item active" data-tab="tab-branch">
                                 <div class="ni-ico"><i class="ti-layers"></i></div>
                                 Branch Settings
                             </div>
-                            @endif
+                            @else
                             @if(showAllMenu())
-                            <div class="st-nav-item" data-tab="tab-gst">
+                            <div class="st-nav-item active" data-tab="tab-gst">
                                 <div class="ni-ico"><i class="ti-receipt"></i></div>
                                 GST Settings
                                 <span class="ni-badge">{{ $gstSettings->count() }}</span>
                             </div>
-                            @endif
-                            @if(showAllMenu())
-                            <div class="st-nav-item" data-tab="tab-limits">
+                            @else
+                            <div class="st-nav-item active" data-tab="tab-limits">
                                 <div class="ni-ico"><i class="ti-lock"></i></div>
                                 Account Limits
                             </div>
+                            @endif
+                            @endif
                             @endif
                             <div class="st-nav-item" data-tab="tab-whatsapp">
                                 <div class="ni-ico"><i class="ti-comment-alt"></i></div>
                                 WhatsApp Integration
                             </div>
+                            <div class="st-nav-item" data-tab="tab-whatsapp-config">
+                                <div class="ni-ico"><i class="ti-timer"></i></div>
+                                WhatsApp Message Config
+                            </div>
                             <div class="st-nav-item" data-tab="tab-reminder-contacts">
                                 <div class="ni-ico"><i class="ti-user"></i></div>
                                 WhatsApp Reminder Contacts
-                            </div>
-                            <div class="st-nav-item" data-tab="tab-message-template">
-                                <div class="ni-ico"><i class="ti-comment"></i></div>
-                                Message Template
-                                <span class="ni-badge">{{ $messageTemplates->count() }}</span>
-                            </div>
-                            <div class="st-nav-item" data-tab="tab-vehicle-reminder">
-                                <div class="ni-ico"><i class="ti-truck"></i></div>
-                                Vehicle Reminder
-                                <span class="ni-badge">{{ $vehicleConfigs->count() }}</span>
                             </div>
                         </div>
                     </div>
 
                     {{-- ─── Tab Content ────────────────────────────────────────────── --}}
                     <div class="col-md-9">
-
-                        {{-- ═══ Tab: All Settings ═════════════════════════════════════ --}}
-                        <div class="st-tab-pane active" id="tab-all-settings">
-                            <div class="st-sec"><i class="ti-server" style="color:#6366f1;font-size:13px;"></i> All Settings</div>
-                            <div class="st-card">
-                                <div class="st-card-hd">
-                                    <h6><span class="hd-ico" style="background:#eef2ff;color:#6366f1;"><i class="ti-server"></i></span> Manage Settings</h6>
-                                </div>
-                                <div class="st-tbl-wrap">
-                                    <table class="st-tbl">
-                                        <thead>
-                                            <tr>
-                                                <th>Setting</th>
-                                                <th>Key</th>
-                                                <th>Value</th>
-                                                <th style="text-align:center;width:80px;">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse($allSettings as $setting)
-                                            <tr id="sr-{{ $setting->id }}">
-                                                <td>
-                                                    <strong style="font-size:13px;">{{ $setting->label ?? $setting->key }}</strong>
-                                                    <div style="font-size:10px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.3px;">
-                                                        {{ $setting->group }}
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <code style="font-size:11px;background:#f1f5f9;padding:2px 8px;border-radius:5px;color:#64748b;">{{ $setting->key }}</code>
-                                                </td>
-                                                <td>
-                                                    <span class="sv" id="sv-{{ $setting->id }}"
-                                                        style="font-size:13px;color:#334155;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
-                                                        {{ $setting->value ?? '<empty>' }}
-                                                    </span>
-                                                    <form method="POST" action="{{ route('settings.update') }}"
-                                                        id="sef-{{ $setting->id }}" style="display:none;" class="sef">
-                                                        @csrf
-                                                        <input type="hidden" name="key" value="{{ $setting->key }}">
-                                                        <div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center;">
-                                                            <input type="text" name="value" class="form-control"
-                                                                value="{{ $setting->value }}"
-                                                                style="height:34px;font-size:12px;border-radius:8px;border:1.5px solid #6366f1;width:180px;padding:0 12px;box-shadow:none;">
-                                                            <button type="submit" class="st-btn st-btn-primary" style="height:32px;padding:0 14px;font-size:11px;border-radius:8px;">
-                                                                <i class="ti-check" style="font-size:10px;"></i> Save
-                                                            </button>
-                                                            <button type="button" class="st-btn st-btn-ghost" style="height:32px;padding:0 10px;font-size:11px;border-radius:8px;"
-                                                                onclick="cancelEdit({{ $setting->id }})">
-                                                                <i class="ti-close" style="font-size:10px;"></i>
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                </td>
-                                                <td style="text-align:center;">
-                                                    <button class="st-ib edit" onclick="toggleEdit({{ $setting->id }})" title="Edit">
-                                                        <i class="ti-pencil"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            @empty
-                                            <tr>
-                                                <td colspan="4" class="text-center py-4" style="color:#cbd5e1;">
-                                                    <i class="ti-server" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>
-                                                    <div style="font-size:14px;font-weight:600;">No settings found</div>
-                                                </td>
-                                            </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>{{-- /#tab-all-settings --}}
 
                         @if(userCan('view_settings_financial_year'))
                         <div class="st-tab-pane" id="tab-financial-year">
@@ -1301,8 +1219,139 @@
 
                         </div>{{-- /#tab-whatsapp --}}
 
+                        {{-- ═══ Tab: WhatsApp Message Configuration ════════════════════════ --}}
+                        <div class="st-tab-pane" id="tab-whatsapp-config">
+                            <div class="st-sec"><i class="ti-timer" style="color:#25d366;font-size:13px;"></i> WhatsApp Message Configuration</div>
+
+                            <div class="st-card">
+                                <div class="st-card-hd">
+                                    <h6>
+                                        <span class="hd-ico" style="background:#f0fdf4;color:#25d366;"><i class="ti-settings"></i></span>
+                                        Message Configuration
+                                    </h6>
+                                    <span class="st-pill" style="background:#dcfce7;color:#16a34a;font-size:10px;">Daily Schedule</span>
+                                </div>
+                                <div class="st-card-bd">
+                                    @php
+                                        $currentSendTime    = $whatsappConfig['whatsapp_send_time']->value    ?? '09:30';
+                                        $currentReminderDays = $whatsappConfig['whatsapp_reminder_days']->value ?? '15';
+                                    @endphp
+
+                                    {{-- Current config banner --}}
+                                    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:14px 18px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;margin-bottom:22px;">
+                                        <div style="display:flex;align-items:center;gap:12px;">
+                                            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 10px rgba(34,197,94,.3);">
+                                                <i class="ti-alarm-clock"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-size:10px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.5px;">Send Time</div>
+                                                <div style="font-size:20px;font-weight:800;color:#14532d;line-height:1.2;">
+                                                    {{ \Carbon\Carbon::createFromFormat('H:i', $currentSendTime)->format('h:i A') }}
+                                                </div>
+                                                <div style="font-size:11px;color:#22c55e;">IST &bull; Daily</div>
+                                            </div>
+                                        </div>
+                                        <div style="width:1px;height:44px;background:#86efac;"></div>
+                                        <div style="display:flex;align-items:center;gap:12px;">
+                                            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 10px rgba(245,158,11,.3);">
+                                                <i class="ti-calendar"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.5px;">Reminder Window</div>
+                                                <div style="font-size:20px;font-weight:800;color:#78350f;line-height:1.2;">
+                                                    {{ $currentReminderDays }} days
+                                                </div>
+                                                <div style="font-size:11px;color:#f59e0b;">before expiry date</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Update form --}}
+                                    <form method="POST" action="{{ route('settings.whatsapp.config.update') }}">
+                                        @csrf
+                                        <div class="row">
+                                            {{-- Send Time --}}
+                                            <div class="col-md-4" style="margin-bottom:16px;">
+                                                <label class="st-f" for="whatsapp_send_time">
+                                                    <i class="ti-alarm-clock mr-1" style="color:#22c55e;"></i>
+                                                    Message Send Time <span class="req">*</span>
+                                                </label>
+                                                <input type="time"
+                                                    name="whatsapp_send_time"
+                                                    id="whatsapp_send_time"
+                                                    class="form-control st-i"
+                                                    value="{{ $currentSendTime }}"
+                                                    required
+                                                    onchange="previewTime(this.value)">
+                                                <small style="color:#94a3b8;font-size:11px;margin-top:5px;display:block;">
+                                                    Daily send time &bull; 24-hour format &bull; IST
+                                                </small>
+                                                @error('whatsapp_send_time')
+                                                    <div style="color:#ef4444;font-size:11px;margin-top:4px;">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            {{-- Days Before Expiry --}}
+                                            <div class="col-md-4" style="margin-bottom:16px;">
+                                                <label class="st-f" for="whatsapp_reminder_days">
+                                                    <i class="ti-calendar mr-1" style="color:#f59e0b;"></i>
+                                                    Days Before Expiry <span class="req">*</span>
+                                                </label>
+                                                <div style="display:flex;align-items:center;gap:0;">
+                                                    <input type="number"
+                                                        name="whatsapp_reminder_days"
+                                                        id="whatsapp_reminder_days"
+                                                        class="form-control st-i"
+                                                        style="border-radius:10px 0 0 10px;text-align:center;font-size:20px;font-weight:800;color:#78350f;max-width:100px;"
+                                                        value="{{ $currentReminderDays }}"
+                                                        min="1" max="365" required
+                                                        oninput="previewDays(this.value)">
+                                                    <span style="display:inline-flex;align-items:center;padding:0 14px;height:42px;background:#fef3c7;border:1.5px solid #fcd34d;border-left:none;border-radius:0 10px 10px 0;font-size:12px;font-weight:700;color:#92400e;white-space:nowrap;">
+                                                        days before expiry
+                                                    </span>
+                                                </div>
+                                                <small style="color:#94a3b8;font-size:11px;margin-top:5px;display:block;">
+                                                    e.g. enter <strong>3</strong> → send 3 days before expiry
+                                                </small>
+                                                @error('whatsapp_reminder_days')
+                                                    <div style="color:#ef4444;font-size:11px;margin-top:4px;">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            {{-- Live preview --}}
+                                            <div class="col-md-4 d-flex align-items-end" style="margin-bottom:16px;">
+                                                <div id="configPreview" style="padding:12px 16px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;font-size:12px;color:#4f46e5;line-height:1.8;width:100%;">
+                                                    <div style="font-weight:700;margin-bottom:4px;"><i class="ti-info-alt mr-1"></i> Preview</div>
+                                                    <div>Send at: <strong id="previewTime">{{ \Carbon\Carbon::createFromFormat('H:i', $currentSendTime)->format('h:i A') }}</strong></div>
+                                                    <div>Window: <strong id="previewDays">{{ $currentReminderDays }} days</strong> before expiry</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div style="margin-top:6px;">
+                                            <button type="submit" class="st-btn st-btn-primary">
+                                                <i class="ti-check mr-1"></i> Save Configuration
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    {{-- Info --}}
+                                    <div class="st-inf mt-4">
+                                        <div class="if-t"><i class="ti-info-alt mr-1"></i> How it works</div>
+                                        <ul>
+                                            <li><strong>Send Time</strong> — reminders dispatch to queue daily at this time (IST)</li>
+                                            <li><strong>Days Before Expiry</strong> — e.g. enter <strong>3</strong> → message sent when document expires in 3 days or fewer</li>
+                                            <li>When you save, today's records are cleared and reminders are <strong>dispatched immediately</strong></li>
+                                            <li>Also triggers automatically when you update a date in <strong>Daily Check In</strong> and it falls within the window</li>
+                                            <li>All active contacts in <strong>WhatsApp Reminder Contacts</strong> receive the message</li>
+                                            <li>Duplicate sends on the same day are skipped automatically</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>{{-- /#tab-whatsapp-config --}}
+
                         <div class="st-tab-pane" id="tab-reminder-contacts">
-                            <div class="st-sec"><i class="ti-user" style="color:#25d366;font-size:13px;"></i> WhatsApp Reminder Contacts</div>
 
                             <div id="wa-contacts-section" class="st-card">
                                 <div class="st-card-hd">
@@ -1408,149 +1457,6 @@
 
                         </div>{{-- /#tab-reminder-contacts --}}
 
-                        <div class="st-tab-pane" id="tab-message-template">
-                            <div class="st-sec"><i class="ti-comment" style="color:#25d366;font-size:13px;"></i> Message Template</div>
-
-                            {{-- ── Add / Edit Form ─────────────────────────────────────────── --}}
-                            <div class="st-card">
-                                <div class="st-card-hd">
-                                    <h6><span class="hd-ico" id="mtFormIcon" style="background:#dcfce7;color:#16a34a;"><i class="ti-plus"></i></span> <span id="mtFormTitle">Add Template</span></h6>
-                                </div>
-                                <div class="st-card-bd">
-                                    <form id="mtForm" onsubmit="return submitMsgTemplate(event)">
-                                        @csrf
-                                        <input type="hidden" name="_method" id="mtMethod" value="POST">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <div class="form-group" style="margin-bottom:16px;">
-                                                    <label class="st-f" for="mtName">Template Name <span class="req">*</span></label>
-                                                    <input type="text" name="template_name" id="mtName" class="form-control st-i"
-                                                        placeholder="e.g. EMI Reminder" maxlength="150" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-8">
-                                                <div class="form-group" style="margin-bottom:16px;">
-                                                    <label class="st-f" for="mtMessage">Message <span class="req">*</span></label>
-                                                    <textarea name="message" id="mtMessage" class="form-control st-i" rows="3"
-                                                        placeholder="Type your message template here..." required style="resize:vertical;"></textarea>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style="display:flex;gap:8px;">
-                                            <button type="submit" class="st-btn st-btn-primary" id="mtSubmitBtn" style="height:42px;font-size:13px;border-radius:10px;padding:0 22px;">
-                                                <i class="ti-plus mr-1"></i> Add Template
-                                            </button>
-                                            <button type="button" class="st-btn st-btn-ghost" id="mtCancelBtn" onclick="resetMsgTemplateForm()" style="display:none;height:42px;padding:0 18px;border-radius:10px;font-size:12px;">
-                                                <i class="ti-close mr-1"></i> Cancel
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-
-                            {{-- ── List / Table ─────────────────────────────────────────── --}}
-                            <div class="st-card mt-3">
-                                <div class="st-card-hd">
-                                    <h6><span class="hd-ico" style="background:#eef2ff;color:#4f46e5;"><i class="ti-list"></i></span> Saved Templates</h6>
-                                    <span id="mtCountBadge" class="ni-badge" style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 12px;border-radius:20px;">{{ $messageTemplates->count() }}</span>
-                                </div>
-                                <div class="st-tbl-wrap">
-                                    <table class="st-tbl">
-                                        <thead>
-                                            <tr>
-                                                <th style="width:5%;">#</th>
-                                                <th style="width:20%;">Template Name</th>
-                                                <th style="width:48%;">Message</th>
-                                                <th style="text-align:center;width:12%;">Status</th>
-                                                <th style="text-align:center;width:15%;">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="mtTableBody">
-                                            @include('Settings._message_template_rows')
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>{{-- /#tab-message-template --}}
-
-                        <div class="st-tab-pane" id="tab-vehicle-reminder">
-                            <div class="st-sec"><i class="ti-truck" style="color:#6366f1;font-size:13px;"></i> Vehicle Reminder Settings</div>
-
-                                {{-- ── Add / Edit Config ─────────────────────────────────────── --}}
-                                <div class="st-card">
-                                        <div class="st-card-hd">
-                                            <h6><span class="hd-ico" id="vrcFormIcon" style="background:#dcfce7;color:#16a34a;"><i class="ti-plus"></i></span> <span id="vrcFormTitle">Add Reminder Config</span></h6>
-                                        </div>
-                                        <div class="st-card-bd">
-                                            <form id="vrcForm" onsubmit="return submitVrc(event)">
-                                                @csrf
-                                                <input type="hidden" name="_method" id="vrcMethod" value="POST">
-                                                <div class="form-group" style="margin-bottom:14px;">
-                                                    <label class="st-f" for="vrc_template">Template <span class="req">*</span></label>
-                                                    <select name="template_id" id="vrc_template" class="form-control st-i select2" style="width:100%;" required>
-                                                        <option value="">— Select Template —</option>
-                                                        @foreach($messageTemplates as $tmpl)
-                                                            @if($tmpl->status)
-                                                            <option value="{{ $tmpl->id }}">{{ $tmpl->template_name }}</option>
-                                                            @endif
-                                                        @endforeach
-                                                    </select>
-                                                    <small style="color:#94a3b8;font-size:11px;margin-top:4px;display:block;">Message content is pulled from <strong>Message Template</strong> settings.</small>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-6" style="margin-bottom:14px;">
-                                                        <label class="st-f" for="vrc_duration">Duration <span class="req">*</span></label>
-                                                        <select name="duration" id="vrc_duration" class="form-control st-i select2" style="width:100%;" required>
-                                                            <option value="">— Duration —</option>
-                                                            <option value="Last 30 Days">Last 30 Days</option>
-                                                            <option value="Last 15 Days">Last 15 Days</option>
-                                                            <option value="Last 10 Days">Last 10 Days</option>
-                                                            <option value="Last 5 Days">Last 5 Days</option>
-                                                            <option value="Last 1 Day">Last 1 Day</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-6" style="margin-bottom:14px;">
-                                                        <label class="st-f" for="vrc_time">Time <span class="req">*</span></label>
-                                                        <input type="text" name="time" id="vrc_time" class="form-control st-i timepicker" style="width:100%;" placeholder="e.g. 02:30 PM" required>
-                                                    </div>
-                                                </div>
-                                                <div style="display:flex;gap:8px;">
-                                                    <button type="submit" class="st-btn st-btn-primary" id="vrcSubmitBtn" style="height:42px;font-size:13px;border-radius:10px;padding:0 22px;">
-                                                        <i class="ti-plus mr-1"></i> Add Config
-                                                    </button>
-                                                    <button type="button" class="st-btn st-btn-ghost" id="vrcCancelBtn" onclick="resetVrcForm()" style="display:none;height:42px;padding:0 18px;border-radius:10px;font-size:12px;">
-                                                        <i class="ti-close mr-1"></i> Cancel
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                </div>
-
-                                {{-- ── Existing Configs Table ────────────────────────────────── --}}
-                                <div class="st-card mt-3">
-                                    <div class="st-card-hd">
-                                        <h6><span class="hd-ico" style="background:#eef2ff;color:#6366f1;"><i class="ti-list"></i></span> Saved Configurations</h6>
-                                        <span id="vrcCountBadge" class="ni-badge">{{ $vehicleConfigs->count() }}</span>
-                                    </div>
-                                    <div class="st-tbl-wrap">
-                                        <table class="st-tbl">
-                                            <thead>
-                                                <tr>
-                                                    <th>Template</th>
-                                                    <th>Duration</th>
-                                                    <th>Time</th>
-                                                    <th style="text-align:center;width:60px;">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="vrcTableBody">
-                                                @include('Settings._vehicle_reminder_rows')
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                        </div>{{-- /#tab-vehicle-reminder --}}
-
                     </div>{{-- /.col-md-9 --}}
                 </div>{{-- /.row --}}
 
@@ -1562,28 +1468,6 @@
 
 @push('scripts')
 <script>
-    function toggleEdit(id) {
-        var v = document.getElementById('sv-' + id);
-        var f = document.getElementById('sef-' + id);
-        if (f.style.display === 'none') {
-            f.style.display = 'block';
-            v.style.display = 'none';
-            var inp = f.querySelector('input[name="value"]');
-            if (inp) {
-                inp.focus();
-                inp.select();
-            }
-        } else {
-            f.style.display = 'none';
-            v.style.display = 'inline-flex';
-        }
-    }
-
-    function cancelEdit(id) {
-        document.getElementById('sv-' + id).style.display = 'inline-flex';
-        document.getElementById('sef-' + id).style.display = 'none';
-    }
-
     function toggleFY(b) {
         var h = document.querySelectorAll('#fyTbl tbody tr.fy-hid');
         var i = document.getElementById('fyTI');
@@ -1622,28 +1506,12 @@
             if (el) el.classList.add('active');
         }
 
-        function initVrcSelect2() {
-            if (typeof $ === 'undefined' || !$.fn.select2) return;
-            $('#tab-vehicle-reminder .select2').each(function() {
-                // Destroy first to force correct width recalculation after tab becomes visible
-                if ($(this).hasClass('select2-hidden-accessible')) {
-                    $(this).select2('destroy');
-                }
-                $(this).select2({
-                    width: '100%',
-                    allowClear: true,
-                    placeholder: $(this).find('option:first').text()
-                });
-            });
-        }
-
         nav.forEach(function(n) {
             n.addEventListener('click', function() {
                 var id = this.getAttribute('data-tab');
                 sw(id);
                 if (history.pushState) history.pushState(null, null, '#' + id.replace('tab-', ''));
                 if (id === 'tab-gst') setTimeout(initGstSelect2, 50);
-                if (id === 'tab-vehicle-reminder') setTimeout(initVrcSelect2, 50);
             });
         });
 
@@ -1654,7 +1522,6 @@
             if (document.getElementById(m)) {
                 sw(m);
                 if (m === 'tab-gst') setTimeout(initGstSelect2, 100);
-                if (m === 'tab-vehicle-reminder') setTimeout(initVrcSelect2, 100);
             }
         }
     })();
@@ -1874,18 +1741,6 @@
                     container.innerHTML = '<img src="' + data.dataUrl + '" width="220" height="220" alt="QR Code" style="image-rendering:pixelated;border-radius:4px;">';
                 } else {
                     waQrRetries++;
-                    if (waQrRetries >= 10) {
-                        if (waQrTimer) { clearTimeout(waQrTimer); waQrTimer = null; }
-                        container.innerHTML =
-                            '<div style="padding:30px 0;text-align:center;">' +
-                            '<div style="font-size:36px;margin-bottom:10px;opacity:0.4;">&#128241;</div>' +
-                            '<div style="font-size:14px;font-weight:600;color:#64748b;margin-bottom:4px;">WhatsApp Service Unavailable</div>' +
-                            '<div style="font-size:12px;color:#94a3b8;max-width:280px;margin:0 auto;margin-bottom:14px;">The Baileys service is not responding.</div>' +
-                            '<button onclick="retryWaQr()" style="padding:8px 20px;border-radius:8px;border:none;background:#0ea5e9;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Try Again</button>' +
-                            '</div>';
-                        if (reconnectBtn) reconnectBtn.style.display = 'none';
-                        return;
-                    }
                     var dots = '';
                     for (var i = 0; i < (waQrRetries % 4); i++) dots += '.';
                     container.innerHTML =
@@ -1902,31 +1757,17 @@
             })
             .catch(function() {
                 waQrRetries++;
-                if (waQrRetries >= 5) {
-                    if (waQrTimer) { clearTimeout(waQrTimer); waQrTimer = null; }
-                    container.innerHTML =
-                        '<div style="padding:30px 0;text-align:center;">' +
-                        '<div style="font-size:36px;margin-bottom:10px;opacity:0.4;">&#128241;</div>' +
-                        '<div style="font-size:14px;font-weight:600;color:#64748b;margin-bottom:4px;">WhatsApp Service Unavailable</div>' +
-                        '<div style="font-size:12px;color:#94a3b8;max-width:280px;margin:0 auto;margin-bottom:14px;">The WhatsApp Baileys service is not reachable.</div>' +
-                        '<button onclick="retryWaQr()" style="padding:8px 20px;border-radius:8px;border:none;background:#0ea5e9;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Try Again</button>' +
-                        '</div>';
-                    if (reconnectBtn) reconnectBtn.style.display = 'none';
-                    return;
-                }
                 container.innerHTML =
                     '<div style="padding:30px 0;text-align:center;">' +
-                    '<div style="font-size:36px;margin-bottom:10px;opacity:0.4;">&#9203;</div>' +
-                    '<div style="font-size:14px;font-weight:600;color:#f59e0b;margin-bottom:4px;">Connecting...</div>' +
-                    '<div style="font-size:12px;color:#94a3b8;">Checking WhatsApp service</div>' +
+                    '<div style="font-size:36px;margin-bottom:10px;opacity:0.4;">&#9888;</div>' +
+                    '<div style="font-size:14px;font-weight:600;color:#ef4444;margin-bottom:4px;">Service Not Available</div>' +
+                    '<div style="font-size:12px;color:#94a3b8;">Baileys service is not running.<br>Retrying in 5 seconds...</div>' +
                     '</div>';
+                if (waQrRetries >= 3 && reconnectBtn) {
+                    reconnectBtn.style.display = '';
+                }
                 waQrTimer = setTimeout(refreshWaQr, 5000);
             });
-    }
-
-    function retryWaQr() {
-        waQrRetries = 0;
-        refreshWaQr();
     }
 
     function disconnectWhatsApp() {
@@ -2125,284 +1966,30 @@
         this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
     });
 
-    // ── Message Template CRUD ────────────────────────────────────────────
-    var mtEditId = null;
-
-    function submitMsgTemplate(e) {
-        e.preventDefault();
-        var fd = new FormData(document.getElementById('mtForm'));
-        if (mtEditId) fd.set('_method', 'PUT');
-        var url = mtEditId ? '{{ url("settings/message-template") }}/' + mtEditId : '{{ route("settings.message-template.store") }}';
-        fetch(url, {
-                method: 'POST',
-                body: fd,
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(r) {
-                document.getElementById('mtTableBody').innerHTML = r.rows;
-                document.querySelector('[data-tab="tab-message-template"] .ni-badge').textContent = r.count;
-                document.getElementById('mtCountBadge').textContent = r.count;
-                resetMsgTemplateForm();
-                refreshVrcTemplateOptions();
-                toastr.success(r.success);
-            });
-        return false;
+    // ── WhatsApp Config: time + days preview ─────────────────────────────────
+    function previewTime(val) {
+        var previewTimeEl = document.getElementById('previewTime');
+        if (!val || !previewTimeEl) return;
+        var parts = val.split(':');
+        var h = parseInt(parts[0], 10);
+        var m = parts[1];
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        var h12 = h % 12 || 12;
+        previewTimeEl.textContent = h12 + ':' + m + ' ' + ampm;
+        // also update old timePreview if still present
+        var tp = document.getElementById('timePreviewVal');
+        if (tp) { tp.textContent = h12 + ':' + m + ' ' + ampm; }
+        var tpBox = document.getElementById('timePreview');
+        if (tpBox) tpBox.style.display = '';
     }
 
-    function openMsgTemplateEdit(id, name, message, status) {
-        mtEditId = id;
-        document.getElementById('mtName').value = name;
-        document.getElementById('mtMessage').value = message;
-        document.getElementById('mtFormTitle').textContent = 'Edit Template';
-        document.getElementById('mtFormIcon').innerHTML = '<i class="ti-pencil"></i>';
-        document.getElementById('mtFormIcon').style.background = '#eef2ff';
-        document.getElementById('mtFormIcon').style.color = '#6366f1';
-        document.getElementById('mtSubmitBtn').innerHTML = '<i class="ti-check mr-1"></i> Update Template';
-        document.getElementById('mtCancelBtn').style.display = 'flex';
-    }
-
-    function resetMsgTemplateForm() {
-        mtEditId = null;
-        document.getElementById('mtForm').reset();
-        document.getElementById('mtMethod').value = 'POST';
-        document.getElementById('mtFormTitle').textContent = 'Add Template';
-        document.getElementById('mtFormIcon').innerHTML = '<i class="ti-plus"></i>';
-        document.getElementById('mtFormIcon').style.background = '#dcfce7';
-        document.getElementById('mtFormIcon').style.color = '#16a34a';
-        document.getElementById('mtSubmitBtn').innerHTML = '<i class="ti-plus mr-1"></i> Add Template';
-        document.getElementById('mtCancelBtn').style.display = 'none';
-    }
-
-    function toggleMsgTemplate(id) {
-        var fd = new FormData();
-        fd.append('_token', '{{ csrf_token() }}');
-        fetch('{{ url("settings/message-template") }}/' + id + '/toggle', {
-                method: 'POST',
-                body: fd,
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(r) {
-                // Update the toggle button in-place without page reload
-                var btn = document.querySelector('#mt-row-' + id + ' .toggle-status');
-                if (btn) {
-                    var on = r.status;
-                    btn.textContent = on ? 'ON' : 'OFF';
-                    btn.style.background = on ? '#dcfce7' : '#fee2e2';
-                    btn.style.color = on ? '#16a34a' : '#ef4444';
-                    btn.title = on ? 'Active' : 'Inactive';
-                }
-                // Sync available templates in Vehicle Reminder form
-                refreshVrcTemplateOptions();
-                toastr.success(r.success);
-            });
-    }
-
-    function deleteMsgTemplate(id) {
-        var name = document.querySelector('#mt-row-' + id + ' td strong').textContent;
-        if (!confirm('Delete template "' + name + '"?')) return;
-        var fd = new FormData();
-        fd.append('_token', '{{ csrf_token() }}');
-        fd.append('_method', 'DELETE');
-        fetch('{{ url("settings/message-template") }}/' + id, {
-                method: 'POST',
-                body: fd,
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
-            .then(function(res) {
-                if (!res.ok) {
-                    toastr.error(res.data.error || 'Cannot delete this template.', 'Error');
-                    return;
-                }
-                document.getElementById('mtTableBody').innerHTML = res.data.rows;
-                document.querySelector('[data-tab="tab-message-template"] .ni-badge').textContent = res.data.count;
-                document.getElementById('mtCountBadge').textContent = res.data.count;
-                refreshVrcTemplateOptions();
-                toastr.success(res.data.success);
-            });
-    }
-
-    /**
-     * Reload the active template options in the Vehicle Reminder form
-     * after a template is added, edited, or deleted.
-     */
-    function refreshVrcTemplateOptions() {
-        var sel = document.getElementById('vrc_template');
-        if (!sel) return;
-        var currentVal = sel.value;
-        // Collect active template names/ids from the message template table
-        var options = '<option value="">— Select Template —</option>';
-        document.querySelectorAll('#mtTableBody tr[id^="mt-row-"]').forEach(function(row) {
-            var btn = row.querySelector('.toggle-status');
-            if (!btn || btn.textContent.trim() !== 'ON') return; // skip inactive
-            var idMatch = row.id.match(/mt-row-(\d+)/);
-            var nameEl = row.querySelector('td strong');
-            if (!idMatch || !nameEl) return;
-            options += '<option value="' + idMatch[1] + '">' + nameEl.textContent + '</option>';
-        });
-        // Destroy select2 and rebuild
-        if (typeof $ !== 'undefined' && $('#vrc_template').data('select2')) {
-            $('#vrc_template').select2('destroy');
+    function previewDays(val) {
+        var previewDaysEl = document.getElementById('previewDays');
+        if (!previewDaysEl) return;
+        var n = parseInt(val, 10);
+        if (!isNaN(n) && n > 0) {
+            previewDaysEl.textContent = n + ' day' + (n > 1 ? 's' : '');
         }
-        sel.innerHTML = options;
-        // Restore previous selection if still valid
-        if (currentVal) sel.value = currentVal;
-        // Re-init select2
-        if (typeof $ !== 'undefined') {
-            $('#vrc_template').select2({ width: '100%', allowClear: true, placeholder: '— Select Template —' });
-        }
-    }
-
-    // ── Vehicle Reminder: 12-hour time input ────────────────────────────
-    (function() {
-        var timeInput = document.getElementById('vrc_time');
-        if (!timeInput) return;
-
-        timeInput.addEventListener('input', function() {
-            var v = this.value.replace(/[^0-9APMapm]/g, '').toUpperCase();
-            if (v.length > 2 && v.length <= 4) {
-                v = v.substring(0, 2) + ':' + v.substring(2);
-            }
-            if (v.length > 5) v = v.substring(0, 5);
-            if (v.length === 5 && !v.includes(':')) {
-                v = v.substring(0, 2) + ':' + v.substring(2);
-            }
-            this.value = v;
-        });
-
-        timeInput.addEventListener('blur', function() {
-            var v = this.value.trim();
-            if (!v) return;
-            var parts = v.match(/^(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?$/);
-            if (parts) {
-                var h = parseInt(parts[1]);
-                var m = parts[2];
-                var ap = (parts[3] || '').toUpperCase();
-                if (!ap) {
-                    ap = h >= 12 ? 'PM' : 'AM';
-                    if (h === 0) h = 12;
-                    else if (h > 12) h = h - 12;
-                }
-                this.value = h + ':' + m + ' ' + ap;
-            }
-        });
-    })();
-
-    // ── Vehicle Reminder Config CRUD (AJAX) ─────────────────────────────
-    var vrcUrl = '{{ url("/settings/vehicle-reminder") }}';
-    var vrcEditId = null;
-
-    function submitVrc(e) {
-        e.preventDefault();
-        var fd = new FormData(document.getElementById('vrcForm'));
-        if (vrcEditId) fd.set('_method', 'PUT');
-        var url = vrcEditId ? vrcUrl + '/' + vrcEditId : vrcUrl;
-        fetch(url, {
-                method: 'POST',
-                body: fd,
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(function(r) {
-                return r.json().then(function(data) {
-                    return { ok: r.ok, status: r.status, data: data };
-                });
-            })
-            .then(function(res) {
-                if (!res.ok) {
-                    var msg = res.data.message || 'Validation failed.';
-                    if (res.data.errors) {
-                        msg = Object.values(res.data.errors).flat().join('\n');
-                    }
-                    toastr.error(msg, 'Error');
-                    return;
-                }
-                document.getElementById('vrcTableBody').innerHTML = res.data.rows;
-                document.querySelector('[data-tab="tab-vehicle-reminder"] .ni-badge').textContent = res.data.count;
-                document.getElementById('vrcCountBadge').textContent = res.data.count;
-                resetVrcForm();
-                toastr.success(res.data.success);
-            })
-            .catch(function(err) {
-                console.error('VRC submit error:', err);
-                toastr.error('Something went wrong.', 'Error');
-            });
-        return false;
-    }
-
-    function editVrc(id, template, duration, time) {
-        vrcEditId = id;
-        document.getElementById('vrcMethod').value = 'PUT';
-        $('#vrc_template').val(template).trigger('change');
-        $('#vrc_duration').val(duration).trigger('change');
-        document.getElementById('vrc_time').value = time || '';
-        document.getElementById('vrcFormTitle').textContent = 'Edit Reminder Config';
-        document.getElementById('vrcFormIcon').innerHTML = '<i class="ti-pencil"></i>';
-        document.getElementById('vrcFormIcon').style.background = '#eef2ff';
-        document.getElementById('vrcFormIcon').style.color = '#6366f1';
-        document.getElementById('vrcSubmitBtn').innerHTML = '<i class="ti-check mr-1"></i> Update Config';
-        document.getElementById('vrcCancelBtn').style.display = 'flex';
-    }
-
-    function resetVrcForm() {
-        vrcEditId = null;
-        document.getElementById('vrcForm').reset();
-        document.getElementById('vrcMethod').value = 'POST';
-        $('#vrc_template').val(null).trigger('change');
-        $('#vrc_duration').val(null).trigger('change');
-        document.getElementById('vrcFormTitle').textContent = 'Add Reminder Config';
-        document.getElementById('vrcFormIcon').innerHTML = '<i class="ti-plus"></i>';
-        document.getElementById('vrcFormIcon').style.background = '#dcfce7';
-        document.getElementById('vrcFormIcon').style.color = '#16a34a';
-        document.getElementById('vrcSubmitBtn').innerHTML = '<i class="ti-plus mr-1"></i> Add Config';
-        document.getElementById('vrcCancelBtn').style.display = 'none';
-    }
-
-    function deleteVrc(id) {
-        if (!confirm('Delete this config?')) return;
-        var fd = new FormData();
-        fd.append('_token', '{{ csrf_token() }}');
-        fd.append('_method', 'DELETE');
-        fetch(vrcUrl + '/' + id, {
-                method: 'POST',
-                body: fd,
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(function(r) {
-                return r.json().then(function(data) {
-                    return { ok: r.ok, status: r.status, data: data };
-                });
-            })
-            .then(function(res) {
-                if (!res.ok) {
-                    toastr.error(res.data.message || 'Failed to delete.', 'Error');
-                    return;
-                }
-                document.getElementById('vrcTableBody').innerHTML = res.data.rows;
-                document.querySelector('[data-tab="tab-vehicle-reminder"] .ni-badge').textContent = res.data.count;
-                document.getElementById('vrcCountBadge').textContent = res.data.count;
-                toastr.success(res.data.success);
-            })
-            .catch(function(err) {
-                console.error('VRC delete error:', err);
-                toastr.error('Failed to delete config.', 'Error');
-            });
     }
 </script>
 @endpush

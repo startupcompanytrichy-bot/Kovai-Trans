@@ -28,8 +28,8 @@ docker-compose.yml
 docker-compose.override.yml
 .dockerignore
 
-# Environment files
-.env.example
+# Environment files (use .env in production)
+.env
 .env.local
 .env.backup
 
@@ -48,10 +48,9 @@ phpunit.xml.dist
 database/database.sqlite
 database/database.sqlite-journal
 
-# Build artifacts (rebuilt in Docker)
+# Build artifacts
 public/build/hot
 public/build/manifest
-public/build/assets
 
 # Misc
 .DS_Store

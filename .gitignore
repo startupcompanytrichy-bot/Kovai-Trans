@@ -1,6 +1,5 @@
 *.log
 .DS_Store
-.env
 .env.backup
 .env.production
 .phpactor.json
@@ -34,3 +33,21 @@ test_view.php
 TODO.md
 EMI_*.md
 storage/framework/views/*.php
+
+# WhatsApp Baileys - credentials & dependencies (must NOT be committed)
+node-services/whatsapp-baileys/auth_info/
+node-services/whatsapp-baileys/node_modules/
+/auth_info/
+
+# Test artifacts
+storage/app/test_*.pdf
+storage/app/public/temp/uploads/
+
+# Windows scheduler/dev scripts (local dev only)
+INSTALL-SCHEDULER.bat
+START-QUEUE-WORKER.bat
+START-SCHEDULER.bat
+run-scheduler.bat
+run-scheduler-loop.bat
+register-scheduler-task.ps1
+scheduler-task.xml

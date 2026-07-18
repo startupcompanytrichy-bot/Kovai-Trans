@@ -194,6 +194,8 @@ Route::post('/invoice/generate', [InvoiceController::class, 'generate'])->name('
 Route::post('/invoice/excel', [InvoiceController::class, 'exportExcel'])->name('invoice.excel');
 Route::post('/invoice/pdf', [InvoiceController::class, 'exportPdf'])->name('invoice.pdf');
 Route::post('/invoice/{invoiceNo}/payment', [InvoiceController::class, 'updatePayment'])->name('invoice.payment.update');
+Route::post('/invoice/{invoiceNo}/whatsapp', [InvoiceController::class, 'sendWhatsApp'])->name('invoice.whatsapp');
+Route::get('/invoice/{invoiceNo}/download-pdf', [InvoiceController::class, 'downloadPdf'])->name('invoice.download.pdf');
 
 Route::get('/api/general/states', [GeneralApiController::class, 'getStates'])->name('api.general.states');
 Route::get('/api/general/districts', [GeneralApiController::class, 'getDistricts'])->name('api.general.districts');
@@ -210,6 +212,7 @@ Route::middleware(CheckLogin::class)->group(function () {
     Route::post('/settings/branch', [SettingsController::class, 'updateBranchSettings'])->name('settings.branch.update');
     Route::post('/settings/limits', [SettingsController::class, 'updateLimitSettings'])->name('settings.limits.update');
     Route::post('/settings/whatsapp', [SettingsController::class, 'updateWhatsAppSettings'])->name('settings.whatsapp.update');
+    Route::post('/settings/whatsapp-config', [SettingsController::class, 'updateWhatsAppConfig'])->name('settings.whatsapp.config.update');
     Route::post('/settings/whatsapp/test', [SettingsController::class, 'testWhatsApp'])->name('settings.whatsapp.test');
     Route::get('/settings/whatsapp/qr', [SettingsController::class, 'getWhatsAppQr'])->name('settings.whatsapp.qr');
     Route::post('/settings/whatsapp/connect', [SettingsController::class, 'connectWhatsApp'])->name('settings.whatsapp.connect');
@@ -217,15 +220,6 @@ Route::middleware(CheckLogin::class)->group(function () {
     Route::post('/settings/update', [SettingsController::class, 'updateSetting'])->name('settings.update');
     Route::post('/settings/gst', [SettingsController::class, 'storeGst'])->name('settings.gst.store');
     Route::post('/settings/payroll', [SettingsController::class, 'updatePayrollSettings'])->name('settings.payroll.update');
-    Route::post('/settings/vehicle-reminder', [SettingsController::class, 'storeVehicleReminderConfig'])->name('settings.vehicle-reminder.store');
-    Route::match(['put', 'post'], '/settings/vehicle-reminder/{id}', [SettingsController::class, 'updateVehicleReminderConfig'])->name('settings.vehicle-reminder.update');
-    Route::delete('/settings/vehicle-reminder/{id}', [SettingsController::class, 'destroyVehicleReminderConfig'])->name('settings.vehicle-reminder.destroy');
-
-    // ── Message Template CRUD ────────────────────────────────────────────
-    Route::post('/settings/message-template', [SettingsController::class, 'storeMessageTemplate'])->name('settings.message-template.store');
-    Route::match(['put', 'post'], '/settings/message-template/{id}', [SettingsController::class, 'updateMessageTemplate'])->name('settings.message-template.update');
-    Route::delete('/settings/message-template/{id}', [SettingsController::class, 'destroyMessageTemplate'])->name('settings.message-template.destroy');
-    Route::post('/settings/message-template/{id}/toggle', [SettingsController::class, 'toggleMessageTemplate'])->name('settings.message-template.toggle');
 
     Route::match(['put', 'post'], '/settings/gst/{id}', [SettingsController::class, 'updateGst'])->name('settings.gst.update');
     Route::delete('/settings/gst/{id}', [SettingsController::class, 'destroyGst'])->name('settings.gst.destroy');
@@ -259,5 +253,4 @@ Route::middleware(CheckLogin::class)->group(function () {
 Route::middleware(CheckLogin::class)->group(function () {
     Route::get('/daily-check-in', [\App\Http\Controllers\DailyCheckInController::class, 'index'])->name('daily-check-in');
     Route::post('/daily-check-in/update-vehicle/{id}', [\App\Http\Controllers\DailyCheckInController::class, 'updateVehicle'])->name('daily-check-in.update-vehicle');
-    Route::post('/daily-check-in/send-reminder', [\App\Http\Controllers\DailyCheckInController::class, 'sendReminder'])->name('daily-check-in.send-reminder');
 });

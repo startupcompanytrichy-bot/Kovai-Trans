@@ -8,17 +8,19 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppService
 {
-    protected $dailyLimit;
-
     protected function baileysUrl(): string
     {
         $url = Setting::getValue('whatsapp_baileys_url', '');
         return rtrim($url ?: 'http://localhost:3001', '/');
     }
 
-    public function __construct()
+    /**
+     * Read the daily limit fresh from DB every call — never cache in constructor.
+     * Default is 1000 (enough for any daily batch).
+     */
+    protected function getDailyLimit(): int
     {
-        $this->dailyLimit = (int) Setting::getValue('whatsapp_daily_limit', 100);
+        return (int) Setting::getValue('whatsapp_daily_limit', 1000);
     }
 
     public function getReminderNumbers(): array
@@ -36,13 +38,17 @@ class WhatsAppService
 
     public function getRemainingCount(): int
     {
-        $lastDate = Setting::getValue('whatsapp_last_send_date', '');
-        $today = date('Y-m-d');
+        $dailyLimit = $this->getDailyLimit();
+        $lastDate   = Setting::getValue('whatsapp_last_send_date', '');
+        $today      = date('Y-m-d');
+
         if ($lastDate !== $today) {
-            return $this->dailyLimit;
+            // New day — reset counter implicitly
+            return $dailyLimit;
         }
+
         $count = (int) Setting::getValue('whatsapp_today_count', 0);
-        return max(0, $this->dailyLimit - $count);
+        return max(0, $dailyLimit - $count);
     }
 
     public function canSend(): bool
@@ -52,10 +58,11 @@ class WhatsAppService
 
     protected function incrementCounter(): void
     {
-        $today = date('Y-m-d');
+        $today    = date('Y-m-d');
         $lastDate = Setting::getValue('whatsapp_last_send_date', '');
 
         if ($lastDate !== $today) {
+            // New day — reset to 1
             Setting::setValue('whatsapp_today_count', '1');
             Setting::setValue('whatsapp_last_send_date', $today);
         } else {
@@ -67,8 +74,10 @@ class WhatsAppService
     public function sendMessage($phoneNumber, $message)
     {
         try {
+            $dailyLimit = $this->getDailyLimit();
+
             if (!$this->canSend()) {
-                Log::warning("WhatsApp daily limit ({$this->dailyLimit}) reached. Message not sent.");
+                Log::warning("WhatsApp daily limit ({$dailyLimit}) reached. Message not sent to {$phoneNumber}.");
                 return false;
             }
 
@@ -77,25 +86,25 @@ class WhatsAppService
                 $clean = '91' . $clean;
             }
 
-            $url = $this->baileysUrl() . '/send';
-
-            $response = Http::timeout(10)->post($url, [
+            $url      = $this->baileysUrl() . '/send';
+            $response = Http::timeout(30)->post($url, [
                 'to'      => $clean,
                 'message' => $message,
             ]);
 
             if ($response->successful()) {
                 $this->incrementCounter();
-                Log::info("WhatsApp message sent to {$clean} via Baileys");
+                Log::info("WhatsApp sent to {$clean} | today count: " . Setting::getValue('whatsapp_today_count', '?') . "/{$dailyLimit}");
                 return true;
             }
 
-            $body = $response->json();
+            $body  = $response->json();
             $error = $body['error'] ?? $response->body();
-            Log::error("Baileys error: {$error}");
+            Log::error("Baileys error for {$clean}: {$error}");
             return false;
+
         } catch (\Exception $e) {
-            Log::warning("WhatsApp service unavailable: " . $e->getMessage());
+            Log::error("WhatsApp service exception: " . $e->getMessage());
             return false;
         }
     }
@@ -119,10 +128,10 @@ class WhatsAppService
     public function getBaileysStatus(): array
     {
         try {
-            $resp = Http::timeout(2)->get($this->baileysUrl() . '/status');
+            $resp = Http::timeout(5)->get($this->baileysUrl() . '/status');
             return $resp->successful() ? $resp->json() : ['connected' => false, 'error' => 'Unreachable'];
         } catch (\Exception $e) {
-            return ['connected' => false, 'error' => 'WhatsApp service not available'];
+            return ['connected' => false, 'error' => $e->getMessage()];
         }
     }
 
@@ -152,9 +161,46 @@ class WhatsAppService
         return null;
     }
 
+    /**
+     * Send a document (PDF) to a WhatsApp number.
+     * Accepts raw PDF bytes (string), encodes to base64 and POSTs to /send-document.
+     */
+    public function sendDocument(string $phoneNumber, string $pdfContent, string $filename, string $caption = ''): bool
+    {
+        try {
+            $clean = preg_replace('/[^0-9]/', '', $phoneNumber);
+            if (strlen($clean) === 10) {
+                $clean = '91' . $clean;
+            }
+
+            $url      = $this->baileysUrl() . '/send-document';
+            $response = Http::timeout(60)->post($url, [
+                'to'       => $clean,
+                'filename' => $filename,
+                'mimetype' => 'application/pdf',
+                'base64'   => base64_encode($pdfContent),
+                'caption'  => $caption,
+            ]);
+
+            if ($response->successful()) {
+                $this->incrementCounter();
+                Log::info("WhatsApp document sent to {$clean}: {$filename}");
+                return true;
+            }
+
+            $body  = $response->json();
+            $error = $body['error'] ?? $response->body();
+            Log::error("Baileys document error for {$clean}: {$error}");
+            return false;
+        } catch (\Exception $e) {
+            Log::error("WhatsApp sendDocument exception: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function sendEmiReminder($phoneNumber, $vehicleNumber, $emiAmount, $dueDate)
     {
-        $message = "🚗 *EMI Payment Reminder*\n\n";
+        $message  = "🚗 *EMI Payment Reminder*\n\n";
         $message .= "Vehicle: {$vehicleNumber}\n";
         $message .= "Amount Due: ₹" . number_format($emiAmount, 2) . "\n";
         $message .= "Due Date: " . \Carbon\Carbon::parse($dueDate)->format('d M Y') . "\n\n";
