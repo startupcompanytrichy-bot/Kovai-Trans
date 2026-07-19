@@ -37,4 +37,4 @@ Schedule::call(function () {
         SendDocumentReminderJob::dispatch();
         \Illuminate\Support\Facades\Log::info("[Scheduler] SendDocumentReminderJob dispatched at {$now} IST.");
     }
-})->everyMinute()->withoutOverlapping();
+})->everyMinute()->name('send-document-reminders')->withoutOverlapping();
