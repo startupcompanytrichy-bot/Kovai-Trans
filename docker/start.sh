@@ -25,10 +25,10 @@ rm -f "$APP_DIR/bootstrap/cache/packages.php"
 rm -f "$APP_DIR/bootstrap/cache/events.php"
 
 # ---------------------------------------------------------------------------
-# 2. Run database migrations
+# 2. Run database migrations safely
 # ---------------------------------------------------------------------------
 echo "[start.sh] Running migrations..."
-php artisan migrate --force
+php artisan migrate:safe
 echo "[start.sh] Migrations done."
 
 # ---------------------------------------------------------------------------
