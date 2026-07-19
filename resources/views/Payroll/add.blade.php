@@ -1,23 +1,8 @@
-@extends('layouts.app')
+@extends('layouts.fullscreen')
 @section('title', 'Add Payroll')
 
 @push('styles')
 <style>
-/* ── Full-screen: hide sidebar, navbar, footer chrome ── */
-.pcoded-navbar,
-.navbar,
-.pcoded-header,
-nav.pcoded-navbar,
-.main-menu,
-footer,
-.pcoded-main-container > .pcoded-wrapper > .pcoded-navbar { display:none !important; }
-
-/* Expand content area to full width */
-.pcoded-content { margin-left: 0 !important; padding:0 !important; }
-.pcoded-wrapper  { display:block !important; }
-.pcoded-inner-content { padding:0 !important; margin:0 !important; }
-.page-wrapper, .page-body-wrapper { padding:0 !important; margin:0 !important; }
-
 /* ── Shell ── */
 html,body { background:#f0f4fa; }
 .pr-shell  { display:flex; flex-direction:column; min-height:100vh; }
@@ -118,7 +103,7 @@ html,body { background:#f0f4fa; }
 
 @include('partials.flash')
 
-<form id="payrollForm" action="{{ route('payroll.store') }}" method="POST">
+<form id="payrollForm" action="{{ route('payroll.store') }}" method="POST" data-no-softnav>
 @csrf
 
 <div class="row">

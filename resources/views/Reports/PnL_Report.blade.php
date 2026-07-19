@@ -43,9 +43,9 @@
             <button onclick="exportPnlExcel()" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:7px 14px;font-weight:600;margin-right:6px;">
                 <i class="ti-export mr-1"></i> Excel
             </button>
-            <button onclick="window.print()" class="btn btn-sm" style="background:#fff;color:#38a169;border-radius:8px;padding:7px 16px;font-weight:700;">
+            <a href="{{ route('reports.pnl.pdf', request()->query()) }}" target="_blank" class="btn btn-sm" style="background:#fff;color:#38a169;border-radius:8px;padding:7px 16px;font-weight:700;">
                 <i class="ti-printer mr-1"></i> Print
-            </button>
+            </a>
         </div>
     </div>
 </div>
@@ -82,7 +82,7 @@
         <h6><i class="ti-list mr-2" style="color:#38a169;"></i>P&L Details ({{ $trips->count() }} completed trips)</h6>
         <div style="display:flex;gap:8px;">
             <button onclick="exportPnlExcel()" class="btn btn-sm btn-outline-success" style="border-radius:8px;"><i class="ti-export mr-1"></i> Export Excel</button>
-            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;"><i class="ti-printer mr-1"></i> Print</button>
+            <a href="{{ route('reports.pnl.pdf', request()->query()) }}" target="_blank" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;"><i class="ti-printer mr-1"></i> Print</a>
         </div>
     </div>
     <div class="rpt-table-wrap">

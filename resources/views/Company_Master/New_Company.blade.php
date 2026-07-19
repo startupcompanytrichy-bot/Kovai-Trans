@@ -536,6 +536,29 @@
                     @error('logo')<small class="text-danger">{{ $message }}</small>@enderror
                 </div>
                 <div class="col-md-7">
+                    <div class="nc-section-title" style="margin-top:0;"><i class="ti-image"></i> Sidebar Logo</div>
+                    <div class="form-group">
+                        <div class="nc-upload-zone" id="sidebarLogoZone" onclick="document.getElementById('sidebar_logo').click()">
+                            <i class="ti-cloud-up"></i>
+                            <img id="sidebarLogoPreview" class="logo-preview-img" src="" alt="Sidebar logo preview">
+                            <div class="uz-title">Click to upload sidebar logo</div>
+                            <div class="uz-sub">JPG, PNG, WEBP — max 2 MB</div>
+                        </div>
+                        <input id="sidebar_logo" name="sidebar_logo" type="file" class="d-none"
+                            accept="image/jpeg,image/png,image/webp"
+                            onchange="ncPreviewSidebarLogo(this)">
+                        @error('sidebar_logo')<small class="text-danger">{{ $message }}</small>@enderror
+                    </div>
+                    <div class="nc-section-title" style="margin-top:12px;"><i class="ti-text"></i> Sidebar Text</div>
+                    <div class="form-group">
+                        <label class="nc-label">Brand text (shown when no sidebar logo)</label>
+                        <input type="text" name="sidebar_text" class="form-control nc-input" value="{{ old('sidebar_text', 'Transport - ERP') }}" placeholder="Transport - ERP">
+                        @error('sidebar_text')<small class="text-danger">{{ $message }}</small>@enderror
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
                     <div class="nc-section-title" style="margin-top:0;"><i class="ti-settings"></i> Company Status</div>
                     <div class="form-group">
                         <label class="nc-label">Status</label>
@@ -600,6 +623,20 @@ $(document).ready(function () {
     window.ncPreviewLogo = function (input) {
         var preview = document.getElementById('logoPreview');
         var zone    = document.getElementById('logoZone');
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                zone.classList.add('has-preview');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
+    window.ncPreviewSidebarLogo = function (input) {
+        var preview = document.getElementById('sidebarLogoPreview');
+        var zone    = document.getElementById('sidebarLogoZone');
         if (input.files && input.files[0]) {
             var reader = new FileReader();
             reader.onload = function (e) {

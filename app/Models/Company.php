@@ -14,6 +14,8 @@ class Company extends Model
         'company_name',
         'business_type',
         'logo',
+        'sidebar_logo',
+        'sidebar_text',
         'pan',
         'gst',
         'email',

@@ -37,8 +37,19 @@ class AuthController extends Controller
             return back()->with('error', 'User not found');
         }
 
-        if ($request->password != $user->password) {
-            return back()->with('error', 'Invalid Password');
+        // Support both bcrypt-hashed and plaintext passwords (migrate on login)
+        $stored = $user->password;
+        $isBcrypt = strlen($stored) === 60 && str_starts_with($stored, '$2y$');
+        if ($isBcrypt) {
+            if (! Hash::check($request->password, $stored)) {
+                return back()->with('error', 'Invalid Password');
+            }
+        } else {
+            if ($request->password !== $stored) {
+                return back()->with('error', 'Invalid Password');
+            }
+            // Plaintext matched — hash and save for next time
+            $user->update(['password' => Hash::make($request->password)]);
         }
 
         if (! $user->status) {
@@ -221,7 +232,7 @@ class AuthController extends Controller
             return back()->with('error', 'User not found');
         }
 
-        $user->update(['password' => $request->password]);
+        $user->update(['password' => Hash::make($request->password)]);
 
         DB::table('password_resets')->where('id', $record->id)->delete();
 

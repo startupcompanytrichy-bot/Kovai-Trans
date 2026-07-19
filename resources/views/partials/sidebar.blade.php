@@ -75,7 +75,7 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
         {{-- ── OPERATIONS ─────────────────────────────────────────── --}}
         <ul class="pcoded-item pcoded-left-item">
             @if($showAll || userCanSeeAnyMenu(['trips', 'daily_check_in', 'expenses']))
-            <li class="pcoded-hasmenu-label"><span>Operations</span></li>
+            <!-- <li class="pcoded-hasmenu-label"><span>Operations</span></li> -->
             @endif
 
             {{-- Trips --}}
@@ -149,7 +149,7 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
         {{-- ── FINANCE ─────────────────────────────────────────────── --}}
         <ul class="pcoded-item pcoded-left-item">
             @if($showAll || userCanSeeAnyMenu(['vehicle_emi', 'reports']))
-            <li class="pcoded-hasmenu-label"><span>Finance</span></li>
+            <!-- <li class="pcoded-hasmenu-label"><span>Finance</span></li> -->
             @endif
 
             {{-- Vehicle EMI --}}
@@ -247,7 +247,7 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
         {{-- ── MASTERS ─────────────────────────────────────────────── --}}
         <ul class="pcoded-item pcoded-left-item">
             @if($showAll || userCanSeeAnyMenu(['parties', 'vehicles', 'drivers', 'suppliers', 'traders', 'organization']))
-            <li class="pcoded-hasmenu-label"><span>Masters</span></li>
+            <!-- <li class="pcoded-hasmenu-label"><span>Masters</span></li> -->
             @endif
 
             {{-- Parties --}}
@@ -384,19 +384,116 @@ $sidebarMode = $isPackingSlip ? 'packing' : 'transport';
 </nav>
 
 <style>
-    /* Mode selector tabs */
     .ps-mode-tab { background:rgba(255,255,255,.08); color:rgba(255,255,255,.6); }
     .ps-mode-active { background:#9333ea!important; color:#fff!important; }
-    /* Sidebar section labels - dark theme (default) */
-    .pcoded-navbar:not([navbar-theme*="themelight"]) .pcoded-hasmenu-label span {
-        color: rgba(255, 255, 255, .8);
+
+    @media (max-width: 575px) {
+        .ps-mode-tab {
+            font-size: 10px !important;
+            padding: 4px 0 !important;
+        }
     }
-    /* Sidebar section labels - light theme */
-    .pcoded-navbar[navbar-theme*="themelight"] .pcoded-hasmenu-label span {
-        color: rgba(0, 0, 0, .7);
+
+    @media (max-width: 992px) {
+        .pcoded-overlay-box {
+            display: block !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,.5);
+            z-index: 1040;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .25s ease, visibility .25s ease;
+        }
+        .pcoded-overlay-box.overlay-on {
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: 1040 !important;
+        }
+        .pcoded-navbar {
+            position: fixed !important;
+            top: 0;
+            left: 0 !important;
+            width: 270px !important;
+            height: 100vh !important;
+            margin-left: 0 !important;
+            z-index: 1050 !important;
+            transform: translate3d(-100%,0,0);
+            transition: transform .25s ease;
+            will-change: transform;
+        }
+        .pcoded-navbar.sidebar-on {
+            transform: translate3d(0,0,0) !important;
+            margin-left: 0 !important;
+        }
+        .pcoded-main-container {
+            margin-left: 0 !important;
+        }
+        #mobile-collapse {
+            display: inline-flex !important;
+        }
     }
-    .pcoded-navbar .pcoded-hasmenu-label {
-        padding: 14px 20px 4px;
-        pointer-events: none;
+
+    @media (min-width: 993px) {
+        #mobile-collapse {
+            display: none !important;
+        }
     }
 </style>
+
+<script>
+(function() {
+    'use strict';
+    var initialized = false;
+
+    function initSidebar() {
+        if (initialized) return;
+        initialized = true;
+
+        var toggle = document.getElementById('mobile-collapse');
+        var sidebar = document.querySelector('.pcoded-navbar');
+        var overlay = document.querySelector('.pcoded-overlay-box');
+        if (!toggle || !sidebar) return;
+
+        function open() {
+            sidebar.classList.add('sidebar-on');
+            if (overlay) overlay.classList.add('overlay-on');
+        }
+
+        function close() {
+            sidebar.classList.remove('sidebar-on');
+            if (overlay) overlay.classList.remove('overlay-on');
+        }
+
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (sidebar.classList.contains('sidebar-on')) {
+                close();
+            } else {
+                open();
+            }
+        });
+
+        if (overlay) {
+            overlay.addEventListener('click', close);
+        }
+
+        var closeBtn = sidebar.querySelector('.sidebar_toggle a');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                close();
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSidebar);
+    } else {
+        initSidebar();
+    }
+})();
+</script>

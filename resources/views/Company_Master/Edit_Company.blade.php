@@ -499,6 +499,65 @@
                 </div>
             </div>
 
+            {{-- ⑥ Sidebar Logo --}}
+            <div class="ec-card">
+                <div class="ec-card-header">
+                    <div class="card-icon" style="background:#fef3c7;color:#d97706;"><i class="ti-layout-sidebar-left"></i></div>
+                    <div>
+                        <h6>Sidebar Logo</h6>
+                        <p class="card-subtitle">Logo shown in the sidebar header</p>
+                    </div>
+                </div>
+                <div class="ec-card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                            <div style="border:2px solid #fef3c7;border-radius:12px;padding:14px;background:#fffbeb;display:inline-flex;align-items:center;justify-content:center;min-width:120px;min-height:90px;">
+                                @if($company->sidebar_logo)
+                                    <img id="ecSidebarLogoPreview"
+                                         src="{{ asset('storage/' . $company->sidebar_logo) }}"
+                                         alt="Current Sidebar Logo"
+                                         style="max-height:80px;max-width:160px;object-fit:contain;border-radius:6px;">
+                                @else
+                                    <div id="ecSidebarLogoPreview"
+                                         style="width:70px;height:70px;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:800;">
+                                        <i class="ti-image"></i>
+                                    </div>
+                                @endif
+                            </div>
+                            <div style="font-size:10px;color:#8a94a6;margin-top:6px;">
+                                {{ $company->sidebar_logo ? 'Current sidebar logo' : 'No sidebar logo yet' }}
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="ec-upload-zone" onclick="document.getElementById('ecSidebarLogoInput').click()">
+                                <i class="ti-cloud-up"></i>
+                                <div class="uz-title">{{ $company->sidebar_logo ? 'Click to replace sidebar logo' : 'Click to upload sidebar logo' }}</div>
+                                <div class="uz-sub">JPG, PNG, WEBP — max 2 MB</div>
+                            </div>
+                            <input id="ecSidebarLogoInput" name="sidebar_logo" type="file" class="d-none"
+                                   accept="image/jpeg,image/png,image/webp"
+                                   onchange="ecPreviewSidebarLogo(this)">
+                            @error('sidebar_logo')<small class="text-danger mt-1 d-block">{{ $message }}</small>@enderror
+                            <small class="text-muted d-block mt-2" style="font-size:11px;">
+                                <i class="ti-info-alt mr-1"></i>
+                                This logo appears in the top-left sidebar/header area.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label-modern">Sidebar Text <span class="req">*</span></label>
+                            <input type="text" name="sidebar_text" class="form-control" value="{{ old('sidebar_text', $company->sidebar_text ?? 'Transport - ERP') }}" placeholder="Transport - ERP">
+                            <small class="text-muted d-block mt-1" style="font-size:11px;">
+                                <i class="ti-info-alt mr-1"></i>
+                                Shown when no sidebar logo is uploaded.
+                            </small>
+                            @error('sidebar_text')<small class="text-danger mt-1 d-block">{{ $message }}</small>@enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         {{-- RIGHT COLUMN ─────────────────────────────────────────── --}}
@@ -657,6 +716,26 @@ $(document).ready(function () {
                 }
                 // Sync to sidebar preview
                 ecSyncMainPreview(e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
+    // Sidebar logo preview
+    window.ecPreviewSidebarLogo = function (input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var p = document.getElementById('ecSidebarLogoPreview');
+                if (p && p.tagName === 'IMG') {
+                    p.src = e.target.result;
+                } else if (p) {
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.id = 'ecSidebarLogoPreview';
+                    img.style.cssText = 'max-height:80px;max-width:160px;object-fit:contain;border-radius:6px;';
+                    p.replaceWith(img);
+                }
             };
             reader.readAsDataURL(input.files[0]);
         }

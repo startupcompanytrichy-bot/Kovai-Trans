@@ -800,7 +800,7 @@ $payConfig = [
                                                 <i class="ti-trash"></i>
                                             </button>
                                         </div>
-                                        <form id="deleteTripForm{{ $trip->id }}" action="{{ route('trip.destroy', $trip->id) }}" method="POST" style="display:none;">
+                                        <form id="deleteTripForm{{ $trip->id }}" action="{{ route('trip.destroy', $trip->id) }}" method="POST" style="display:none;" data-no-softnav>
                                             @csrf @method('DELETE')
                                         </form>
                                     </td>
@@ -936,9 +936,9 @@ $payConfig = [
             width: '80px',
         });
 
-        /* ── Row click → edit ─────────────────────────────────────────── */
+        /* ── Row click → edit via softNav ──────────────────────────────── */
         $('#tripsTable').on('click', '.trip-row', function() {
-            window.location.href = $(this).data('edit-url');
+            softNav($(this).data('edit-url'));
         });
 
         /* ── Checkbox logic ───────────────────────────────────────────── */

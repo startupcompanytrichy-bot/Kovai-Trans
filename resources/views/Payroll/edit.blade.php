@@ -55,7 +55,7 @@
 
 @include('partials.flash')
 
-<form id="payrollForm" action="{{ route('payroll.update', $payroll->id) }}" method="POST">
+<form id="payrollForm" action="{{ route('payroll.update', $payroll->id) }}" method="POST" data-no-softnav>
 @csrf
 @method('PUT')
 <div class="row">

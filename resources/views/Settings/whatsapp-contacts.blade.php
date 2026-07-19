@@ -196,7 +196,7 @@
                                 </td>
                                 <td>
                                     <div class="wac-actions" style="justify-content:center;">
-                                        <button type="button" class="wac-btn wac-btn-ghost wac-btn-sm" onclick="editContact('{{ $contact->id }}', '{!! addslashes($contact->name) !!}', '{{ $contact->mobile }}')" title="Edit">
+                                        <button type="button" class="wac-btn wac-btn-ghost wac-btn-sm" data-id="{{ $contact->id }}" data-name="{{ $contact->name }}" data-mobile="{{ $contact->mobile }}" onclick="editContact(this.dataset.id, this.dataset.name, this.dataset.mobile)" title="Edit">
                                             <i class="ti-pencil"></i>
                                         </button>
                                         <button type="button" class="wac-btn wac-btn-sm {{ $contact->is_active ? 'wac-btn-ghost' : 'wac-btn-primary' }}" id="toggle-{{ $contact->id }}" onclick="toggleContact('{{ $contact->id }}')" title="{{ $contact->is_active ? 'Deactivate' : 'Activate' }}">

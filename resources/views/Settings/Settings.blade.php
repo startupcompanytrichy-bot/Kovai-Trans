@@ -1436,16 +1436,20 @@
                                                     </td>
                                                     <td style="text-align:center;">
                                                         <div style="display:flex;gap:6px;justify-content:center;">
-                                                            <button type="button" class="st-btn st-btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="editWaContact('{{ $c->id }}', '{!! addslashes($c->name) !!}', '{{ $c->mobile }}')" title="Edit">
+                                                            <button type="button" class="st-btn st-btn-secondary" style="padding:4px 10px;font-size:11px;" data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-mobile="{{ $c->mobile }}" onclick="editWaContact(this.dataset.id, this.dataset.name, this.dataset.mobile)" title="Edit">
                                                                 <i class="ti-pencil"></i>
                                                             </button>
                                                             <button type="button" class="st-btn st-btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="toggleWaContact('{{ $c->id }}')" title="Toggle">
                                                                 <i class="ti-{{ $c->is_active ? 'power-off' : 'check' }}"></i>
                                                             </button>
-                                                            <button type="button" class="st-btn" style="padding:4px 10px;font-size:11px;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;" onclick="deleteWaContact('{{ $c->id }}', '{!! addslashes($c->name) !!}')" title="Delete">
+                                                            <button type="button" class="st-btn" style="padding:4px 10px;font-size:11px;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;" onclick="showDeleteModal('deleteForm{{ $c->id }}', this.dataset.delName, 'Contact')" data-del-name="{{ $c->name }}" title="Delete">
                                                                 <i class="ti-trash"></i>
                                                             </button>
                                                         </div>
+                                                        <form id="deleteForm{{ $c->id }}" action="{{ route('whatsapp-contacts.destroy', $c->id) }}" method="POST" style="display:none;">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                        </form>
                                                     </td>
                                                 </tr>
                                                 @endforeach
@@ -1909,60 +1913,6 @@
             setTimeout(function() {
                 location.reload();
             }, 500);
-        });
-    }
-
-    function deleteWaContact(id, name) {
-        if (typeof toastr === 'undefined') {
-            if (!confirm('Delete "' + name + '"?')) return;
-            doDeleteWaContact(id);
-            return;
-        }
-        toastr.clear();
-        var $toast = toastr['warning'](
-            'Delete "' + name + '"? This cannot be undone.',
-            'Confirm Delete', {
-                timeOut: 0,
-                extendedTimeOut: 0,
-                closeButton: true,
-                tapToDismiss: false,
-                positionClass: 'toast-top-center',
-                toastClass: 'wa-delete-toast',
-            }
-        );
-        var $btnRow = $('<div style="margin-top:10px;display:flex;gap:8px;justify-content:center;"></div>');
-        var $yes = $('<button class="btn btn-sm" style="background:#ef4444;color:#fff;border:none;padding:4px 18px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;">Yes, Delete</button>');
-        var $no = $('<button class="btn btn-sm" style="background:#e2e8f0;color:#475569;border:none;padding:4px 18px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>');
-        $yes.on('click', function() {
-            toastr.clear($toast);
-            doDeleteWaContact(id);
-        });
-        $no.on('click', function() {
-            toastr.clear($toast);
-        });
-        $btnRow.append($yes).append($no);
-        $toast.append($btnRow);
-    }
-
-    function doDeleteWaContact(id) {
-        var fd = new FormData();
-        fd.append('_token', '{{ csrf_token() }}');
-        fd.append('_method', 'DELETE');
-        fetch(waContactUrl + '/' + id, {
-            method: 'POST',
-            body: fd,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        }).then(function(r) {
-            return r.json();
-        }).then(function() {
-            if (typeof toastr !== 'undefined') toastr['success']('Contact deleted successfully.', 'Deleted');
-            setTimeout(function() {
-                location.reload();
-            }, 500);
-        }).catch(function() {
-            if (typeof toastr !== 'undefined') toastr['error']('Failed to delete contact.', 'Error');
         });
     }
 

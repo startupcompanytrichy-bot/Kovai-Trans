@@ -7,7 +7,10 @@ $totalCompanies = $companies->count();
 $activeCompanies = $companies->where('status', true)->count();
 $inactiveCompanies = $companies->where('status', false)->count();
 $withBank = $companies->filter(fn($c) => !empty($c->bank_name))->count();
+$sidebarCompany = \App\Models\Company::whereNotNull('sidebar_logo')->orderBy('id')->first();
+$sidebarLogoUrl = $sidebarCompany ? asset('storage/' . $sidebarCompany->sidebar_logo) : asset('assets/images/Original-Logo.png');
 @endphp
+<meta name="sidebar-logo-url" content="{{ $sidebarLogoUrl }}">
 
 <style>
 /* ── Company Index Page ────────────────────────────────────────────── */

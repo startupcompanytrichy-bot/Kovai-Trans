@@ -49,6 +49,8 @@ class MasterController extends Controller
             'district' => 'nullable|string|max:100',
             'address' => 'required',
             'pincode' => 'required',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'sidebar_logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ], [
             'company_code.unique' => 'Company code already exists.',
             'pan.unique' => 'PAN number already exists.',
@@ -82,6 +84,7 @@ class MasterController extends Controller
             'branch_name'         => $request->branch_name,
             'upi_id'              => $request->upi_id,
             'place_of_supply'     => $request->place_of_supply,
+            'sidebar_text'        => $request->sidebar_text ?: 'Transport - ERP',
             'status'              => true,
             'created_by'          => Auth::id(),
         ];
@@ -89,6 +92,11 @@ class MasterController extends Controller
         if ($request->hasFile('logo')) {
             $data['logo'] = $request->file('logo')
                 ->store('company/logos', 'public');
+        }
+
+        if ($request->hasFile('sidebar_logo')) {
+            $data['sidebar_logo'] = $request->file('sidebar_logo')
+                ->store('company/sidebar-logos', 'public');
         }
 
         Company::create($data);
@@ -128,6 +136,8 @@ class MasterController extends Controller
             'district' => 'nullable|string|max:100',
             'address' => 'required',
             'pincode' => 'required',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'sidebar_logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $data = [
@@ -151,6 +161,7 @@ class MasterController extends Controller
             'branch_name'         => $request->branch_name,
             'upi_id'              => $request->upi_id,
             'place_of_supply'     => $request->place_of_supply,
+            'sidebar_text'        => $request->sidebar_text ?: 'Transport - ERP',
             'updated_by'          => Auth::id(),
         ];
 
@@ -167,6 +178,21 @@ class MasterController extends Controller
 
             $data['logo'] = $request->file('logo')
                 ->store('company/logos', 'public');
+        }
+
+        if ($request->hasFile('sidebar_logo')) {
+
+            if (
+                $company->sidebar_logo &&
+                Storage::disk('public')->exists($company->sidebar_logo)
+            ) {
+
+                Storage::disk('public')
+                    ->delete($company->sidebar_logo);
+            }
+
+            $data['sidebar_logo'] = $request->file('sidebar_logo')
+                ->store('company/sidebar-logos', 'public');
         }
 
         $company->update($data);

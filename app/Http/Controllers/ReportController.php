@@ -181,6 +181,85 @@ class ReportController extends Controller
         return view('Reports.Collection_Report', compact('trips', 'summary'));
     }
 
+    public function expensesPdf(Request $request)
+    {
+        $query = Expense::with(['trip', 'vehicle', 'driver'])
+            ->where('is_deleted', false);
+
+        if (!$request->filled('date_from') && !$request->filled('date_to')) {
+            \applyFinYearFilter($query);
+        }
+
+        $this->applyDateFilter($query, $request, 'expense_date');
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+        if ($request->filled('vehicle_id')) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        $expenses = $query->orderBy('expense_date', 'desc')->get();
+
+        $summary = [
+            'total'       => $expenses->sum('amount'),
+            'by_category' => $expenses->groupBy('category')->map(fn($g) => $g->sum('amount')),
+        ];
+
+        $categories = Expense::$categories;
+
+        return view('Reports.Expense_Report_Print', compact('expenses', 'summary', 'categories'));
+    }
+
+    public function collectionPdf(Request $request)
+    {
+        $query = Trip::with(['party', 'vehicle'])
+            ->where('is_deleted', false)
+            ->where('payment_status', '!=', 'completed');
+
+        if (!$request->filled('date_from') && !$request->filled('date_to')) {
+            \applyFinYearFilter($query);
+        }
+
+        $this->applyDateFilter($query, $request, 'trip_date');
+
+        $trips = $query->orderBy('collection_due_date')->get();
+
+        $summary = [
+            'total_outstanding' => $trips->sum(fn($t) => $t->outstanding_amount),
+            'overdue'           => $trips->filter(fn($t) => $t->collection_due_date && $t->collection_due_date->isPast())->count(),
+            'pending_count'     => $trips->count(),
+        ];
+
+        return view('Reports.Collection_Report_Print', compact('trips', 'summary'));
+    }
+
+    public function pnlPdf(Request $request)
+    {
+        $query = Trip::with(['vehicle', 'driver', 'party'])
+            ->where('is_deleted', false)
+            ->where('status', 'completed');
+
+        if (!$request->filled('date_from') && !$request->filled('date_to')) {
+            \applyFinYearFilter($query);
+        }
+
+        $this->applyDateFilter($query, $request, 'trip_date');
+
+        $trips = $query->orderBy('trip_date', 'desc')->get();
+
+        $summary = [
+            'total_trips'    => $trips->count(),
+            'total_income'   => $trips->sum('freight_amount'),
+            'total_expenses' => $trips->sum(fn($t) => $t->total_expenses),
+            'net_profit'     => $trips->sum(fn($t) => $t->net_profit),
+            'profit_trips'   => $trips->filter(fn($t) => $t->is_profitable)->count(),
+            'loss_trips'     => $trips->filter(fn($t) => !$t->is_profitable)->count(),
+        ];
+
+        return view('Reports.PnL_Report_Print', compact('trips', 'summary'));
+    }
+
     private function buildEmiRows($emis)
     {
         return $emis->flatMap(function ($emi) {

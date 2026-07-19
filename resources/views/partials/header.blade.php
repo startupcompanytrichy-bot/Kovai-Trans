@@ -1,6 +1,8 @@
 @php
 $activeFY = \App\Models\FinancialYear::current();
 $currentRoute = request()->route()?->getName() ?? '';
+$sidebarCompany = \App\Models\Company::whereNotNull('sidebar_logo')->orderBy('id')->first();
+$sidebarLogoSrc = $sidebarCompany ? asset('storage/' . $sidebarCompany->sidebar_logo) : asset('assets/images/Original-Logo.png');
 @endphp
 
 <nav class="navbar header-navbar pcoded-header">
@@ -13,8 +15,8 @@ $currentRoute = request()->route()?->getName() ?? '';
             <a class="mobile-search morphsearch-search" href="#">
                 <i class="ti-search"></i>
             </a>
-            <a href="index.html">
-                <img class="img-fluid" src="{{ asset('assets/images/Original-Logo.png') }}?v={{ file_exists(public_path('assets/images/T-Groups-Logo.png')) ? filemtime(public_path('assets/images/T-Groups-Logo.png')) : time() }}" alt="Theme-Logo" />
+            <a href="index.html" style="flex:1;display:flex;align-items:center;justify-content:center;min-width:0;">
+                <img id="sidebar-logo-img" class="img-fluid" src="{{ $sidebarLogoSrc }}?v={{ time() }}" alt="Theme-Logo" style="max-height:60px;width:auto;height:auto;max-width:100%;object-fit:contain;" />
             </a>
             <a class="mobile-options">
                 <i class="ti-more"></i>
@@ -219,33 +221,10 @@ $currentRoute = request()->route()?->getName() ?? '';
         color: #1e293b;
     }
 
-    /* ── Mobile logo & nav-right toggle ────────────────────────────────── */
-    @media (max-width: 575.98px) {
-        .navbar-logo {
-            display: flex !important;
-            align-items: center !important;
-            gap: 6px;
-            padding: 0 10px !important;
-        }
-
-        .navbar-logo a {
-            display: inline-flex !important;
-            align-items: center !important;
-            line-height: 1;
-        }
-
-        .navbar-logo a img {
-            max-height: 32px !important;
-            width: auto !important;
-            object-fit: contain;
-        }
-
-        .mobile-menu,
-        .mobile-search,
-        .mobile-options {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+    /* ── Mobile/tablet: nav-right dropdown toggle ────────────────────── */
+    @media (max-width: 992px) {
+        .header-navbar .navbar-wrapper .navbar-logo .mobile-options {
+            display: block;
         }
 
         .header-navbar .navbar-wrapper .navbar-container .nav-right {
@@ -279,6 +258,35 @@ $currentRoute = request()->route()?->getName() ?? '';
         }
     }
 
+    @media (max-width: 575.98px) {
+        .navbar-logo {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px;
+            padding: 0 10px !important;
+        }
+
+        .navbar-logo a {
+            display: inline-flex !important;
+            align-items: center !important;
+            line-height: 1;
+        }
+
+        .navbar-logo a img {
+            max-height: 32px !important;
+            width: auto !important;
+            object-fit: contain;
+        }
+
+        .mobile-menu,
+        .mobile-search,
+        .mobile-options {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+    }
+
     /* mobile: collapse fy chip to icon only */
     @media (max-width: 575.98px) {
         .fy-chip-body {
@@ -304,6 +312,10 @@ $currentRoute = request()->route()?->getName() ?? '';
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        if (window.jQuery) {
+            jQuery('.mobile-options').off('click');
+        }
+
         var toggle = document.querySelector('.mobile-options');
         var menu = document.querySelector('.header-navbar .navbar-wrapper .navbar-container .nav-right');
         if (toggle && menu) {

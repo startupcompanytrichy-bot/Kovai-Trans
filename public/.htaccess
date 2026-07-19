@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # Block access to dot-files (.env, .git, etc.)
+    RewriteRule (^|/)\.(?!well-known) - [F]
+
+    # Block access to sensitive files
+    RewriteRule ^(artisan|composer\.(json|lock))$ - [F]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
