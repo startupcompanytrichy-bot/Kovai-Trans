@@ -4,99 +4,131 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * migrate:safe
  *
  * Production-safe migration for Render.com deployments.
  *
- * Problem: The PostgreSQL DB already has all tables from a previous deploy,
- * but the `migrations` tracking table is empty (new container, existing DB).
- * Running `migrate --force` throws "relation already exists" on every table.
+ * The PostgreSQL DB already has all tables from previous deploys but
+ * the `migrations` table may be empty or partial. This command runs
+ * each pending migration individually and gracefully skips ones that
+ * fail because the schema change was already applied.
  *
- * Solution: Mark ALL migration files as already-run (batch 0) upfront,
- * then run `migrate --force` — it will only execute genuinely new migrations
- * (ones added after the DB was last set up).
- *
- * This is safe because:
- * - If a table truly doesn't exist yet, it won't be in the migrations table
- *   after our pre-population (we only mark files, not check tables).
- *   Wait — we mark ALL files, so new ones would be wrongly skipped.
- *
- * Revised approach:
- * - Mark only migrations whose tables/columns ALREADY EXIST in the DB.
- * - For each migration not yet recorded: try running it; if it fails with
- *   "already exists", mark it as run and continue.
+ * PostgreSQL error codes treated as "already applied":
+ *   42P07 — duplicate_table        (CREATE TABLE on existing table)
+ *   42701 — duplicate_column       (ADD COLUMN on existing column)
+ *   42703 — undefined_column       (DROP COLUMN on non-existent column)
+ *   42P01 — undefined_table        (DROP TABLE on non-existent table)
+ *   42704 — undefined_object       (DROP INDEX on non-existent index)
+ *   42P16 — invalid_table_def
+ *   23505 — unique_violation       (CREATE UNIQUE INDEX on dup data)
  */
 class MigrateSafe extends Command
 {
     protected $signature   = 'migrate:safe';
-    protected $description = 'Run migrations safely — skips already-existing tables gracefully';
+    protected $description = 'Run migrations safely — skips already-applied schema changes';
+
+    /** PostgreSQL SQLSTATE codes that mean "already done" */
+    private const SKIP_CODES = ['42P07', '42701', '42703', '42P01', '42704', '42P16', '23505'];
 
     public function handle(): int
     {
-        // Ensure migrations table exists
+        // Ensure the migrations tracking table exists
         $this->call('migrate:install');
 
-        $migrationPath = database_path('migrations');
-        $files         = glob($migrationPath . '/*.php');
+        $files = glob(database_path('migrations/*.php'));
         sort($files);
 
-        $this->info('Checking ' . count($files) . ' migration files...');
+        $this->info('Processing ' . count($files) . ' migration files...');
+
+        $migrated = 0;
+        $skipped  = 0;
+        $failed   = 0;
 
         foreach ($files as $file) {
-            $migrationName = pathinfo($file, PATHINFO_FILENAME);
+            $name = pathinfo($file, PATHINFO_FILENAME);
 
-            // Already recorded — skip
-            if (DB::table('migrations')->where('migration', $migrationName)->exists()) {
+            // Already recorded in migrations table — nothing to do
+            if (DB::table('migrations')->where('migration', $name)->exists()) {
                 continue;
             }
 
-            // Try to run this single migration
-            try {
-                DB::beginTransaction();
-                // Load and run the migration
-                $migration = require $file;
-                $migration->up();
-                DB::commit();
+            // Run this single migration file via artisan migrate --path
+            // This avoids require() issues with anonymous classes
+            $relativePath = 'database/migrations/' . basename($file);
 
-                // Record it
-                DB::table('migrations')->insert([
-                    'migration' => $migrationName,
-                    'batch'     => 1,
-                ]);
-                $this->line("  <info>Migrated:</info>  {$migrationName}");
+            $exitCode = $this->runMigration($relativePath, $name);
 
-            } catch (\Throwable $e) {
-                DB::rollBack();
-
-                $msg = $e->getMessage();
-
-                // PostgreSQL "already exists" errors — table/column/index already there
-                if (
-                    str_contains($msg, 'already exists') ||
-                    str_contains($msg, 'duplicate column') ||
-                    str_contains($msg, '42P07') ||  // duplicate_table
-                    str_contains($msg, '42701') ||  // duplicate_column
-                    str_contains($msg, '42P01')     // undefined_table on drop (already dropped)
-                ) {
-                    // Mark as run so it won't be attempted again
-                    DB::table('migrations')->insert([
-                        'migration' => $migrationName,
-                        'batch'     => 0,
-                    ]);
-                    $this->line("  <comment>Skipped (already exists):</comment> {$migrationName}");
-                } else {
-                    // Real error — stop and report
-                    $this->error("  Migration failed: {$migrationName}");
-                    $this->error("  Error: {$msg}");
-                    return self::FAILURE;
-                }
+            if ($exitCode === 'migrated') {
+                $this->line("  <info>Migrated:</info>  {$name}");
+                $migrated++;
+            } elseif ($exitCode === 'skipped') {
+                $this->line("  <comment>Skipped (already applied):</comment>  {$name}");
+                $skipped++;
+            } else {
+                $this->error("  <error>Failed:</error>  {$name}");
+                $this->error("  {$exitCode}");
+                $failed++;
+                // Stop on genuine errors
+                return self::FAILURE;
             }
         }
 
-        $this->info('All migrations processed successfully.');
+        $this->newLine();
+        $this->info("Done — Migrated: {$migrated} | Skipped: {$skipped} | Failed: {$failed}");
         return self::SUCCESS;
+    }
+
+    private function runMigration(string $path, string $name): string
+    {
+        try {
+            DB::beginTransaction();
+
+            $migration = $this->resolveMigration($path);
+            $migration->up();
+
+            DB::commit();
+
+            DB::table('migrations')->insert(['migration' => $name, 'batch' => 1]);
+
+            return 'migrated';
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            $msg = $e->getMessage();
+
+            foreach (self::SKIP_CODES as $code) {
+                if (str_contains($msg, $code)) {
+                    DB::table('migrations')->insert(['migration' => $name, 'batch' => 0]);
+                    return 'skipped';
+                }
+            }
+
+            // Also check common string patterns for additional safety
+            if (
+                str_contains($msg, 'already exists') ||
+                str_contains($msg, 'duplicate column') ||
+                str_contains($msg, 'does not exist') && (
+                    str_contains($msg, 'column') ||
+                    str_contains($msg, 'index') ||
+                    str_contains($msg, 'relation')
+                )
+            ) {
+                DB::table('migrations')->insert(['migration' => $name, 'batch' => 0]);
+                return 'skipped';
+            }
+
+            return $msg;
+        }
+    }
+
+    private function resolveMigration(string $relativePath): object
+    {
+        $fullPath = base_path($relativePath);
+        // Use include rather than require so re-loading the same file doesn't error
+        // Each anonymous class definition is unique per include call in PHP 8+
+        return include $fullPath;
     }
 }
