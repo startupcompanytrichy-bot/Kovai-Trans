@@ -30,7 +30,7 @@ class MigrateSafe extends Command
     public function handle(): int
     {
         // 1. Ensure migrations table exists
-        $this->call('migrate:install', ['--force' => true]);
+        $this->call('migrate:install');
 
         // 2. Scan migration files and mark already-existing ones as run
         $migrationPath = database_path('migrations');
