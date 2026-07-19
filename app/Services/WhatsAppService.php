@@ -40,10 +40,9 @@ class WhatsAppService
     {
         $dailyLimit = $this->getDailyLimit();
         $lastDate   = Setting::getValue('whatsapp_last_send_date', '');
-        $today      = date('Y-m-d');
+        $today      = \Carbon\Carbon::now('Asia/Kolkata')->format('Y-m-d');
 
         if ($lastDate !== $today) {
-            // New day — reset counter implicitly
             return $dailyLimit;
         }
 
@@ -58,11 +57,10 @@ class WhatsAppService
 
     protected function incrementCounter(): void
     {
-        $today    = date('Y-m-d');
+        $today    = \Carbon\Carbon::now('Asia/Kolkata')->format('Y-m-d');
         $lastDate = Setting::getValue('whatsapp_last_send_date', '');
 
         if ($lastDate !== $today) {
-            // New day — reset to 1
             Setting::setValue('whatsapp_today_count', '1');
             Setting::setValue('whatsapp_last_send_date', $today);
         } else {

@@ -16,27 +16,25 @@ Artisan::command('inspire', function () {
 // Architecture:
 //   Cron (every minute) → schedule:run
 //     → at configured time → dispatches SendDocumentReminderJob to "default" queue
-//       → that job creates DB records and dispatches SendSingleWhatsAppJob
-//          to "whatsapp" queue for every contact
-//             → queue worker processes "whatsapp" queue, sends via WhatsApp service
+//       → that job creates DB records + dispatches SendSingleWhatsAppJob per contact
+//          → queue:work --queue=whatsapp,default processes and sends via WhatsApp
 //
-// No bots, no direct HTTP calls in the scheduler.
-// Everything goes through the database queue.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// EMI reminders — daily at 9:00 AM IST, same reminder window as document reminders
+// EMI reminders — daily at 9:00 AM IST
 Schedule::job(new SendEmiReminderJob)
     ->dailyAt('09:00')
     ->timezone('Asia/Kolkata')
     ->withoutOverlapping();
 
-// Document expiry reminders — time from Settings → WhatsApp Message Config
-// Falls back to 09:30 if not set.
-// Dispatches SendDocumentReminderJob → which queues individual SendSingleWhatsAppJob per message.
-$sendTime = Setting::getValue('whatsapp_send_time', '09:30');
+// Document expiry reminders — re-read send time every minute so Settings changes
+// take effect without restarting the container.
+Schedule::call(function () {
+    $sendTime = Setting::getValue('whatsapp_send_time', '09:30');
+    $now      = \Carbon\Carbon::now('Asia/Kolkata')->format('H:i');
 
-Schedule::job(new SendDocumentReminderJob)
-    ->dailyAt($sendTime)
-    ->timezone('Asia/Kolkata')
-    ->withoutOverlapping()
-    ->onOneServer();
+    if ($now === $sendTime) {
+        SendDocumentReminderJob::dispatch();
+        \Illuminate\Support\Facades\Log::info("[Scheduler] SendDocumentReminderJob dispatched at {$now} IST.");
+    }
+})->everyMinute()->withoutOverlapping();

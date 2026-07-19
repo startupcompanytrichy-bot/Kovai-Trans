@@ -2,30 +2,20 @@
 
 namespace App\Console;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
     /**
-     * Define the application's command schedule.
+     * All scheduling is defined in routes/console.php.
+     * The old artisan commands (emi:send-reminders, vehicle:send-document-reminders)
+     * are kept for manual use only — do NOT schedule them here to avoid duplicate sends.
      */
-    protected function schedule(Schedule $schedule): void
+    protected function schedule(\Illuminate\Console\Scheduling\Schedule $schedule): void
     {
-        // Send EMI reminders daily at 9 AM
-        $schedule->command('emi:send-reminders')
-            ->dailyAt('09:00')
-            ->timezone('Asia/Kolkata');
-
-        // Send vehicle document reminders daily at 9:25 AM IST
-        $schedule->command('vehicle:send-document-reminders')
-            ->dailyAt('09:25')
-            ->timezone('Asia/Kolkata');
+        // Intentionally empty — see routes/console.php
     }
 
-    /**
-     * Register the commands for the application.
-     */
     protected function commands(): void
     {
         $this->load(__DIR__.'/Commands');
