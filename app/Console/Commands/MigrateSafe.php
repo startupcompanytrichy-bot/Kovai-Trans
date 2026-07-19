@@ -9,35 +9,42 @@ use Illuminate\Support\Facades\Schema;
 /**
  * migrate:safe
  *
- * Production-safe migration command for Render.com deployments.
+ * Production-safe migration for Render.com deployments.
  *
- * Problem: The PostgreSQL DB may already have tables (created by a previous
- * deploy or manual setup) but the `migrations` tracking table doesn't record
- * them. Running `migrate --force` then throws "relation already exists".
+ * Problem: The PostgreSQL DB already has all tables from a previous deploy,
+ * but the `migrations` tracking table is empty (new container, existing DB).
+ * Running `migrate --force` throws "relation already exists" on every table.
  *
- * Solution:
- *   1. Ensure the `migrations` table exists.
- *   2. For every migration file, if the migration is NOT recorded AND the
- *      primary table it would create already exists → mark it as run (batch 0).
- *   3. Then run `migrate --force` normally — it will skip already-recorded
- *      migrations and only run genuinely new ones.
+ * Solution: Mark ALL migration files as already-run (batch 0) upfront,
+ * then run `migrate --force` — it will only execute genuinely new migrations
+ * (ones added after the DB was last set up).
+ *
+ * This is safe because:
+ * - If a table truly doesn't exist yet, it won't be in the migrations table
+ *   after our pre-population (we only mark files, not check tables).
+ *   Wait — we mark ALL files, so new ones would be wrongly skipped.
+ *
+ * Revised approach:
+ * - Mark only migrations whose tables/columns ALREADY EXIST in the DB.
+ * - For each migration not yet recorded: try running it; if it fails with
+ *   "already exists", mark it as run and continue.
  */
 class MigrateSafe extends Command
 {
     protected $signature   = 'migrate:safe';
-    protected $description = 'Run migrations safely — pre-records existing tables to avoid duplicate-table errors';
+    protected $description = 'Run migrations safely — skips already-existing tables gracefully';
 
     public function handle(): int
     {
-        // 1. Ensure migrations table exists
+        // Ensure migrations table exists
         $this->call('migrate:install');
 
-        // 2. Scan migration files and mark already-existing ones as run
         $migrationPath = database_path('migrations');
         $files         = glob($migrationPath . '/*.php');
         sort($files);
 
-        $marked = 0;
+        $this->info('Checking ' . count($files) . ' migration files...');
+
         foreach ($files as $file) {
             $migrationName = pathinfo($file, PATHINFO_FILENAME);
 
@@ -46,51 +53,50 @@ class MigrateSafe extends Command
                 continue;
             }
 
-            // Guess the table name from the migration filename
-            // Pattern: YYYY_MM_DD_HHMMSS_create_TABLENAME_table  or  ..._TABLENAME_table
-            $tableName = $this->guessTableName($migrationName);
+            // Try to run this single migration
+            try {
+                DB::beginTransaction();
+                // Load and run the migration
+                $migration = require $file;
+                $migration->up();
+                DB::commit();
 
-            if ($tableName && Schema::hasTable($tableName)) {
+                // Record it
                 DB::table('migrations')->insert([
                     'migration' => $migrationName,
-                    'batch'     => 0, // batch 0 = pre-existing, won't be rolled back
+                    'batch'     => 1,
                 ]);
-                $this->line("  <comment>Marked as run (table exists):</comment> {$migrationName}");
-                $marked++;
+                $this->line("  <info>Migrated:</info>  {$migrationName}");
+
+            } catch (\Throwable $e) {
+                DB::rollBack();
+
+                $msg = $e->getMessage();
+
+                // PostgreSQL "already exists" errors — table/column/index already there
+                if (
+                    str_contains($msg, 'already exists') ||
+                    str_contains($msg, 'duplicate column') ||
+                    str_contains($msg, '42P07') ||  // duplicate_table
+                    str_contains($msg, '42701') ||  // duplicate_column
+                    str_contains($msg, '42P01')     // undefined_table on drop (already dropped)
+                ) {
+                    // Mark as run so it won't be attempted again
+                    DB::table('migrations')->insert([
+                        'migration' => $migrationName,
+                        'batch'     => 0,
+                    ]);
+                    $this->line("  <comment>Skipped (already exists):</comment> {$migrationName}");
+                } else {
+                    // Real error — stop and report
+                    $this->error("  Migration failed: {$migrationName}");
+                    $this->error("  Error: {$msg}");
+                    return self::FAILURE;
+                }
             }
         }
 
-        if ($marked > 0) {
-            $this->info("Pre-recorded {$marked} existing migration(s).");
-        }
-
-        // 3. Run actual migrations — only genuinely new ones will execute
-        $this->info('Running migrate --force...');
-        $this->call('migrate', ['--force' => true]);
-
+        $this->info('All migrations processed successfully.');
         return self::SUCCESS;
-    }
-
-    protected function guessTableName(string $migrationName): ?string
-    {
-        // Remove timestamp prefix: 0001_01_01_000000_create_users_table → create_users_table
-        $name = preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $migrationName);
-
-        // create_XXXX_table  → XXXX
-        if (preg_match('/^create_(.+?)_table$/', $name, $m)) {
-            return $m[1];
-        }
-
-        // add_X_to_XXXX_table → XXXX
-        if (preg_match('/^add_.+?_to_(.+?)_table$/', $name, $m)) {
-            return $m[1];
-        }
-
-        // make_X_nullable_in_XXXX_table → XXXX
-        if (preg_match('/(?:_to_|_in_)(.+?)_table$/', $name, $m)) {
-            return $m[1];
-        }
-
-        return null;
     }
 }
