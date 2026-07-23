@@ -527,6 +527,7 @@ $(document).ready(function(){
         renderSchedule();
     };
 
+    var emiSubmitting = false; // prevent duplicate submissions
     var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     function inr(n){ return parseFloat(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
     function fmtDate(d){ return d.getDate().toString().padStart(2,'0')+' '+MN[d.getMonth()]+' '+d.getFullYear(); }
@@ -711,7 +712,11 @@ $(document).ready(function(){
     updateSummary();
     renderSchedule();
 
-    $('#emiForm').on('submit',function(){ $('#saveBtn').prop('disabled',true).html('<i class="ti-reload mr-1"></i> Saving...'); });
+    $('#emiForm').on('submit',function(e){
+        if(emiSubmitting){ e.preventDefault(); return false; }
+        emiSubmitting = true;
+        $('#saveBtn').prop('disabled',true).html('<i class="ti-reload mr-1"></i> Saving...');
+    });
 });
 </script>
 @endpush

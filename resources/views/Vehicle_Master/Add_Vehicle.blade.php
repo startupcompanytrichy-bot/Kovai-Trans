@@ -356,12 +356,16 @@
         }
     }
 
+    var vehSubmitting = false; // prevent duplicate submissions
+
     $(document).ready(function() {
         $('.select2-veh').select2({
             width: '100%'
         });
 
         document.getElementById('vehicleForm').addEventListener('submit', function(e) {
+            if (vehSubmitting) { e.preventDefault(); return false; }
+            vehSubmitting = true;
             e.preventDefault();
             var form = this;
             var btn = document.getElementById('submitBtn');

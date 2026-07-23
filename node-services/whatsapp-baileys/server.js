@@ -16,6 +16,7 @@ let qrCode = null;
 let lastError = null;
 let starting = false;
 let connectedNumber = null;
+let manualReset = false;
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -32,6 +33,9 @@ async function startSocket() {
       logger: pino({ level: 'silent' }),
       auth: state,
       browser: ['KovaiTrans', 'Chrome', '1.0'],
+      keepAliveIntervalMs: 30000,
+      connectTimeoutMs: 60000,
+      defaultQueryTimeoutMs: 60000,
     });
 
     sock.ev.on('connection.update', (update) => {
@@ -61,18 +65,15 @@ async function startSocket() {
         connected = false;
         starting = false;
         connectedNumber = null;
-        const reason = lastDisconnect?.error?.output?.statusCode || DisconnectReason.loggedOut;
-        const needsResync = reason === DisconnectReason.loggedOut || reason === 405;
-        if (needsResync) {
-          fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-          lastError = null;
-        } else {
-          lastError = `Disconnected: ${DisconnectReason[reason] || reason}`;
+
+        if (manualReset) {
+          manualReset = false;
+          return;
         }
-        const shouldReconnect = reason !== DisconnectReason.loggedOut;
-        if (shouldReconnect) {
-          setTimeout(startSocket, 3000);
-        }
+
+        console.log(`Disconnected, reconnecting with saved credentials...`);
+        lastError = `Reconnecting...`;
+        setTimeout(startSocket, 3000);
       }
     });
 
@@ -101,6 +102,7 @@ app.get('/status', (_req, res) => {
 });
 
 app.post('/reconnect', async (_req, res) => {
+  manualReset = true;
   connected = false;
   qrCode = null;
   lastError = null;

@@ -15,7 +15,7 @@ $sidebarLogoSrc = $sidebarCompany ? asset('storage/' . $sidebarCompany->sidebar_
             <a class="mobile-search morphsearch-search" href="#">
                 <i class="ti-search"></i>
             </a>
-            <a href="index.html" style="flex:1;display:flex;align-items:center;justify-content:center;min-width:0;">
+            <a href="#" style="flex:1;display:flex;align-items:center;justify-content:center;min-width:0;">
                 <img id="sidebar-logo-img" class="img-fluid" src="{{ $sidebarLogoSrc }}?v={{ time() }}" alt="Theme-Logo" style="max-height:60px;width:auto;height:auto;max-width:100%;object-fit:contain;" />
             </a>
             <a class="mobile-options">

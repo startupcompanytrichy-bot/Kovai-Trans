@@ -933,6 +933,16 @@
     // ── State ────────────────────────────────────────────────────────────────────
     var parMode = 'add'; // 'add' | 'edit' | 'view'
     var parEditId = null; // current party ID when editing
+    var parSubmitting = false; // prevent duplicate submissions
+
+    // ── Prevent duplicate form submissions ───────────────────────────────────────
+    document.getElementById('partyForm').addEventListener('submit', function(e) {
+        if (parSubmitting) { e.preventDefault(); return false; }
+        parSubmitting = true;
+        var btn = document.getElementById('parSaveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti-reload"></i> Saving...';
+    });
 
     // ── Search ───────────────────────────────────────────────────────────────────
     document.getElementById('partySearch').addEventListener('keyup', function() {
@@ -1007,6 +1017,7 @@
     }
 
     function parResetForm() {
+        parSubmitting = false;
         document.getElementById('partyForm').reset();
         document.getElementById('parErrorContainer').innerHTML = '';
         // Reset save button state

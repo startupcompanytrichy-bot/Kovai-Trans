@@ -565,6 +565,16 @@
 // ── State ────────────────────────────────────────────────────────────────────
 var trdMode       = 'add';   // 'add' | 'edit' | 'view'
 var trdEditId     = null;    // current trader ID when editing
+var trdSubmitting = false;   // prevent duplicate submissions
+
+// ── Prevent duplicate form submissions ────────────────────────────────────────
+document.getElementById('traderForm').addEventListener('submit', function(e) {
+    if (trdSubmitting) { e.preventDefault(); return false; }
+    trdSubmitting = true;
+    var btn = document.getElementById('trdSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti-reload"></i> Saving...';
+});
 
 // ── Search & Filter ───────────────────────────────────────────────────────────
 function applyTraderFilter() {
@@ -652,6 +662,7 @@ function closeTraderPanel() {
 }
 
 function trdResetForm() {
+    trdSubmitting = false;
     document.getElementById('traderForm').reset();
     document.getElementById('trdErrorContainer').innerHTML = '';
     // Reset save button state

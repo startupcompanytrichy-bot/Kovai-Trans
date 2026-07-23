@@ -597,10 +597,16 @@ function unlockTripSection(){
 }
 
 /* ── Form submit ── */
+var prSubmitting = false; // prevent duplicate submissions
 $('#payrollForm').on('submit', function(e){
+    if(prSubmitting){ e.preventDefault(); return false; }
+    prSubmitting = true;
+    $('.btn-save-pr').prop('disabled',true).html('<i class="ti-reload mr-1"></i> Saving...');
     var hasRows = $('#tripListItems .ti-cbox').length > 0;
     if(hasRows && !tripSectionLocked){
         if((parseFloat($('#basicSalary').val())||0) <= 0){
+            prSubmitting = false;
+            $('.btn-save-pr').prop('disabled',false).html('<i class="ti-save"></i> Save Payroll');
             e.preventDefault(); alert('Please enter Salary Earned before saving.'); return false;
         }
         lockTripSection();

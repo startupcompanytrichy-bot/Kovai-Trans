@@ -834,6 +834,16 @@
     // ── State ────────────────────────────────────────────────────────────────────
     var supMode = 'add'; // 'add' | 'edit' | 'view'
     var supEditId = null; // current supplier ID when editing
+    var supSubmitting = false; // prevent duplicate submissions
+
+    // ── Prevent duplicate form submissions ───────────────────────────────────────
+    document.getElementById('supplierForm').addEventListener('submit', function(e) {
+        if (supSubmitting) { e.preventDefault(); return false; }
+        supSubmitting = true;
+        var btn = document.getElementById('supSaveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti-reload"></i> Saving...';
+    });
 
     // ── Search ───────────────────────────────────────────────────────────────────
     document.getElementById('supplierSearch').addEventListener('keyup', function() {
@@ -906,6 +916,7 @@
     }
 
     function supResetForm() {
+        supSubmitting = false;
         document.getElementById('supplierForm').reset();
         document.getElementById('supErrorContainer').innerHTML = '';
         // Reset save button state

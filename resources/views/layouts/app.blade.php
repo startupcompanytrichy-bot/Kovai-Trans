@@ -226,6 +226,24 @@
         });
     }
 
+    /* Transfer @stack('styles') from fetched document <head> to live <head> */
+    function transferPageStyles(doc) {
+        cleanupPageStyles();
+        // Collect content of existing layout styles to avoid duplication
+        var existingContents = {};
+        document.head.querySelectorAll('style:not([data-page-style])').forEach(function(s) {
+            existingContents[s.textContent] = true;
+        });
+        doc.head.querySelectorAll('style').forEach(function(s) {
+            if (s.hasAttribute('data-page-style')) return;
+            if (existingContents[s.textContent]) return;
+            var h = document.createElement('style');
+            h.setAttribute('data-page-style', '1');
+            h.textContent = s.textContent;
+            document.head.appendChild(h);
+        });
+    }
+
     /* ── Update sidebar active state without reloading sidebar ─────── */
     function syncSidebarActive(url) {
         var path = url.replace(window.location.origin, '').split('?')[0];
@@ -235,6 +253,17 @@
         });
         document.querySelectorAll('.pcoded-navbar .pcoded-hasmenu').forEach(function(li) {
             li.classList.remove('pcoded-trigger');
+        });
+        // Update mode selector tabs (Transport / Packing)
+        document.querySelectorAll('.ps-mode-tab').forEach(function(tab) {
+            tab.classList.remove('ps-mode-active');
+            var tabHref = tab.getAttribute('href');
+            if (tabHref) {
+                var tabPath = tabHref.replace(window.location.origin, '').split('?')[0];
+                if (tabPath === path) {
+                    tab.classList.add('ps-mode-active');
+                }
+            }
         });
         // Find matching link and set active
         document.querySelectorAll('.pcoded-navbar a[href]').forEach(function(a) {
@@ -284,6 +313,7 @@
 
                 if (newInner && curInner) {
                     cleanupPageStyles();
+                    transferPageStyles(doc);
                     curInner.innerHTML = newInner.innerHTML;
                     if (!fromPopState) {
                         history.pushState({sn: true, url: finalUrl}, '', finalUrl);
@@ -351,6 +381,7 @@
 
             if (newInner && curInner) {
                 cleanupPageStyles();
+                transferPageStyles(doc);
                 curInner.innerHTML = newInner.innerHTML;
                 history.pushState({sn: true, url: finalUrl}, '', finalUrl);
                 document.title = doc.title;
